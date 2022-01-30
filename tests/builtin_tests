@@ -1,0 +1,153 @@
+#!/bin/bash
+
+. ../builtin
+
+TOTAL_TESTS=0
+
+# $1 - First
+# $2 - Value to check
+test_eq() {
+	if [ "$1" == "$2" ]; then
+		echo "OK ($2)"
+	else
+		echo "NOK $1 <> $2"
+	fi
+}
+
+test_sum() {
+	declare -a sumvalues
+	declare -a sumres
+
+	sumvalues[1]="1 1"
+	sumvalues[2]="1 2"
+	sumvalues[3]="2 2"
+	sumvalues[4]="10 2"
+	sumvalues[5]="151520 15151"
+	sumvalues[6]="-10 10"
+	sumvalues[7]="1 1 1"
+	sumvalues[8]="-100 -300"
+
+	sumres[1]=2
+	sumres[2]=3
+	sumres[3]=4
+	sumres[4]=12
+	sumres[5]=166671
+	sumres[6]=0
+	sumres[7]=3
+	sumres[8]=-400
+
+	for pos in `seq 1 ${#sumvalues[@]}`; do
+		bashbd.sum RET ${sumvalues[pos]}
+		echo "${FUNCNAME[0]} - Test $pos: `test_eq $RET ${sumres[pos]}`"
+	done
+
+	let TOTAL_TESTS=$TOTAL_TESTS+${#sumvalues[@]}
+}
+
+test_max() {
+	declare -a mval
+	declare -a mres
+
+	mval[1]="1 10"
+	mval[2]="-10 3"
+	mval[3]="90 180"
+	mval[4]="0 1"
+	mval[5]="-1 1"
+	mval[6]="1 10 879"
+	mval[7]="-1029 -90"
+	mval[8]="898 9292 8182"
+
+	mres[1]=10
+	mres[2]=3
+	mres[3]=180
+	mres[4]=1
+	mres[5]=1
+	mres[6]=879
+	mres[7]=-90
+	mres[8]=9292
+
+	for pos in `seq 1 ${#mval[@]}`; do
+		bashbd.max RET ${mval[pos]}
+		echo "${FUNCNAME[0]} - Test $pos: `test_eq $RET ${mres[pos]}`"
+	done
+	let TOTAL_TESTS=$TOTAL_TESTS+${#mval[@]}
+}
+
+test_min() {
+	declare -a minval
+	declare -a minres
+
+	minval[1]="1 10"
+	minval[2]="12 2"
+	minval[3]="-10 1"
+	minval[4]="-90 -1230"
+	minval[5]="11212 121"
+	minval[6]="12 23 43 1"
+	minval[7]="123 2 43 -23 123"
+
+	minres[1]=1
+	minres[2]=2
+	minres[3]=-10
+	minres[4]=-1230
+	minres[5]=121
+	minres[6]=1
+	minres[7]=-23
+
+	for pos in `seq 1 ${#minval[@]}`; do
+		bashbd.min RET ${minval[pos]}
+		echo "${FUNCNAME[0]} - Test $pos: `test_eq $RET ${minres[pos]}`"
+	done
+	let TOTAL_TESTS=$TOTAL_TESTS+${#minval[@]}
+}
+
+test_count() {
+	declare -a cval
+	declare -a cres
+
+	cval[1]="1 asd casd oaskod asdasd;."
+	cval[2]="qwe"
+	cval[3]="99 99 88 77 11"
+	cval[4]="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17"
+
+	cres[1]=5
+	cres[2]=1
+	cres[3]=5
+	cres[4]=17
+
+	for pos in `seq 1 ${#cval[@]}`; do
+		bashbd.count RET ${cval[pos]}
+		echo "${FUNCNAME[0]} - Test $pos: `test_eq $RET ${cres[pos]}`"
+	done
+	let TOTAL_TESTS=$TOTAL_TESTS+${#cval[@]}
+}
+
+test_avg() {
+	declare -a cval
+	declare -a cres
+
+	cval[1]="1 1"
+	cval[2]="2 2"
+	cval[3]="2 4"
+	cval[4]="2 4 6"
+	cval[5]="2 4 6 12"
+
+	cres[1]="1"
+	cres[2]="2"
+	cres[3]="3"
+	cres[4]="4"
+	cres[5]="6"
+
+	for pos in `seq 1 ${#cval[@]}`; do
+		bashbd.avg RET ${cval[pos]}
+		echo "${FUNCNAME[0]} - Test $pos: `test_eq $RET ${cres[pos]}`"
+	done
+	let TOTAL_TESTS=$TOTAL_TESTS+${#cval[@]}
+}
+
+test_sum
+test_max
+test_min
+test_count
+test_avg
+
+echo "Total testes: $TOTAL_TESTS"

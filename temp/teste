@@ -1,0 +1,30 @@
+#!/bin/bash
+
+#declare -ar CTABLE=(1 schemas)
+readonly CTABLE=(1 schemas)
+
+fnc() {
+	return 3
+}
+
+ASSERT="_assert \${LINENO}"
+
+_assert() {
+	local INPUT=$2
+	CONDITION="${!2}"
+
+	if [ ! $CONDITION ]; then
+		echo "falha: $1 - $CONDITION"
+	else
+		echo "OK"
+	fi
+}
+
+echo `basename $0`
+
+#echo ${CTABLE[@]}
+#echo ${CTABLE[1]}
+
+CONDITION="1 -lt 3"
+eval $ASSERT CONDITION
+

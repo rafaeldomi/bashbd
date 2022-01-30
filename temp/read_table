@@ -1,0 +1,40 @@
+#!/bin/bash
+
+FILE=$1
+
+if [ ! -f $FILE ]; then
+	echo "Arquivo nao existe. Saindo"
+	exit 1
+fi
+
+TOTAL_SZ=$(stat $FILE -c %s)
+ATTRS=($2)
+
+TEMP=`dd if=tmpfile ibs=1 count=1 conv=notrunc status=none | xxd -p -u`
+MGC=${TEMP:0:2}
+
+echo "      Tipo: $MGC"
+echo "Total size: $TOTAL_SZ"
+echo ""
+
+let SIZE="8+200"
+let POS="1"
+
+while [ $POS -lt $TOTAL_SZ ]; do
+	ROW=`dd if=$FILE ibs=1 count=$SIZE skip=$POS conv=notrunc status=none`
+	if [ "${ROW}" == "" ]; then
+		break
+	fi
+	let POS="$POS + $SIZE"
+
+	#echo $ROW
+
+	fpos=0
+	for f in `seq 1 ${#ATTRS[@]}`; do
+		FLDA="${ROW:$fpos:${ATTRS[f-1]}}"
+		FLD=`echo $FLDA`
+		echo -n "$FLD "
+		let fpos=$fpos+${ATTRS[f-1]}
+	done
+	echo
+done

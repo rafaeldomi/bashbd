@@ -1,0 +1,272 @@
+#!/bin/bash
+
+: <<'COMMENT'
+This file contains functions that doesn't fit in others files
+COMMENT
+
+# Some definitions (Like c macros)
+ASSERT="_assert \${LINENO}"
+
+# Finish program
+# $1 - The exit desired exit code
+finish() {
+	exit $1
+}
+
+# Repeat char
+# $1 - Output
+# $2 - Char
+# $3 - Repeat count
+repeat() {
+	local _RET=$1
+	local value=""
+	local total=$3
+
+	while [ $((total--)) -ge 0 ]; do
+		value="$value$2"
+	done
+
+	eval $_RET="$value"
+}
+
+# Program help menu
+show_help() {
+	writeln "Ajuda do programa"
+	writeln " -h         Mostrar essa ajuda"
+	writeln " -c [conf]  Informar um arquivo de configuração"
+	writeln "            Default = bd.conf"
+	writeln " -d [dir]   Iniciar diretório do banco"
+
+	finish 0
+}
+
+# Ask for command aguarda o input do usuário
+# Retorna quando tiver ";" na string
+# Ou quando começar com "\" ou "help", sem considerar ;
+ask_for_command() {
+	TMP=""
+	INPUT_CMD=""
+
+	while [ true ]; do
+		read -r -e -p "bashbd> " TMP
+		INPUT_CMD="$INPUT_CMD$TMP"
+
+
+		if [ "${TMP:0:1}" == "\\" ] ||
+		   [ "${TMP^^}" == "HELP" ] ||
+		   [ "${TMP^^}" == "EXIT" ]; then
+			break
+		fi
+
+		if [[ "${TMP}" =~ ";" ]]; then
+			break
+		fi
+
+		INPUT_CMD="$INPUT_CMD "
+	done
+}
+
+# $1 - variable
+# $2 - size
+# $3 - value
+append_fmt_string() {
+	#local _STR=$1
+	#RES=`printf "$1%$2s" "$3"`
+	#eval $_STR=$RES
+	
+	STR=`printf "$STR%$2s" "$3"`
+	NS=+$2
+}
+
+init_empty_row() {
+	local _STR=$1
+	eval $_STR=""
+}
+
+# $1 - value
+# $2 - filename
+# $3 - position
+append_row_simple() {
+	check_file $2
+
+	echo -n "$1" | $PRG_DD of=$2 seek=$3 conv=notrunc status=none
+}
+
+# Check if the file, pointed in $1, is valid and is owned by us
+# $1 - Filename
+check_file() {
+	# Does file exists?
+	if [ ! -f $1 ]; then
+		eval $LOGGER ERROR "File does not exists: $1"
+		return -1
+	fi
+
+	# Does file is owned by bashbd?
+	# This prevent that we change things that should not be touched
+	USR=`stat -c %U $1`
+	if [ $USR != "bashbd" ]; then
+		eval $LOGGER ERROR "File is not owned by bashbd user"
+		return -1
+	fi
+
+	return 0
+}
+
+_assert() {
+	local INPUT=$2
+	CDT=${!2}
+
+	if [ ! $CDT ]; then
+		LOGGER_MSG="Assert Failed. Condition: $CDT .. in Line: $1"
+		eval $LOGGER FATAL
+	fi
+}
+
+# Check if the function is running inside bashbd program
+is_bashbd() {
+	local PRG=`basename $0`
+	LOGGER_MSG="Programa: $PRG"
+	eval $LOGGER LOG
+
+	if [ "$PROGRAM" == "$PRG" ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+# Check if $1 is a dir and his a data directory for bashbd
+# $1 - DIR
+check_data_dir() {
+	# Directory exists?
+	if [ ! -d $BDDATA ]; then
+		eval $LOGGER FATAL "Could not find data structure"
+	fi
+
+	# Is a directory stampped by bashbd?
+	if [ ! -f $BDDATA/$STAMP_FILE ]; then
+		eval $LOGGER FATAL "This directory is not a bashbd dir"
+	fi
+}
+
+# Search for some binaries in the system
+find_binaries() {
+	# List the commands to find the binaries
+	# These commands are built-in to bash:
+	#  |  mapfile  |  let  |  shift    | eval
+	#  |  local    | read  |  command  |
+	local PRGS=(dd seq printf echo stat basename bash)
+
+	for cmd in "${PRGS[@]}"; do
+		#local cmdpath=`which ${cmd}`
+		local cmdpath=`command -v ${cmd}`
+
+		# Check if its Okay
+		RES=$?
+		if [ ! "$RES" == 0 ]; then
+			# [ log ]
+			eval $LOGGER FATAL "Program ${cmd} not found"
+		fi
+
+		# Declare variable
+		readonly PRG_${cmd^^}="${cmdpath}"
+
+		LOGGER_MSG="Found ${cmd} in ${cmdpath}"
+		eval $LOGGER DEBUG1
+	done
+}
+
+# Init variables in preparation to print to terminal
+# $1 - Header of the list
+terminal_init_output() {
+	TER_HEADER="$1"
+	TER_TOT_ROWS=0
+	TER_TOT_COL=0
+
+	unset TER_COL
+	unset TER_ROWS
+	unset TER_COL_SIZE
+
+	declare -a TER_COL
+	declare -a TER_ROWS
+	declare -a TER_COL_SIZE
+
+	return 0
+}
+
+# Adding a row data to terminal row data vector
+# $1 - The row data
+terminal_add_row() {
+	let TER_TOT_ROWS++
+
+	# Open fields
+	mapfile -t -O 1 -d `echo -en "\x1D"` ter_fields <<<$(echo "$@")
+
+	fn=0
+	for f in "${ter_fields[@]}"; do
+		let fn++
+		inf=$(echo $f)
+
+		LOGGER_MSG="($TER_TOT_ROWS) $fn => Size: ${#inf}  |  SizeAtual: ${TER_COL[${fn}-SZ]}"
+		eval $LOGGER DEBUG3
+
+		TER_ROWS[${TER_TOT_ROWS}${fn}]="$inf"
+
+		if [ "${#inf}" -gt "${TER_COL[${fn}-SZ]}" ]; then
+			TER_COL[${fn}-SZ]="${#inf}"
+		fi
+	done
+
+	return 0
+}
+
+# $1.. - The values to show in table header in terminal
+terminal_set_columns() {
+	for value in "${@}"; do
+		let TER_TOT_COL++
+
+		# The value/name to show in table header
+		TER_COL[$TER_TOT_COL]="$value"
+
+		# To controle the size of the column
+		TER_COL[${TER_TOT_COL}-SZ]=0
+	done
+}
+
+# Finally print data in the terminal
+# This should be the final proc called
+#  1 - terminal_init_output ..
+#  2 - terminal_set_columns ..
+#  3 - terminal_add_row n times
+#  4 - terminal_print_data
+terminal_print_data() {
+	# Print Header Name
+	writeln " ** Showing: $TER_HEADER"
+
+	descp=""
+	line=""
+	for i in `$PRG_SEQ 1 ${TER_TOT_COL}`; do
+		LOGGER_MSG="fld ($i): ${TER_COL[$i]} ==> ${TER_COL[$i-SZ]}"
+		eval $LOGGER DEBUG3
+
+		if [ $i -eq 1 ]; then
+			descp=`printf "%%%ss" ${TER_COL[$i-SZ]}`
+			repeat OUT "-" ${TER_COL[$i-SZ]}
+			line="$OUT"
+		else
+			descp=`printf "%s | %%%ss" $descp ${TER_COL[$i-SZ]}`
+			repeat OUT "-" ${TER_COL[$i-SZ]}
+			line="$line+$OUT"
+		fi
+	done
+
+	# Print Column Names
+	printf "${descp}\n" id schema
+	echo $line
+
+	for row in `seq 1 $TER_TOT_ROWS`; do
+		printf "$descp\n" ${TER_ROWS[${row}1]} ${TER_ROWS[${row}2]}
+	done
+
+	echo "($TER_TOT_ROWS rows)"
+}

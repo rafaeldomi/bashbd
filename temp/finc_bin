@@ -1,0 +1,11 @@
+#!/bin/bash
+
+fnc() {
+local PRGS=(dd seq)
+
+for i in "${PRGS[@]}"; do
+	readonly PRG_${i^^}=`which $i`
+done
+}
+
+fnc

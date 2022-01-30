@@ -1,0 +1,18 @@
+#!/bin/bash
+
+fnc_1() {
+	echo "Value"
+}
+
+fnc_2() {
+	local _RET=$1
+	eval $_RET="Value"
+}
+
+for i in `seq 1 10`; do
+	#VAL=$(fnc_1)
+	fnc_2 VAL
+	#VAL=`fnc_1`
+	#VAL=fnc_1
+	echo $VAL
+done

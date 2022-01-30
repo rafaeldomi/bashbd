@@ -1,0 +1,340 @@
+#!/bin/bash
+
+. storage
+
+: <<'COMMENT'
+Description of ROW Vector:
+	ROWS      => Total row number in the vector
+	FIELDS    => Total fields number in the row
+	FIELDS_n  => The type of the attributes
+    n,VALUE_y => The number of the row, and the values of its attibutes
+COMMENT
+
+# Initiate the ROW variable
+# $n - Type or size of the attribute
+# Example:
+#  row_init int 200
+#    $1 - type int
+#    $2 - size 200
+row_init() {
+	VALUES=($@)
+
+	# METADATA
+	# #1 - Row is alive? 0 No 1 Yes
+	ROW[META]="0"
+	ROW[FIELDS]="${#}"
+	ROW[ROWS]=0
+
+	for i in `$PRG_SEQ 1 ${#}`; do
+		ROW[FIELDS_$i]="${VALUES[i-1]}"
+	done
+}
+
+# Add a array pre-filled with data to the global ROW variable
+# $1 - The array
+# Example:
+#  VARIABLE_EXAMPLE=(1 value1)
+#  row_init int 20
+#  row_add_value ${VARIABLE_EXAMPLE[@]}
+row_add_value() {
+	VALUES=("$@")
+
+	fn=0
+
+	# Now we have one more row
+	let ROW[ROWS]=${ROW[ROWS]}+1
+	rown=${ROW[ROWS]}
+
+	# This loop puts the value that is in the original array-variable
+	#  on our ROW variable style
+	for pos in `$PRG_SEQ 1 ${#VALUES[@]}`; do
+		# One more field/attribute
+		let fn=$fn+1
+
+		ROW[$rown,VALUE_$fn]="${VALUES[pos-1]}"
+	done
+}
+
+# Convert a decimal value to his hex representation
+dec_to_hex() {
+	local _RET=$1
+
+	echo $2
+
+	VALOR=`printf "%08X" $2`
+
+	eval $_RET=$VALOR
+}
+
+# Simple function to insert into table
+# The values must be present in the $ROW variable
+# $1 - Table to append data
+row_append_simple() {
+	local _TABLE=$1
+
+	CROW=""
+
+	# Loop na quantidade de rows inseridos no vetor
+	for i in `$PRG_SEQ 1 ${ROW[ROWS]}`; do
+		# In this first level of the loop we are in the Record level
+
+		# Work the metadata
+		CROW="${CROW}1`storage_print_magic ${MAGIC_CODE_FLD}`"
+
+		for f in `$PRG_SEQ 1 ${ROW[FIELDS]}`; do
+			# Here we are looping through the fields
+
+			I_VALUE="${ROW[$i,VALUE_$f]}"
+			SIZE="${ROW[FIELDS_$f]}"
+
+			#echo "|$I_VALUE|"
+
+			# Verifica se tem que tratar o dado
+			case ${SIZE} in
+				int)
+					# Let keep it simple by now, without doing any type of conversion
+					#dec_to_hex OUTPUT $I_VALUE
+					#CROW=`printf "%s%s" "${CROW}" "${OUTPUT}"`
+					CROW=`$PRG_PRINTF "%s%8s" "${CROW}" "${I_VALUE}"`
+					;;
+
+				*)
+					CROW=`$PRG_PRINTF "%s%${SIZE}s" "${CROW}" "${I_VALUE}"`
+					;;
+			esac
+
+			# Put a Field Separator
+			if [ ! "$f" == "${ROW[FIELDS]}" ]; then
+				CROW="${CROW}`storage_print_magic ${MAGIC_CODE_FLD}`"
+			fi
+		done
+
+		# The row data finished, put a Record Separator
+		if [ ! "$i" == "${ROW[ROWS]}" ]; then
+			CROW="${CROW}`storage_print_magic ${MAGIC_CODE_SEP}`"
+		fi
+	done
+
+	# Just echo the value to the table
+	$PRG_ECHO -n "${CROW}" >> $_TABLE
+
+	# Data is inserted by now
+}
+
+# Mark our DIR as a data directory used by bashbd
+# Must be called just by bootstrap function
+bootstrap_stamp_dir() {
+	touch $STAMP_FILE
+}
+
+bootstrap() {
+	# Am I running through bashbd program?
+	is_bashbd
+	RES=$?
+	if [ "$RES" == "1" ]; then
+		echo "This must be run through bd program. Exiting"
+		exit 1
+	fi
+
+	if [ -d $1 ]; then
+		eval $LOGGER FATAL "Folder already exists. Exiting"
+	fi
+
+	mkdir $1 && cd $1
+
+	##############################
+	## Table: schemas
+	# id   = integer
+	# name = 200
+	storage_create_file "TABLE" ${CTABLE_SCHEMAS}
+
+	readonly   BOOT_SCHEMA_BASH=(1 bashbd)
+	readonly BOOT_SCHEMA_PUBLIC=(2 public)
+	
+	unset ROW
+	declare -A ROW
+
+	row_init int 200
+	row_add_value ${BOOT_SCHEMA_BASH[@]}
+	row_add_value ${BOOT_SCHEMA_PUBLIC[@]}
+	row_append_simple ${CTABLE_SCHEMAS}
+
+	eval $LOGGER LOG "Table schemas: OK"
+
+	############################
+	## Table: language
+	##  id	    int
+	##  name    200
+	##  handler 200
+	storage_create_file "TABLE" ${CTABLE_LANG}
+
+	readonly BOOT_LANGUAGE_BASH=(1 builtin 0x0)
+
+	unset ROW
+	declare -A ROW
+
+	row_init int 200 200
+	row_add_value ${BOOT_LANGUAGE_BASH[@]}
+	row_append_simple ${CTABLE_LANG}
+
+	eval $LOGGER LOG "Table language OK"
+
+	############################
+	## Table: Types
+	## id		int
+	## name		200
+	## fnc_out	200
+	## size		int
+	storage_create_file "TABLE" ${CTABLE_TYPES}
+
+	readonly BOOT_TYPES_INT=(1 int fnc_out 4)
+	readonly BOOT_TYPES_CHAR=(2 char 0x0 -1)
+
+	unset ROW
+	declare -A ROW
+	row_init int 200 200 int
+	row_add_value ${BOOT_TYPES_INT[@]}
+	row_add_value ${BOOT_TYPES_CHAR[@]}
+	row_append_simple ${CTABLE_TYPES}
+
+	eval $LOGGER LOG "Table types OK"
+
+	#############################
+	## Table: tables
+	## id			int
+	## name			200
+	## schema_id	int
+	storage_create_file "TABLE" ${CTABLE_TABLES}
+
+	readonly BOOT_TABLE_SCHEMAS=(${CTABLE_SCHEMAS} schemas 1)
+	readonly BOOT_TABLE_TABLE=(${CTABLE_TABLES} tables 1)
+	readonly BOOT_TABLE_ATTRS=(${CTABLE_ATTRS} attrs 1)
+	readonly BOOT_TABLE_TYPES=(${CTABLE_TYPES} types 1)
+	readonly BOOT_TABLE_FUNCTIONS=(${CTABLE_FUNCTIONS} functions 1)
+	readonly BOOT_TABLE_INDEX=(${CTABLE_INDEX} index 1)
+	readonly BOOT_TABLE_LANGUAGE=(${CTABLE_LANG} language 1)
+
+	unset ROW
+	declare -A ROW
+
+	row_init int 200 int
+	row_add_value ${BOOT_TABLE_SCHEMAS[@]}
+	row_add_value ${BOOT_TABLE_TABLE[@]}
+	row_add_value ${BOOT_TABLE_ATTRS[@]}
+	row_add_value ${BOOT_TABLE_TYPES[@]}
+	row_add_value ${BOOT_TABLE_FUNCTIONS[@]}
+	row_add_value ${BOOT_TABLE_INDEX[@]}
+	row_add_value ${BOOT_TABLE_INDEX[@]}
+	row_add_value ${BOOT_TABLE_LANGUAGE[@]}
+
+	row_append_simple ${CTABLE_TABLES}
+
+	eval $LOGGER LOG "Table tables OK"
+
+	###########################
+	## Table: functions
+	## id		int
+	## name		200
+	## handler	200
+	## lang_id	int
+	storage_create_file "TABLE" ${CTABLE_FUNCTIONS}
+
+	readonly BOOT_FNC_SUM=(1 sum bashbd.sum 1)
+	readonly BOOT_FNC_COALESCE=(2 coalesce bashbd.coalesce 1)
+	readonly BOOT_FNC_MAX=(3 max bashbd.max 1)
+	readonly BOOT_FNC_MIN=(4 min bashbd.min 1)
+	readonly BOOT_FNC_COUNT=(5 count bashbd.count 1)
+	readonly BOOT_FNC_AVG=(6 avg bashbd.avg 1)
+
+	unset ROW
+	declare -A ROW
+
+	row_init int 200 200 int
+	row_add_value ${BOOT_FNC_SUM[@]}
+	row_add_value ${BOOT_FNC_COALESCE[@]}
+	row_add_value ${BOOT_FNC_MAX[@]}
+	row_add_value ${BOOT_FNC_MIN[@]}
+	row_add_value ${BOOT_FNC_COUNT[@]}
+	row_add_value ${BOOT_FNC_AVG[@]}
+
+	row_append_simple ${CTABLE_FUNCTIONS}
+
+	eval $LOGGER LOG "Table functions OK"
+
+	##########################
+	## Table index
+	## id 		int
+	## table_id	int
+	## fields	200
+	storage_create_file "TABLE" ${CTABLE_INDEX}
+
+	eval $LOGGER LOG "Table index OK"
+
+	##########################
+	## Table Attrs
+	## id		int
+	## table_id	int
+	## name		200
+	## types_id	int
+	## size		int
+	storage_create_file "TABLE" ${CTABLE_ATTRS}
+
+	# Types
+	# 1 - Integer
+	# 2 - Char
+	readonly BOOT_SCHEMAS_ID=(1 ${CTABLE_SCHEMAS} id 1 -1)
+	readonly BOOT_SCHEMAS_NAME=(2 ${CTABLE_SCHEMAS} name 1 -1)
+	readonly BOOT_LANG_ID=(3 ${CTABLE_LANG} id 1 -1)
+	readonly BOOT_LANG_NAME=(4 ${CTABLE_LANG} name 2 200)
+	readonly BOOT_LANG_HAND=(5 ${CTABLE_LANG} handler 2 200)
+	readonly BOOT_TYPES_ID=(6 ${CTABLE_TYPES} id 1 -1)
+	readonly BOOT_TYPES_NAME=(7 ${CTABLE_TYPES} name 2 200)
+	readonly BOOT_TYPES_FNC=(8 ${CTABLE_TYPES} fnc_out 2 200)
+	readonly BOOT_TYPES_SIZE=(9 ${CTABLE_TYPES} size 1 -1)
+	readonly BOOT_TABLES_ID=(10 ${CTABLE_TABLES} id 1 -1)
+	readonly BOOT_TABLES_NAME=(11 ${CTABLE_TABLES} name 2 200)
+	readonly BOOT_TABLES_SCHEMAID=(12 ${CTABLE_TABLES} schema_id 1 -1)
+	readonly BOOT_ATTRS_ID=(13 ${CTABLE_ATTRS} id 1 -1)
+	readonly BOOT_ATTRS_TABLEID=(14 ${CTABLE_ATTRS} table_id 1 -1)
+	readonly BOOT_ATTRS_NAME=(15 ${CTABLE_ATTRS} name 2 200)
+	readonly BOOT_ATTRS_TYPES=(16 ${CTABLE_ATTRS} types_id 1 -1)
+	readonly BOOT_ATTRS_SIZE=(17 ${CTABLE_ATTRS} size 1 -1)
+	readonly BOOT_FUNCTIONS_ID=(18 ${CTABLE_FUNCTIONS} id 1 -1)
+	readonly BOOT_FUNCTIONS_NAME=(19 ${CTABLE_FUNCTIONS} name 2 200)
+	readonly BOOT_INDEX_ID=(20 ${CTABLE_INDEX} id 1 -1)
+	readonly BOOT_INDEX_NAME=(21 ${CTABLE_INDEX} name 2 200)
+	readonly BOOT_INDEX_FIELDS=(22 ${CTABLE_INDEX} fields 2 200)
+
+	unset ROW
+	declare -A ROW
+
+	row_init int int 200 int int
+	row_add_value ${BOOT_SCHEMAS_ID[@]}
+	row_add_value ${BOOT_SCHEMAS_NAME[@]}
+	row_add_value ${BOOT_LANG_ID[@]}
+	row_add_value ${BOOT_LANG_NAME[@]}
+	row_add_value ${BOOT_LANG_HAND[@]}
+	row_add_value ${BOOT_TYPES_ID[@]}
+	row_add_value ${BOOT_TYPES_NAME[@]}
+	row_add_value ${BOOT_TYPES_FNC[@]}
+	row_add_value ${BOOT_TYPES_SIZE[@]}
+	row_add_value ${BOOT_TABLES_ID[@]}
+	row_add_value ${BOOT_TABLES_NAME[@]}
+	row_add_value ${BOOT_TABLES_SCHEMAID[@]}
+	row_add_value ${BOOT_ATTRS_ID[@]}
+	row_add_value ${BOOT_ATTRS_TABLEID[@]}
+	row_add_value ${BOOT_ATTRS_NAME[@]}
+	row_add_value ${BOOT_ATTRS_TYPES[@]}
+	row_add_value ${BOOT_ATTRS_SIZE[@]}
+	row_add_value ${BOOT_FUNCTIONS_ID[@]}
+	row_add_value ${BOOT_FUNCTIONS_NAME[@]}
+	row_add_value ${BOOT_INDEX_ID[@]}
+	row_add_value ${BOOT_INDEX_NAME[@]}
+	row_add_value ${BOOT_INDEX_FIELDS[@]}
+
+	row_append_simple ${CTABLE_ATTRS}
+
+	eval $LOGGER LOG "Table attrs OK"
+
+	bootstrap_stamp_dir
+}

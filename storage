@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Return a string of the magic code
+# $1 - OBJECT
+# $2 - RETURN
+get_magic_code() {
+	local _RET=$1
+
+	case "$2" in
+		TABLE)
+			eval $_RET="$MAGIC_CODE_TABLE" ;;
+		INDEX)
+			eval $_RET="$MAGIC_CODE_INDEX" ;;
+		SEQUENCE)
+			eval $_RET="$MAGIC_CODE_SEQUENCE" ;;
+		FUNCTION)
+			eval $_RET="$MAGIC_CODE_FUNCTION" ;;
+		TRIGGER)
+			eval $_RET="$MAGIC_CODE_TRIGGER" ;;
+		*)
+			$PRG_ECHO "Não tratado $2"
+			;;
+	esac
+}
+
+# $1 - Retorno
+# $2 - MGC
+get_magic_code_name() {
+	local _RET=$1
+	case $2 in
+		$MAGIC_CODE_TABLE)	  eval $_RET="TABLE" ;;
+		$MAGIC_CODE_INDEX)    eval $_RET="INDEX" ;;
+		$MAGIC_CODE_SEQUENCE) eval $_RET="SEQUENCE" ;;
+		$MAGIC_CODE_FUNCTION) eval $_RET="FUNCTION" ;;
+		$MAGIC_CODE_TRIGGER)  eval $_RET="TRIGGER" ;;
+	esac
+}
+
+# Check if file exists
+#  Return 0: File exists
+#  Return 1: File NOT exists
+# $1 - Filename
+storage_file_exists() {
+	if [ -f $1 ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+# $1 = OBJECT
+# $2 = NAME
+storage_create_file() {
+	local _OBJ=$1
+	local _FILE=$2
+
+	storage_file_exists $_FILE
+	RES=$?
+	if [ "$RES" -eq "0" ]; then
+		LOGGER_MSG="Cannot create file. File ($_FILE) already exists"
+		eval $LOGGER ERROR
+		return -1
+	fi
+
+	get_magic_code MGC $_OBJ
+	storage_append_magic $MGC $_FILE
+	storage_append_magic $MAGIC_CODE_SEP $_FILE
+
+	return 0
+}
+
+# $1 - Hex Magic Code
+# $2 - File
+storage_append_magic() {
+	$PRG_ECHO -en "\x$1" >> $2
+}
+
+storage_print_magic() {
+	$PRG_ECHO -en "\x$1"
+}
+
+# Check if the object is of the desired type
+# $1 - Kind of Object (TABLE, INDEX...)
+# $2 - File
+storage_check_mgc() {
+	TMP=`$PRG_DD if=$2 ibs=1 count=1 conv=notrunc status=none | xxd -p`
+	VALUE=${TMP^^}
+
+	get_magic_code MGC $1
+
+	if [ ! "$VALUE" == "$MGC" ]; then
+		$PRG_ECHO "Invalid kind of object"
+	fi
+}
+

@@ -1,0 +1,38 @@
+#!/bin/bash
+
+. log
+. functions
+. parser
+. cmd_table
+
+execute() {
+	# Clear this "object" (I know, variable, OK)
+	unset SQLOBJ
+	declare -A SQLOBJ
+
+	# [ parser ]
+	# Aqui preenchemos o objeto SQLOBJ
+	parser "${INPUT_CMD}"
+	RET="$?"
+
+	if [ ! "$RET" == "0" ]; then
+		eval $LOGGER ERROR "Some error ocurred in parser"
+		return $RET
+	fi
+
+	# Buscar código dos objetos
+	#post_parser
+
+	LOGGER_MSG="Command |${SQLOBJ[CMD]}|"
+	eval $LOGGER DEBUG1
+
+	case "${SQLOBJ[CMD]^^}" in
+		TABLE)
+			table_execute
+			;;
+		*)
+			LOGGER_MSG="Unknown command: ${SQLOBJ[CMD]}"
+			eval $LOGGER ERROR
+			;;
+	esac
+}

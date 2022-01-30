@@ -1,0 +1,80 @@
+#!/bin/bash
+
+: <<'COMMENT'
+ * writeln
+	-> Apenas imprimir uma informação
+
+ * log
+	-> Log normal do programa
+
+ * debug
+	-> Apenas debug do programa, internals do código
+
+ * LOGGER
+	-> Utilizar essa versão
+		eval $LOGGER [LEVEL] [MSG]
+	-> Para mensagens "complexas", com print de variável ou aspas " '
+	    salvar o conteúdo na variável LOGGER_MSG
+COMMENT
+
+LOGGER="log \${FUNCNAME[0]} \${LINENO}"
+
+# COLORS
+CL_RED='\e[1;31m'
+CL_GREEN='\e[1;32m'
+CL_YELLOW='\e[1;33m'
+CL_BLUE='\e[1;34m'
+CL_MAGENTA='\e[1;35m'
+CL_CYAN='\e[1;36m'
+# NoColor
+CL_NC='\e[0m\033[0m'
+
+# Print a debug string
+# $1 - function name
+# $2 - line number
+# $3 - message
+debug() {
+	if [ "$DEBUG" = "1" ]; then
+		printf "%s:%s - %s\n" "$1" "$2" "$3"
+	fi
+}
+
+writeln() {
+	printf "%s\n" "$1"
+}
+
+# $1 - FUNCNAME
+# $2 - LINENO
+# $3 - Level (FATAL - LOG - ERROR)
+# $4 - Message
+log () {
+	local _FUNC=$1
+	local _LINE=$2
+	local _LEVEL=$3
+
+	LL="$_LEVEL"
+
+	if [ "$LL" == "DEBUG3" ]; then
+		return 0
+	fi
+
+	MSG=""
+	if [ -z ${4} ]; then
+		MSG="${LOGGER_MSG}"
+	else
+		VALUES=($@)
+		SPC=""
+		for i in `$PRG_SEQ 3 ${#}`; do
+			MSG="$MSG${SPC}${VALUES[i]}"
+			SPC=" "
+		done
+	fi
+
+	printf "%s [%17s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "$MSG"
+
+	if [ "$_LEVEL" == "FATAL" ]; then
+		#echo -e "`date +\"%D %T\"` [$LL]: Saindo por erro FATAL"
+		printf "%s [%14s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "EXITING BECAUSE OF FATAL ERROR"
+		finish 1
+	fi
+}

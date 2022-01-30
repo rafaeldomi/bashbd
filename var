@@ -1,0 +1,28 @@
+if [ ! $VAR_INCLUDED ]; then
+VAR_INCLUDED=1
+
+# DEBUG
+#   0 = False
+#   1 = True
+DEBUG=1
+
+# BDDATA
+#   This point to BD Data Directory
+BDDATA=data
+
+# ERRCODE
+#	Could be set for further analysis
+ERRCODE=-1
+
+# PROGRAMNAME
+#	Name of this program
+#	This value is set at bashbd init
+PROGRAM="-1"
+
+#####################
+# CACHES
+#####################
+declare -a CACHE_SCHEMA
+declare -a CACHE_TABLE
+
+fi

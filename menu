@@ -1,0 +1,101 @@
+#!/bin/bash
+
+cmd_menu() {
+	if [ "${1^^}" == "HELP" ]; then
+		menu_show_help
+		return 0
+	fi
+
+	# Break in tokens
+	# TKN 0 = The command
+	# TKN 1 = Option, if the command permits
+	local TKN=(${@})
+
+	# Vim shows that using "$array_var[x]:init:end" is wrong, but is correct
+	case "${TKN[0]:1:1}" in
+		q)  finish 0;;
+		t)	menu_list_tables;;
+		s)  menu_list_schemas;;
+		f)  menu_list_functions;;
+		l)  menu_list_lang;;
+		c)  menu_warm_cache "${TKN[1]}";;
+		\?)	menu_show_help;;
+		*)  echo "Menu Comando $PAR não reconhecido"
+	esac
+
+	return 0
+}
+
+menu_show_tables() {
+	echo "Tabelas:"
+}
+
+menu_show_help() {
+	writeln "Command menu"
+	writeln ""
+	writeln "\\?       Show this help"
+	writeln ""
+	writeln "\\t       List tables"
+	writeln "\\s       List schemas"
+	writeln "\\f       List functions"
+	writeln "\\l       List languages"
+	writeln ""
+	writeln "\\c [obj] Warm cache"
+	writeln "   schemas"
+	writeln "   functions"
+	writeln "   languages"
+	writeln "   tables"
+    writeln ""
+	writeln "\\q     Quit program"
+}
+
+###################################################
+###################################################
+menu_list_schemas() {
+	terminal_init_output "List of Schemas"
+	terminal_set_columns "id" "schema"
+
+	# Read raw file
+	mapfile -t -s 1 -O 1 -d `echo -e -n "\x1E"` rows < $CTABLE_SCHEMAS
+	if [ ! "$?" == "0" ]; then
+		eval $LOGGER ERROR "Fail to open table bashbd.schemas"
+		return 1
+	fi
+
+	for row in "${rows[@]}"; do
+		terminal_add_row "$row"
+	done
+
+	terminal_print_data
+}
+
+menu_list_tables() {
+	terminal_init_output "List od Tables"
+}
+
+menu_list_functions() {
+	:
+}
+
+menu_warm_cache() {
+	# Do the cache if necessary
+	cache_do_cache $CTABLE_SCHEMAS
+}
+
+menu_list_lang() {
+	terminal_init_output "List of languages"
+	terminal_set_columns id name fnc_out size
+
+	# Read raw file
+	mapfile -t -s 1 -O 1 -d `echo -en "\x1E"` rows < $CTABLE_LANG
+	if [ ! "$?" == "0" ]; then
+		eval $LOGGER ERROR "Fail to open table bashbd.languages"
+		return 1
+	fi
+
+	for row in "${rows[@]}"; do
+		terminal_add_row "$row"
+	done
+
+	terminal_print_data
+}

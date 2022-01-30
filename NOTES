@@ -1,0 +1,94 @@
+
+* 1 file per relation (table / index)
+* sequence is a special relation
+* utilizar seek https://unix.stackexchange.com/questions/307186/what-is-the-difference-between-seek-and-skip-in-dd-command/307188 
+* 8kb pages?? 
+* dd if=1 count=8 ibs=1 skip=8 conv=notrunc status=none
+* dd if=1 count=200 ibs=1 skip=8 conv=notrunc status=none
+
+bashbd.schemas   [1]
+bashbd.tables    [2]
+bashbd.attrs     [3]
+bashbd.types     [4]
+bashbd.functions [5]
+bashbd.index	 [6]
+bashbd.language  [7]
+
+bashbd.schemas
+	id   		integer
+	name 		char(200)
+bashbd.language
+	id			integer
+	name		char(200)
+	handler		char(200)
+bashbd.types
+	id			integer
+	name		char(200)
+	fnc_out		char(200)
+	size		integer
+bashbd.tables
+	id			integer
+	name 		char(200)
+	schema_id	integer
+bashbd.attrs
+	id			integer
+	table_id	integer
+	name		char(200)
+	types_id	integer
+bashbd.functions
+	id			integer
+	name		char(200)
+bashbd.index
+	id			integer
+	table_id	integer
+	fields		char(200)
+
+integer = 4 bytes
+char = defined size
+
+schemas
+  - 1 - bashbd
+  - 2 - public
+
+tables
+  - 1 schemas 1
+  - 2 tables 1
+  - 3 attrs 1
+
+###### 
+Parser: https://hal.archives-ouvertes.fr/hal-01890044/document
+
+Error handling https://stackoverflow.com/questions/64786/error-handling-in-bash
+
+
+#############
+Returning functions
+echo vs eval ... tests
+
+# Using mapfile to read
+mapfile -t -s 1 rows  < file
+
+######################
+
+
+++ echo -e -n '\x1E'
++ mapfile -t -s 1 -O 1 -d $'\036' rows
+
+https://stackoverflow.com/questions/5349718/how-can-i-repeat-a-character-in-bash
+
+echo -e -n $'\x0A' | hexdump -C
+
+
+--- Hexa to decimal
+echo $((0xbc))
+
+https://sa-east-1.signin.aws.amazon.com
+
+0A1E
+^ ^- Separator code
+|- Table code
+
+val 1D 12 1E
+val 1D 132 1E
+
+http://mywiki.wooledge.org/BashFAQ/006#Indirection

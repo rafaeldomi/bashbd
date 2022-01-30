@@ -1,0 +1,8 @@
+#!/bin/bash
+
+. log
+
+table_execute() {
+	eval $LOGGER DEBUG1 "Iniciando"
+
+}

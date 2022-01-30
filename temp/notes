@@ -1,0 +1,47 @@
+CODE_MAGIC_TABLE  = 0xAF (HEADER START)
+CODE_HEADER_END   = 0xFF
+
+AF        FF
+8bytes = last position
+
+1 byte HEADER START
+8 bytes last position table
+6 bytes filler
+1 by HEADER END
+
+------
+16 bytes HEADER TOTAL
+
+byte 17 inicia data
+
+echo "3F" | xxd -r -p
+
+echo -n $'\x3F'
+
+echo -n "?" | xxd -p
+
+2147483647
+7FFFFFFF
+
+32767 = 7FFF
+
+# hexa para caractere
+$ echo -e "\x41"
+A
+
+# caracteres hexa para string
+$ echo -e "\x46\x65\x72\x6e\x61\x6e\x64\x6f"
+Fernando
+
+  6 #echo -n $'\x3F' > tmpfile                                                      
+  7
+  8 #echo  -e "\x3F"                                                                
+  9
+ 10 #cat tmpfile | xxd -p                                                           
+ 11
+ 12 #dd if=tmpfile ibs=1 count=1 conv=notrunc status=none | xxd -p                  
+
+https://www.gnu.org/software/bash/manual/html_node/Shell-Parameter-Expansion.html
+https://pt.slideshare.net/ikedai/zabbix-conference-2012?next_slideshow=1
+https://docs.google.com/spreadsheets/d/1eneT1xylHFYIpQDaSU1tAWzaILfBucMxbKe_aUqwyi4/edit#gid=0
+

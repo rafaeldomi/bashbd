@@ -1,0 +1,286 @@
+#!/bin/bash
+COMMAND=(TABLE SELECT INSERT UPDATE DELETE "ALTER TABLE" "CREATE TABLE" "CREATE INDEX" "DROP TABLE")
+END_COMMAND=;
+SEPARATOR=,
+SPACE=" "
+JOINS=(INNER "INNER JOIN" "LEFT" "LEFT JOIN" "RIGHT" "RIGHT JOIN")
+
+tokenize() {
+	# Quebrar em tokens
+	read -a TOKENS <<< $1
+
+	echo "Total Tokens: ${#TOKENS[@]}"
+}
+
+cmd_table() {
+	echo "Func: cmd_table"
+
+	for pos in `seq 1 ${#TOKENS[@]}`; do
+		# For TABLE cmd the token[1] must be the table name
+		if [ "${TOKENS[pos]}" == "" ]; then
+			continue
+		fi
+		echo "$pos - |${TOKENS[pos]}|"
+
+		SQLOBJ[TABLE]="${TOKENS[pos]}"
+	done
+}
+
+cmd_select() {
+	echo "Func: cmd_select"
+
+	grupo="f"
+	fieldn=0
+	ordern=0
+	groupn=0
+	wheren=0
+	tablen=0
+	skip=0
+	for pos in `seq 1 ${#TOKENS[@]}`; do
+		if [ "$skip" -gt 0 ]; then
+			let skip=$skip-1
+
+			echo "  __ novo skip: $skip  ${TOKENS[$pos]}"
+
+			continue
+		fi
+
+		TKN="${TOKENS[pos]}"
+		NEXTTKN="${TOKENS[pos+1]}"
+
+		echo "$pos - $grupo - $TKN - $NEXTTKN"
+
+		if [ "${TKN}" == "" ]; then
+			continue
+		fi
+
+		##################
+		# ORDER BY
+		if [ "${TKN^^}" == "ORDER" ]; then
+			if [ ! "${NEXTTKN^^}" == "BY" ]; then
+				echo "Sintaxe ORDER faltando BY"
+				exit
+			fi
+			SQLOBJ[ORDER]=true
+			grupo="o"
+			continue
+		fi
+		if [ "$grupo" == "o" ]; then
+			if [ "${TKN^^}" == "BY" ]; then
+				continue
+			fi
+
+			let ordern=$ordern+1
+			SQLOBJ[ORDER_$ordern]="${TKN}"
+			SQLOBJ[ORDER_DIR_$ordern]="${NEXTTKN}"
+			SQLOBJ[ORDER_TOTAL]=$ordern
+			skip=1
+		fi
+
+		#################
+		# GROUP BY
+		if [ "${TKN^^}" == "GROUP" ]; then
+			if [ ! "${NEXTTKN^^}" == "BY" ]; then
+				echo "Sintaxe GROUP faltando BY"
+				exit
+			fi
+			SQLOBJ[GROUP]=true
+			grupo="g"
+			continue
+		fi
+		if [ "$grupo" == "g" ]; then
+			if [ "${TKN^^}" == "BY" ]; then
+				continue
+			fi
+
+			let groupn=$groupn+1
+			SQLOBJ[GROUP_$groupn]="${TKN}"
+			SQLOBJ[GROUP_TOTAL]=$groupn
+		fi
+
+		#################
+		# WHERE
+		# FIELD OPERATOR VALUE
+		if [ "${TKN^^}" == "WHERE" ]; then
+			grupo="w"
+
+			SQLOBJ[WHERE]=true
+			continue
+		fi
+
+		if [ "$grupo" = "w" ]; then
+			# TKN1 - Field
+			# TKN2 - Operator
+			# TKN3 - Value
+			# TKN4 - Se for AND tem um novo filtro WHERE
+			WTKN1=${TOKENS[pos]}
+			WTKN2=${TOKENS[pos+1]}
+			WTKN3=${TOKENS[pos+2]}
+			WTKN4=${TOKENS[pos+3]}
+
+			let wheren=$wheren+1
+			SQLOBJ[WHERE_TOTAL]=$wheren
+
+			SQLOBJ[WHERE_${wheren}_LEFT]="${WTKN1}"
+			SQLOBJ[WHERE_${wheren}_OPERATOR]="${WTKN2}"
+			SQLOBJ[WHERE_${wheren}_RIGHT]="${WTKN3}"
+
+			if [ ! "${WTKN4^^}" == "AND" ]; then
+				grupo=""
+				continue
+			fi
+
+			skip=3
+		fi
+
+		#################
+		# FIELDS
+		if [ "$grupo" == "f" ]; then
+			let fieldn=$fieldn+1
+			SQLOBJ[FIELDS_TOTAL]="$fieldn"
+			SQLOBJ[FIELDS_$fieldn]="${TKN}"
+
+			if [ "${NEXTTKN^^}" == "FROM" ]; then
+				grupo="fr"
+				continue
+			fi
+		fi
+
+		################
+		# FROM
+		if [ "$grupo" == "fr" ]; then
+			if [ ! "${TKN^^}" == "FROM" ]; then
+				echo "SQL mal-formado. FROM não encontrado"
+			fi
+			grupo="t"
+			continue
+		fi
+
+		#######################
+		# TABELA
+		# table [alias]
+		if [ "$grupo" == "t" ]; then
+			let tablen=$tablen+1
+			SQLOBJ[TABLE_TOTAL]="${tablen}"
+
+			SQLOBJ[TABLE_$tablen]="${TKN}"
+
+			# Verifica o próximo Token
+			case "${NEXTTKN^^}" in
+				ORDER)
+					group="o"; continue
+					;;
+				GROUP)
+					group="g"; continue
+					;;
+				INNER|LEFT|RIGHT)
+					group="j"; continue
+					;;
+				*)
+					SQLOBJ[TABLE_${tablen}_ALIAS]="${NEXTTKN}"
+					skip=1
+					grupo=""
+					continue
+			esac
+
+			continue
+		fi
+	done
+}
+
+print_sqlobj() {
+	echo "-----"
+	echo "Full SQL: ${SQLOBJ[ORIG]}"
+	echo "COMMAND: ${SQLOBJ[CMD]}"
+
+	if [ "${SQLOBJ[FIELDS_TOTAL]}" -gt 0 ]; then
+		echo "FIELDS"
+		echo "   TOTAL: ${SQLOBJ[FIELDS_TOTAL]}"
+		for i in `seq 1 ${SQLOBJ[FIELDS_TOTAL]}`; do
+			echo  "  FIELD_$i: ${SQLOBJ[FIELDS_${i}]}"
+		done
+	fi
+
+	echo "TABELA TOTAL: ${SQLOBJ[TABLE_TOTAL]}"
+	if [ "${SQLOBJ[TABLE_TOTAL]}" -gt 0 ]; then
+		for i in `seq 1 ${SQLOBJ[TABLE_TOTAL]}`; do
+			echo "    TABLE: ${SQLOBJ[TABLE_$i]}"
+			echo "    ALIAS: ${SQLOBJ[TABLE_${i}_ALIAS]}"
+		done
+	fi
+
+	echo "WHERE: ${SQLOBJ[WHERE]}"
+	if [ "${SQLOBJ[WHERE_TOTAL]}" -gt 0 ]; then
+		for i in `seq 1 ${SQLOBJ[WHERE_TOTAL]}`; do
+			echo "  WHERE # $wheren"
+			echo "        LEFT: ${SQLOBJ[WHERE_${i}_LEFT]}"
+			echo "        OPER: ${SQLOBJ[WHERE_${i}_OPERATOR]}"
+			echo "       RIGHT: ${SQLOBJ[WHERE_${i}_RIGHT]}"
+		done
+	fi
+
+	echo "ORDER: ${SQLOBJ[ORDER]}"
+	if [ "${SQLOBJ[ORDER]}" == "true" ]; then
+		echo "   TOTAL: ${SQLOBJ[ORDER_TOTAL]}"
+		for i in `seq 1 ${SQLOBJ[ORDER_TOTAL]}`; do
+			echo  "      FIELD_$i: ${SQLOBJ[ORDER_${i}]}"
+			echo  "  FIELD_DIR_$i: ${SQLOBJ[ORDER_DIR_${i}]}"
+		done
+	fi
+
+	echo "GROUP: ${SQLOBJ[GROUP]}"
+	if [ "${SQLOBJ[GROUP]}" == "true" ]; then
+		echo "   TOTAL: ${SQLOBJ[GROUP_TOTAL]}"
+		for i in `seq 1 ${SQLOBJ[GROUP_TOTAL]}`; do
+			echo "   GROUP_$i: ${SQLOBJ[GROUP_${i}]}"
+		done
+	fi
+}
+
+parser() {
+	unset SQLOBJ
+	declare -A SQLOBJ
+
+	SQLOBJ[ORDER]=false
+	SQLOBJ[GROUP]=false
+	SQLOBJ[WHERE]=false
+	SQLOBJ[FIELDS_TOTAL]=0
+	SQLOBJ[WHERE_TOTAL]=0
+	SQLOBJ[TABLE_TOTAL]=0
+
+	echo "###### PARSER"
+	echo "## |$1|"
+	tokenize "$1"
+
+	# Verifica o primeiro token
+	if [[ ${COMMAND[*]} =~ (^|[[:space:]])"${TOKENS[0]^^}"($|[[:space:]]) ]]; then
+		SQLOBJ[ORIG]="$1"
+		SQLOBJ[CMD]="${TOKENS[0]^^}"	
+
+		case "${TOKENS[0]^^}" in
+			TABLE)
+				cmd_table
+				;;
+			SELECT)
+				cmd_select
+				;;
+		esac
+
+		print_sqlobj
+	else
+		echo "Comando '${TOKENS[0]}' não reconhecido"
+	fi
+}
+
+#parser "select 1=1"
+#parser "TABLE tabela1"
+#parser  "  SELECT * FROM tabela2"
+#parser "select field1, field2, field3 from tabela3 order by field1 desc"
+#parser "select field1, field2, field3 from tabela3 tab order by field1 desc"
+#parser "select field1, field2, field3 from tabela3 order by field1 desc, field2 asc"
+#parser "select id, count(*) from tabela1 group by 1"
+#parser "sel tabela1" # Wrong
+#parser "select * from tabela where field1 = 'asd'";
+#parser "select * from tabela where field1 = '1' and field2 = 'asd'";
+#parser "select * from tabela where field1 >= '1' and field2 = 'asd' and asd = true";
+#parser "select al.valor from table al"

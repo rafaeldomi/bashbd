@@ -1,0 +1,36 @@
+#!/bin/bash
+
+fnc() {
+	if [ -f $1 ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+fnc1() {
+	test -f $1
+	return $?
+}
+
+fnc2() {
+	[ -f $1 ] && return 0 || return 1
+}
+
+fnc3() {
+	if [[ -f $1 ]]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
+loop() {
+	SEQ=`which seq`
+	#for i in `$SEQ 1 10000`; do
+	for i in {1..10000}; do
+		fnc1 log
+	done
+}
+
+time loop

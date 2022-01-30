@@ -1,0 +1,42 @@
+#!/bin/bash
+
+MAX=10
+
+append_value() {
+	echo -n "$1" >> file
+}
+
+append_magic() {
+	echo -en "\x$1" >> file
+}
+
+if [ "$1" == "c" ]; then
+	> file
+
+	readonly CODE_MAGIC_TABLE="0A"
+	readonly CODE_MAGIC_SEP="1E" # Record separator
+	readonly CODE_NULL="00"
+
+	append_magic $CODE_MAGIC_TABLE
+	append_magic $CODE_MAGIC_SEP
+
+	for i in `seq 1 $MAX`; do
+		append_value "$i 1 1 1"
+		append_magic $CODE_MAGIC_SEP
+	done
+
+	exit 0
+fi
+
+# Using mapfile to read file contents
+mapfile -t -s 1 -O 1 -d `echo -e -n "\x1E"` rows < file
+echo "Total: ${#rows[@]}"
+
+for pos in `seq 1 ${#rows[@]}`; do
+	echo "${rows[pos]}"
+	VALUES=(${rows[pos]})
+	#for f in `seq 1 ${#VALUES[@]}`; do
+	#	echo > /dev/null
+	#	#echo "   field $f => ${VALUES[f-1]}"
+	#done
+done

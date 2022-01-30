@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Search for the table ID
+# $1 - OUT ID
+# $2 - SCHEMA
+# $3 - TABLE
+get_table_id_simple() {
+	:
+}
+
+# Search for schema ID
+# $1 - OUT ID
+# $2 - SCHEMA
+get_schema_id_simple() {
+	:
+}

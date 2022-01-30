@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# $1 - The kind of object to check
+cache_has_cache() {
+	local VAR=""
+
+	case $1 in
+		$CTABLE_SCHEMAS)
+			if [ ! -z $CACHE_SCHEMA ]; then
+				return 0
+			fi
+			if [ ${#CACHE_SCHEMA[@]} -le 0 ]; then
+				return 1
+			fi
+			;;
+	esac	
+
+	
+
+}
+
+# Do cache for a specify object
+# $1 - The kind of object
+cache_do_cache() {
+	if cache_has_cache $1; then
+		return 0
+	fi
+
+	
+	return 0
+}

@@ -1,0 +1,103 @@
+#!/bin/bash
+
+# Source some files
+. var
+. const
+. internals
+. functions
+. log
+. executor
+. menu
+
+# Do some checks before initializang the program
+# $1- This MUST be the args received in the program
+do_pre_init() {
+	# This must be the first procedure to be called
+	find_binaries
+
+	eval $LOGGER LOG "Iniciando"
+
+	# Simple Check if there is no problem if the code
+	$PRG_BASH -n $0
+	RES=$?
+	if [ ! $RES == 0 ]; then
+		# Lets use echo, 'cause we dont know what is broke
+		echo "There is a problem with the code. Exiting"
+		exit 1
+	fi
+
+	# Set the program name
+	PROGRAM=$($PRG_BASENAME $0)
+
+	while getopts "vhb:d:" arg; do
+		case $arg in
+			v)
+				LOGGER_MSG="Version: $VERSION"
+				eval $LOGGER LOG
+				finish 0
+				;;
+			h)
+				# [ functions ]
+				show_help
+				finish 0
+				;;
+			b)
+				# Run the bootstrap and finish, nothing more
+				# [ bootstrap ]
+				DO_BOOTSTRAP=1
+				;;
+			d)
+				BDDATA="${OPTARG}"
+				;;
+		esac
+	done
+
+	# Run bootstrap process?
+	if [ $DO_BOOTSTRAP ]; then
+		# Import the necessary file
+		. bootstrap
+
+		bootstrap $BDDATA
+		finish 0
+	fi
+
+	check_data_dir $BDDATA
+
+	cd $BDDATA
+}
+
+main_loop() {
+	do_pre_init "$@"
+
+	eval $LOGGER LOG "Program ready"
+	eval $LOGGER LOG "Type help for menu or exit to finish"
+
+	# This is the program main loop, ethernal
+	while [ true ]; do
+		# [ functions ]
+		ask_for_command
+
+		LOGGER_MSG="Input '${INPUT_CMD}'"
+		eval $LOGGER DEBUG1
+
+		if [ "${INPUT_CMD:0:1}" == "\\" ] ||
+		   [ "${INPUT_CMD^^}" == "HELP" ]; then
+			# [ menu ]
+			cmd_menu "${INPUT_CMD}"
+			continue
+		fi
+		if [ "${INPUT_CMD^^}" == "EXIT" ]; then
+			eval $LOGGER LOG "Exiting program"
+			finish 0
+		fi
+
+		# [ executor ]
+		execute "$INPUT_CMD"
+	done
+}
+
+########################
+#######   MAIN   #######
+########################
+# [ bd ]
+main_loop "$@"

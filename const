@@ -1,0 +1,36 @@
+if [ ! $CONST_INCLUDED ]; then
+CONST_INCLUDED=1
+
+### Table codes
+readonly CTABLE_SCHEMAS=1
+readonly CTABLE_TABLES=2
+readonly CTABLE_ATTRS=3
+readonly CTABLE_TYPES=4
+readonly CTABLE_FUNCTIONS=5
+readonly CTABLE_INDEX=6
+readonly CTABLE_LANG=7
+
+### Types Sizes
+readonly SZ_SMALLINT=2
+readonly SZ_INT=4
+readonly SZ_BIGINT=8
+readonly SZ_CHAR=1
+
+### MAGIC CODES
+readonly MAGIC_CODE_TABLE="0A"
+readonly MAGIC_CODE_INDEX="0B"
+readonly MAGIC_CODE_SEQUENCE="0C"
+readonly MAGIC_CODE_FUNCTION="0D"
+readonly MAGIC_CODE_TRIGGER="0E"
+
+readonly MAGIC_CODE_NULL="00"	# Null code
+readonly MAGIC_CODE_SEP="1E"	# Record separator
+readonly MAGIC_CODE_FLD="1D"	# Group separator / Field Separator
+
+### STAMP
+readonly STAMP_FILE=bashbd.stamp
+
+### Others
+# Version
+readonly VERSION=0
+fi

@@ -1,0 +1,61 @@
+#!/bin/bash
+
+. const
+. storage
+
+# Program to dump file contents
+
+FILE=$1
+
+echo "Dumping $FILE"
+
+TMP=$(dd if=$FILE ibs=1 count=1 conv=notrunc status=none | xxd -p)
+VALUE=${TMP^^}
+
+
+get_magic_code_name OUT $VALUE
+
+echo -e "  Type: $VALUE ($OUT)\n"
+
+# -t = Remove delimitador no final de cada linha (sem enter)
+# -s = Descarta a primeira linha (File Type)
+# -O = Inicia atribuição no index x
+# -d = Delimitador de record
+mapfile -t -s 1 -O 1 -d `echo -en "\x1E"` DATA < $FILE
+
+echo "Total Rows: ${#DATA[@]}"
+
+rown=0
+
+for i_row in "${DATA[@]}"; do
+	# Break the row
+	mapfile -t -O 1 -d `echo -en "\x1D"` FLD <<<$(echo "${i_row[@]}")
+
+	let rown++
+	echo "Row: ${rown}"
+
+	rowf=0
+	for f in "${FLD[@]}"; do
+		# Só no primeiro registro e no primeiro field
+		if [ "$rown" -eq 1 ] && [ "$rowf" -eq 0 ]; then
+			:
+		fi
+
+		inf=$(echo $f)
+
+		# Metadata
+		if [ "$rowf" -eq 0 ]; then
+			echo "Metadata"
+			echo "   Alive? ${inf:0:1}"
+		else
+			echo " $rowf = $inf"
+		fi
+
+		let rowf++
+	done
+done
+
+N | Alive? | Fld1 | Fld2 | Fld3
+
+
+

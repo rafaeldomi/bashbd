@@ -1,0 +1,105 @@
+#!/bin/bash
+
+# $1 - The return value
+# $2..n - The input values
+
+# Todas as funções devem retornar um código de sucesso
+# 0 - OK
+# 1 - Falha
+
+# Opcionalmente podem setar uma msg de erro em MSGERROR
+
+# Sum of values
+bashbd.sum() {
+	local _RET=$1
+	VALUE=0
+	shift
+	while [ ! -z $1 ]; do
+		let VALUE=$VALUE+$1
+		shift
+	done
+
+	eval $_RET=$VALUE
+	return 0
+}
+
+# Return the first not-null value
+# COALESCE
+bashbd.coalesce() {
+	local _RET=$1
+	shift
+	VALUE="$1"
+	while [ "$1" == "0x0" ]; do
+		shift
+		VALUE="$1"
+	done
+	eval $_RET="$VALUE"
+	return 0
+}
+
+# Return the maximum value in the array
+# MAX
+bashbd.max() {
+	local _RET=$1
+	shift
+	VALUE="$1"
+	shift
+	while [ ! -z $1 ]; do
+		if [ "$1" -gt "$VALUE" ]; then
+			VALUE=$1
+		fi
+		shift
+	done
+	eval $_RET="$VALUE"
+	return 0
+}
+
+# Return the minimum value in the array
+# MIN
+bashbd.min() {
+	local _RET=$1
+	shift
+	VALUE="$1"
+	shift
+	while [ ! -z $1 ]; do
+		if [ "$1" -lt "$VALUE" ]; then
+			VALUE=$1
+		fi
+		shift
+	done
+	eval $_RET="$VALUE"
+	return 0
+}
+
+# Count how many values exists in the array
+# Count
+bashbd.count() {
+	local _RET=$1
+	VALUE=${#}
+	let VALUE=$VALUE-1	
+
+	eval $_RET="$VALUE"
+	return 0
+}
+
+# Avg
+bashbd.avg() {
+	local _RET=$1
+	shift
+	TOTN=${#}
+
+	TOTV=0
+	while [ ! -z $1 ]; do
+		let TOTV=$TOTV+$1
+		shift
+	done
+
+	let VALUE=$TOTV/$TOTN
+	eval $_RET=$VALUE
+	return 0
+}
+
+# Order
+bashbd.order() {
+	:
+}
