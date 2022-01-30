@@ -1,19 +1,14 @@
-##################################################
-##################################################
-#
 #					BASH BD
-#
-##################################################
-############################## by Rafael Domiciano
+by Rafael Domiciano
 
 1. BashBD. What is it?
 2. Code conventions
-2.1 Functions prototypes
-2.2 Returning values
-2.3 Comment on the header of the function
-2.4 About "source" or "dot" to import
-2.5 "variable" vs "constants"
-2.6 Handling Errors
+   .1 Functions prototypes
+   .2 Returning values
+   .3 Comment on the header of the function
+   .4 About "source" or "dot" to import
+   .5 "variable" vs "constants"
+   .6 Handling Errors
 3. Structures
 
 ##################################################
