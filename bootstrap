@@ -224,7 +224,6 @@ bootstrap() {
 	row_add_value ${BOOT_TABLE_TYPES[@]}
 	row_add_value ${BOOT_TABLE_FUNCTIONS[@]}
 	row_add_value ${BOOT_TABLE_INDEX[@]}
-	row_add_value ${BOOT_TABLE_INDEX[@]}
 	row_add_value ${BOOT_TABLE_LANGUAGE[@]}
 
 	row_append_simple ${CTABLE_TABLES}

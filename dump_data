@@ -1,21 +1,48 @@
 #!/bin/bash
 
+##############
+# Program to dump file contents
+##############
+
 . const
 . storage
+. temp/table
+. functions
+. log
 
-# Program to dump file contents
+find_binaries
 
+declare -A ATABLE
 FILE=$1
 
-echo "Dumping $FILE"
+if [ ! -f $FILE ]; then
+	echo "File $FILE not found. Exiting"
+	exit 1
+fi
 
-TMP=$(dd if=$FILE ibs=1 count=1 conv=notrunc status=none | xxd -p)
+# $1 - Field N
+# $2 - Value
+check_size() {
+	atual=${ATABLE[S_$1]}
+	input=${#2}
+
+	if [ -z $atual ]; then
+		atual=0
+	fi
+
+	if [ "$input" -gt "$atual" ]; then
+		ATABLE[S_$1]=$input
+	fi
+}
+
+echo "Dumping: $FILE"
+
+TMP=$($PRG_DD if=$FILE ibs=1 count=1 conv=notrunc status=none | xxd -p)
 VALUE=${TMP^^}
-
 
 get_magic_code_name OUT $VALUE
 
-echo -e "  Type: $VALUE ($OUT)\n"
+echo "  Type: $VALUE ($OUT)"
 
 # -t = Remove delimitador no final de cada linha (sem enter)
 # -s = Descarta a primeira linha (File Type)
@@ -23,39 +50,68 @@ echo -e "  Type: $VALUE ($OUT)\n"
 # -d = Delimitador de record
 mapfile -t -s 1 -O 1 -d `echo -en "\x1E"` DATA < $FILE
 
-echo "Total Rows: ${#DATA[@]}"
+#echo "Total Rows: ${#DATA[@]}"
+ATABLE[ROWS]=${#DATA[@]}
 
 rown=0
+TABDATA=""
+TABFLD="Row N, Alive"
 
+# Loop in the records
 for i_row in "${DATA[@]}"; do
 	# Break the row
 	mapfile -t -O 1 -d `echo -en "\x1D"` FLD <<<$(echo "${i_row[@]}")
 
 	let rown++
-	echo "Row: ${rown}"
+	#echo "Row: ${rown}"
 
+	# Loop in the fields on the record
 	rowf=0
-	for f in "${FLD[@]}"; do
-		# Só no primeiro registro e no primeiro field
-		if [ "$rown" -eq 1 ] && [ "$rowf" -eq 0 ]; then
-			:
-		fi
+	TABSEP=""
 
+	TABDATA="${TABDATA}$rown"
+
+	for f in "${FLD[@]}"; do
+		# Like a trim
 		inf=$(echo $f)
+
+		# Check size
+		check_size $rowf "${inf}"
 
 		# Metadata
 		if [ "$rowf" -eq 0 ]; then
-			echo "Metadata"
-			echo "   Alive? ${inf:0:1}"
+			:
+			#echo "Metadata"
+			#echo "   Alive? ${inf:0:1}"
 		else
-			echo " $rowf = $inf"
+			#echo " $rowf = $inf"
+			if [ "${rown}" -eq 1 ]; then
+				TABFLD="$TABFLD,Fld${rowf}"
+			fi
 		fi
 
 		let rowf++
+
+		TABDATA="${TABDATA},${inf}"
+		TABSEP=","
+
+		ATABLE[${rown}_${rowf}]="$inf"
 	done
+
+	TABDATA="$TABDATA
+"
+
+	# Só no primeiro registro
+	if [ "$rown" == 1 ]; then
+		ATABLE[TF]=$rowf
+	fi
 done
 
-N | Alive? | Fld1 | Fld2 | Fld3
+echo "Total fields: ${ATABLE[TF]}"
+echo "Total Rows: ${ATABLE[ROWS]}"
+echo ""
 
+#echo "||${TABFLD},${TABDATA}||"
 
-
+printTable ',' "${TABFLD}
+${TABDATA}"

@@ -1,0 +1,47 @@
+#!/bin/bash
+
+TOTAL_TESTS=0
+
+. fnc_tests
+. ../functions
+
+repeat_test() {
+	declare -a repeat_i
+	declare -a repeat_o
+
+	repeat_i[1]="- 10"
+	repeat_i[2]="a 12 2"
+
+	repeat_o[1]="----------"
+	repeat_o[2]="aaaaaaaaaaaa"
+
+	for pos in `seq 1 ${#repeat_i[@]}`; do
+		repeat OUT ${repeat_i[pos]}
+		echo "${FUNCNAME[0]} - Test $pos: `test_eq $OUT ${repeat_o[pos]}`"
+	done
+
+	let TOTAL_TESTS=$TOTAL_TEST+${#repeat_i[@]}
+}
+
+trim_test() {
+	declare -a trim_i
+	declare -a trim_o
+
+	trim_i[1]="   A"
+	trim_i[2]="A   "
+
+	trim_o[1]="A"
+	trim_o[2]="A"
+
+	for pos in `seq 1 ${#trim_i[@]}`; do
+		trim OUT "${trim_i[pos]}"
+		echo "${FUNCNAME[0]} - Test $pos: `test_eq $OUT ${trim_o[pos]}`"
+	done
+
+	let TOTAL_TESTS=$TOTAL_TEST+${#trim_i[@]}
+}
+
+repeat_test
+trim_test
+
+echo "Total testes: $TOTAL_TESTS"

@@ -36,6 +36,7 @@ int fnc() {
 }
 
 Example:
+```bash
 #!/bin/bash
 fnc() {
 	if [ true ]; then
@@ -46,6 +47,17 @@ fnc() {
 }
 fnc
 echo $?
+```
+
+Aditionally functions should use local variable with "_" initiating the name.
+Example:
+```bash
+#!/bin/bash
+# $1 - Input value
+fnc() {
+	local _INPUT=$1
+}
+```
 
 ## 2.2 Returning values
 If the function must return a value, the first parameter of the function is used for this purpose. Is similar to an c function that has the first parameter returning by reference.

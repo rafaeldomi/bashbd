@@ -22,7 +22,7 @@ PROGRAM="-1"
 #####################
 # CACHES
 #####################
-declare -a CACHE_SCHEMA
-declare -a CACHE_TABLE
+declare -A CACHE_SCHEMA
+declare -A CACHE_TABLE
 
 fi

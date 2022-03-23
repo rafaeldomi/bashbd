@@ -15,7 +15,7 @@ cmd_menu() {
 	case "${TKN[0]:1:1}" in
 		q)  finish 0;;
 		t)	menu_list_tables;;
-		s)  menu_list_schemas;;
+		s)  menu_list_schemas;;  # [ menu ]
 		f)  menu_list_functions;;
 		l)  menu_list_lang;;
 		c)  menu_warm_cache "${TKN[1]}";;
@@ -55,10 +55,11 @@ menu_list_schemas() {
 	terminal_init_output "List of Schemas"
 	terminal_set_columns "id" "schema"
 
+	unset rows
 	# Read raw file
 	mapfile -t -s 1 -O 1 -d `echo -e -n "\x1E"` rows < $CTABLE_SCHEMAS
 	if [ ! "$?" == "0" ]; then
-		eval $LOGGER ERROR "Fail to open table bashbd.schemas"
+		eval $LOGGER ERROR "Failed to open table bashbd.schemas"
 		return 1
 	fi
 
@@ -70,7 +71,21 @@ menu_list_schemas() {
 }
 
 menu_list_tables() {
-	terminal_init_output "List od Tables"
+	terminal_init_output "List of Tables"
+	terminal_set_columns "id" "name" "schema_id"
+
+	unset rows
+	mapfile -t -s 1 -O 1 -d `echo -e -n "\x1E"` rows < $CTABLE_TABLES
+	if [ ! "$?" == "0" ]; then
+		eval $LOGGER ERROR "Failed to open table bashbd.tables"
+		return 1
+	fi
+
+	for row in "${rows[@]}"; do
+		terminal_add_row "$row"
+	done
+
+	terminal_print_data
 }
 
 menu_list_functions() {

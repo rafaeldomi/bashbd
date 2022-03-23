@@ -14,3 +14,9 @@ get_table_id_simple() {
 get_schema_id_simple() {
 	:
 }
+
+# Returns true if row is alive
+# $1 - ROW
+row_is_alive() {
+	:
+}

@@ -29,14 +29,14 @@ do_pre_init() {
 	# Set the program name
 	PROGRAM=$($PRG_BASENAME $0)
 
-	while getopts "vhb:d:" arg; do
+	while getopts "?vhb:d:" arg; do
 		case $arg in
 			v)
 				LOGGER_MSG="Version: $VERSION"
 				eval $LOGGER LOG
 				finish 0
 				;;
-			h)
+			h|\?)
 				# [ functions ]
 				show_help
 				finish 0
@@ -99,5 +99,10 @@ main_loop() {
 ########################
 #######   MAIN   #######
 ########################
+
+# Initialize this variable with a default value to not break
+#  LOGGER calls
+PRG_PRINTF="printf"
+
 # [ bd ]
 main_loop "$@"

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Functions for using in the tests
+
+# $1 - First
+# $2 - Value to check
+test_eq() {
+	if [ "$1" == "$2" ]; then
+		echo "OK ($1)"
+	else
+		echo "NOK $1 <> $2"
+	fi
+}

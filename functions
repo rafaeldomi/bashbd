@@ -17,16 +17,33 @@ finish() {
 # $1 - Output
 # $2 - Char
 # $3 - Repeat count
+# $4 - Choose version of this function, default is the latest
 repeat() {
+	local _VERSION=${4:-2}
 	local _RET=$1
-	local value=""
-	local total=$3
+	local _VALUE=""
+	local _TOTAL=$3
 
-	while [ $((total--)) -ge 0 ]; do
-		value="$value$2"
-	done
+	if [ "$_VERSION" -eq 2 ]; then
+		A=$(printf "%${_TOTAL}s")
+		_VALUE=$(echo -e "${A// /${2}}")
+	else
+		while [ $((total--)) -ge 0 ]; do
+			_VALUE="${_VALUE}$2"
+		done
+	fi
 
-	eval $_RET="$value"
+	eval $_RET="${_VALUE}"
+}
+
+# Trim string
+# $1 - Output
+# $2 - String to trim either left and right
+trim() {
+	local _RET=$1
+	local _VALUE=""
+	_VALUE=$(echo "$1")
+	eval $_RET="${_VALUE}"
 }
 
 # Program help menu
@@ -36,6 +53,7 @@ show_help() {
 	writeln " -c [conf]  Informar um arquivo de configuração"
 	writeln "            Default = bd.conf"
 	writeln " -d [dir]   Iniciar diretório do banco"
+	writeln " -b [dir]   Inicia um novo diretório de Data"
 
 	finish 0
 }
@@ -128,11 +146,14 @@ is_bashbd() {
 	LOGGER_MSG="Programa: $PRG"
 	eval $LOGGER LOG
 
-	if [ "$PROGRAM" == "$PRG" ]; then
-		return 0
-	else
-		return 1
-	fi
+	[ "$PROGRAM" == "$PRG" ]
+	return $?
+
+	#if [ "$PROGRAM" == "$PRG" ]; then
+	#	return 0
+	#else
+	#	return 1
+	#fi
 }
 
 # Check if $1 is a dir and his a data directory for bashbd
@@ -154,8 +175,9 @@ find_binaries() {
 	# List the commands to find the binaries
 	# These commands are built-in to bash:
 	#  |  mapfile  |  let  |  shift    | eval
-	#  |  local    | read  |  command  |
-	local PRGS=(dd seq printf echo stat basename bash)
+	#  |  local    | read  |  command  | wc
+	#  |  awk	   | sed   |  column   | dd
+	local PRGS=(dd seq printf echo stat basename bash wc awk sed column)
 
 	for cmd in "${PRGS[@]}"; do
 		#local cmdpath=`which ${cmd}`
@@ -172,7 +194,7 @@ find_binaries() {
 		readonly PRG_${cmd^^}="${cmdpath}"
 
 		LOGGER_MSG="Found ${cmd} in ${cmdpath}"
-		eval $LOGGER DEBUG1
+		eval $LOGGER DEBUG2
 	done
 }
 
@@ -187,9 +209,9 @@ terminal_init_output() {
 	unset TER_ROWS
 	unset TER_COL_SIZE
 
-	declare -a TER_COL
-	declare -a TER_ROWS
-	declare -a TER_COL_SIZE
+	declare -A TER_COL
+	declare -A TER_ROWS
+	declare -A TER_COL_SIZE
 
 	return 0
 }
@@ -204,8 +226,16 @@ terminal_add_row() {
 
 	fn=0
 	for f in "${ter_fields[@]}"; do
-		let fn++
 		inf=$(echo $f)
+
+		# Verifica se row is alive?
+		if [ $fn -eq 0 ]; then
+			if [ ! "${inf:0:1}" -eq 1 ]; then
+				break
+			fi
+			let fn++
+			continue
+		fi
 
 		LOGGER_MSG="($TER_TOT_ROWS) $fn => Size: ${#inf}  |  SizeAtual: ${TER_COL[${fn}-SZ]}"
 		eval $LOGGER DEBUG3
@@ -215,6 +245,7 @@ terminal_add_row() {
 		if [ "${#inf}" -gt "${TER_COL[${fn}-SZ]}" ]; then
 			TER_COL[${fn}-SZ]="${#inf}"
 		fi
+		let fn++
 	done
 
 	return 0
@@ -222,14 +253,18 @@ terminal_add_row() {
 
 # $1.. - The values to show in table header in terminal
 terminal_set_columns() {
+	TER_HEADER_NAMES=""
+
 	for value in "${@}"; do
 		let TER_TOT_COL++
 
 		# The value/name to show in table header
 		TER_COL[$TER_TOT_COL]="$value"
 
-		# To controle the size of the column
+		# To control the size of the column
 		TER_COL[${TER_TOT_COL}-SZ]=0
+
+		TER_HEADER_NAMES="$TER_HEADER_NAMES $value"
 	done
 }
 
@@ -250,22 +285,23 @@ terminal_print_data() {
 		eval $LOGGER DEBUG3
 
 		if [ $i -eq 1 ]; then
-			descp=`printf "%%%ss" ${TER_COL[$i-SZ]}`
+			descp=`$PRG_PRINTF "%%%ss" ${TER_COL[$i-SZ]}`
 			repeat OUT "-" ${TER_COL[$i-SZ]}
 			line="$OUT"
 		else
-			descp=`printf "%s | %%%ss" $descp ${TER_COL[$i-SZ]}`
+			descp=`$PRG_PRINTF "%s | %%%ss" $descp ${TER_COL[$i-SZ]}`
 			repeat OUT "-" ${TER_COL[$i-SZ]}
 			line="$line+$OUT"
 		fi
 	done
+	echo ${descp}
 
 	# Print Column Names
-	printf "${descp}\n" id schema
+	$PRG_PRINTF "${descp}\n" ${TER_HEADER_NAMES}
 	echo $line
 
-	for row in `seq 1 $TER_TOT_ROWS`; do
-		printf "$descp\n" ${TER_ROWS[${row}1]} ${TER_ROWS[${row}2]}
+	for row in `$PRG_SEQ 1 $TER_TOT_ROWS`; do
+		$PRG_PRINTF "$descp\n" ${TER_ROWS[${row}1]} ${TER_ROWS[${row}2]}
 	done
 
 	echo "($TER_TOT_ROWS rows)"

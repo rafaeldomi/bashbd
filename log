@@ -70,11 +70,11 @@ log () {
 		done
 	fi
 
-	printf "%s [%17s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "$MSG"
+	$PRG_PRINTF "%s [%17s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "$MSG"
 
 	if [ "$_LEVEL" == "FATAL" ]; then
 		#echo -e "`date +\"%D %T\"` [$LL]: Saindo por erro FATAL"
-		printf "%s [%14s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "EXITING BECAUSE OF FATAL ERROR"
+		$PRG_PRINTF "%s [%14s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "EXITING BECAUSE OF FATAL ERROR"
 		finish 1
 	fi
 }
