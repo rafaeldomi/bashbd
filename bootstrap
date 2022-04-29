@@ -10,12 +10,14 @@ Description of ROW Vector:
     n,VALUE_y => The number of the row, and the values of its attibutes
 COMMENT
 
-# Initiate the ROW variable
-# $n - Type or size of the attribute
-# Example:
-#  row_init int 200
-#    $1 - type int
-#    $2 - size 200
+: <<'FUNCTION'
+Description: Initialize the ROW variable
+ $n - Type or size of the attribute
+ Example:
+  row_init int 200
+    $1 - type int
+    $2 - size 200
+FUNCTION
 row_init() {
 	VALUES=($@)
 
@@ -55,7 +57,9 @@ row_add_value() {
 	done
 }
 
-# Convert a decimal value to his hex representation
+: <<'FUNCTION'
+Description: Convert a decimal value to his hex representation
+FUNCTION
 dec_to_hex() {
 	local _RET=$1
 
@@ -66,9 +70,11 @@ dec_to_hex() {
 	eval $_RET=$VALOR
 }
 
-# Simple function to insert into table
+: <<'FUNCTION'
+Description: Simple function to insert into table
 # The values must be present in the $ROW variable
 # $1 - Table to append data
+FUNCTION
 row_append_simple() {
 	local _TABLE=$1
 
@@ -121,12 +127,17 @@ row_append_simple() {
 	# Data is inserted by now
 }
 
-# Mark our DIR as a data directory used by bashbd
-# Must be called just by bootstrap function
+: <<'FUNCTION'
+Description: Mark our DIR as a data directory used by bashbd
+ Must be called just by bootstrap function
+FUNCTION
 bootstrap_stamp_dir() {
 	touch $STAMP_FILE
 }
 
+: <<'FUNCTION'
+Description: Do the bootstrap of a data dir
+FUNCTION
 bootstrap() {
 	# Am I running through bashbd program?
 	is_bashbd

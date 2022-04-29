@@ -7,17 +7,23 @@ COMMENT
 # Some definitions (Like c macros)
 ASSERT="_assert \${LINENO}"
 
-# Finish program
-# $1 - The exit desired exit code
+: <<'FUNCTION'
+Description: Finish program
+Parameters:
+  $1 - The exit desired exit code
+FUNCTION
 finish() {
 	exit $1
 }
 
-# Repeat char
-# $1 - Output
-# $2 - Char
-# $3 - Repeat count
-# $4 - Choose version of this function, default is the latest
+: <<'FUNCTION'
+Description: Repeat char
+Parameters:
+  $1 - Output
+  $2 - Char
+  $3 - Repeat count
+  $4 - Choose version of this function, default is the latest
+FUNCTION
 repeat() {
 	local _VERSION=${4:-2}
 	local _RET=$1
@@ -36,9 +42,12 @@ repeat() {
 	eval $_RET="${_VALUE}"
 }
 
-# Trim string
-# $1 - Output
-# $2 - String to trim either left and right
+: <<'FUNCTION'
+Description: Trim String
+Parameters:
+  $1 - Output
+  $2 - String to trim either left and right
+FUNCTION
 trim() {
 	local _RET=$1
 	local _VALUE=""
@@ -46,7 +55,9 @@ trim() {
 	eval $_RET="${_VALUE}"
 }
 
-# Program help menu
+: <<'FUNCTION'
+Description: Program help menu
+FUNCTION
 show_help() {
 	writeln "Ajuda do programa"
 	writeln " -h         Mostrar essa ajuda"
@@ -61,14 +72,13 @@ show_help() {
 # Ask for command aguarda o input do usuário
 # Retorna quando tiver ";" na string
 # Ou quando começar com "\" ou "help", sem considerar ;
-ask_for_command() {
-	TMP=""
+ask_for_input() {
+	local TMP=""
 	INPUT_CMD=""
 
 	while [ true ]; do
 		read -r -e -p "bashbd> " TMP
 		INPUT_CMD="$INPUT_CMD$TMP"
-
 
 		if [ "${TMP:0:1}" == "\\" ] ||
 		   [ "${TMP^^}" == "HELP" ] ||
@@ -130,6 +140,9 @@ check_file() {
 	return 0
 }
 
+: <<'FUNCTION'
+Description: Assert ^^
+FUNCTION
 _assert() {
 	local INPUT=$2
 	CDT=${!2}
@@ -140,7 +153,9 @@ _assert() {
 	fi
 }
 
-# Check if the function is running inside bashbd program
+: <<'FUNCTION'
+Description: Check if the function is reunning inside bashbd program
+FUNCTION
 is_bashbd() {
 	local PRG=`basename $0`
 	LOGGER_MSG="Programa: $PRG"

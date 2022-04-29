@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Search and list the bash functions
+for file in $(ls); do
+	# echo $file
+
+	B_FUNCTION=0
+	while read -r line; do
+		# Verifica se linha é inicio de function
+		
+	done < $file
+done

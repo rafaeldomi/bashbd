@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if [ ! $VAR_INCLUDED ]; then
 VAR_INCLUDED=1
 

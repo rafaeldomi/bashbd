@@ -18,7 +18,7 @@ get_magic_code() {
 		TRIGGER)
 			eval $_RET="$MAGIC_CODE_TRIGGER" ;;
 		*)
-			$PRG_ECHO "Não tratado $2"
+			$PRG_ECHO "Unknown Magic Code $2"
 			;;
 	esac
 }

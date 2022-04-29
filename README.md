@@ -133,3 +133,36 @@ The "header" of the record has some metadata:
   pos1: Record is alive
         0 - No
         1 - Yes
+
+#################################################
+
+# 3. Workflows
+
+## 3.1. Code Workflows
+
+* HelpMenu
+bd [main]
+  | functions [show_help]
+
+* Bootstrap
+bd [main]
+  | bootstrap [bootstrap]
+
+* Help menu
+bd [main]
+  | input - help
+  | menu [cmd_menu]
+	| \t menu [menu_list_tables]
+    | \s menu [menu_list_schemas]
+	| \f menu [menu_list_functions]
+	| \l menu [menu_list_lang]
+
+* Execute
+bd [main]
+  | input - query
+  | executor [execute]
+    | parser [parser]
+      | TABLE  cmd_table  [table_execute]
+	  | SELECT cmd_select [select_execute]
+      | INSERT cmd_insert [insert_execute]
+      | DELETE cmd_delete [delete_execute]

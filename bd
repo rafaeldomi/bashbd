@@ -67,6 +67,7 @@ do_pre_init() {
 }
 
 main_loop() {
+	# [ bd ]
 	do_pre_init "$@"
 
 	eval $LOGGER LOG "Program ready"
@@ -75,22 +76,28 @@ main_loop() {
 	# This is the program main loop, ethernal
 	while [ true ]; do
 		# [ functions ]
-		ask_for_command
+		ask_for_input
 
 		LOGGER_MSG="Input '${INPUT_CMD}'"
 		eval $LOGGER DEBUG1
 
+		# Help or subcommand
 		if [ "${INPUT_CMD:0:1}" == "\\" ] ||
 		   [ "${INPUT_CMD^^}" == "HELP" ]; then
 			# [ menu ]
 			cmd_menu "${INPUT_CMD}"
 			continue
 		fi
+
+		# Oh no, I'd like to see you soon
 		if [ "${INPUT_CMD^^}" == "EXIT" ]; then
 			eval $LOGGER LOG "Exiting program"
+
+			# Exit with 0 'cause I still love u
 			finish 0
 		fi
 
+		# So, lets process this (probably) SQL command
 		# [ executor ]
 		execute "$INPUT_CMD"
 	done
