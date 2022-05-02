@@ -1,7 +1,5 @@
 #!/bin/bash
 
-. temp/tableteste
-
 cmd_menu() {
 	if [ "${1^^}" == "HELP" ]; then
 		menu_show_help
@@ -16,9 +14,9 @@ cmd_menu() {
 	# Vim shows that using "$array_var[x]:init:end" is wrong, but is correct
 	case "${TKN[0]:1:1}" in
 		q)  finish 0;;
-		t)	menu_list_tables;;
-		s)  menu_list_schemas;;  # [ menu ]
-		f)  menu_list_functions;;
+		t)	menu_list_tables;;	 	# [ menu ]
+		s)  menu_list_schemas;;  	# [ menu ]
+		f)  menu_list_functions;;	# [ menu ]
 		l)  menu_list_lang;;
 		c)  menu_warm_cache "${TKN[1]}";;
 		\?)	menu_show_help;;
@@ -26,10 +24,6 @@ cmd_menu() {
 	esac
 
 	return 0
-}
-
-menu_show_tables() {
-	echo "Tabelas:"
 }
 
 menu_show_help() {
@@ -41,6 +35,7 @@ menu_show_help() {
 	writeln "\\s       List schemas"
 	writeln "\\f       List functions"
 	writeln "\\l       List languages"
+	writeln "\\S       List sequences"
 	writeln ""
 	writeln "\\c [obj] Warm cache"
 	writeln "   schemas"
@@ -54,34 +49,45 @@ menu_show_help() {
 ###################################################
 ###################################################
 menu_list_schemas() {
-	terminal_init_output "List of Schemas"
-	terminal_set_columns "id" "schema"
-
+	TMPFILE="temp/data.tmp"
+	$PRG_ECHO "id,name" > $TMPFILE
 	unset rows
-	# Read raw file
-	mapfile -t -s 1 -O 1 -d `echo -e -n "\x1E"` rows < $CTABLE_SCHEMAS
-	if [ ! "$?" == "0" ]; then
-		eval $LOGGER ERROR "Failed to open table bashbd.schemas"
-		return 1
-	fi
 
+	mapfile -t -s1 -O 1 -d `$PRG_ECHO -e -n "\x1E"` rows < $CTABLE_SCHEMAS
 	for row in "${rows[@]}"; do
-		terminal_add_row "$row"
+		mapfile -t -O 1 -d `$PRG_ECHO -en "\x1D"` fields <<<$( $PRG_ECHO "$row")
+		fn=0
+		rowa=""
+		vir=""
+		for f in "${fields[@]}"; do
+			inf=$(echo $f)
+			if [ "$fn" -eq 0 ]; then
+				if [ ! "${inf:0:1}" -eq 1 ]; then
+					break
+				fi
+				let fn++
+				continue
+			fi
+
+			rowa="$rowa$vir$inf"
+			vir=","
+		done
+		echo "$rowa" >> $TMPFILE
 	done
 
-	terminal_print_data
+	table_print ',' "$( $PRG_CAT $TMPFILE)"
+
 }
 
-
 menu_list_tables() {
-	TMPFILE=`mktemp`
+	TMPFILE="temp/data.tmp"
 
-	echo "id,name,schema_id" > $TMPFILE
+	$PRG_ECHO "id,name,schema_id" > $TMPFILE
 
 	unset rows
-	mapfile -t -s 1 -O 1 -d `echo -e -n "\x1E"` rows < $CTABLE_TABLES
+	mapfile -t -s 1 -O 1 -d `$PRG_ECHO -e -n "\x1E"` rows < $CTABLE_TABLES
 	for row in "${rows[@]}"; do
-		mapfile -t -O  1 -d `echo -en "\x1D"` fields <<<$(echo "$row")
+		mapfile -t -O  1 -d `$PRG_ECHO -en "\x1D"` fields <<<$( $PRG_ECHO "$row")
 
 		fn=0
 		rowa=""
@@ -102,26 +108,9 @@ menu_list_tables() {
 		echo "$rowa" >> $TMPFILE
 	done
 
-	printTable ',' "$(cat $TMPFILE)"
+	table_print ',' "$( $PRG_CAT $TMPFILE)"
 
-	rm -f $TMPFILE
-	return 0
-
-	terminal_init_output "List of Tables"
-	terminal_set_columns "id" "name" "schema_id"
-
-	unset rows
-	mapfile -t -s 1 -O 1 -d `echo -e -n "\x1E"` rows < $CTABLE_TABLES
-	if [ ! "$?" == "0" ]; then
-		eval $LOGGER ERROR "Failed to open table bashbd.tables"
-		return 1
-	fi
-
-	for row in "${rows[@]}"; do
-		terminal_add_row "$row"
-	done
-
-	terminal_print_data
+	$PRG_RM -f $TMPFILE
 }
 
 menu_list_functions() {

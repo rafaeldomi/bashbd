@@ -22,6 +22,24 @@ tokenize() {
 	dbg_parse "Total Tokens: ${#TOKENS[@]}"
 }
 
+parse_create() {
+	dbg_parse "Func: cmd_create"
+
+	for pos in `$PRG_SEQ 1 ${#TOKENS[@]}`; do
+		TKN="${TOKENS[pos]}"
+		NEXTTKN="${TOKENS[pos+1]}"
+
+		if [ "${TKN}" == "" ]; then
+			continue
+		fi
+
+		# CREATE SEQUENCE [name]
+		if [ "${TKN^^}" == "SCHEMA" ]; then
+			:
+		fi
+	done
+}
+
 # TRUNCATE [TABLE] tabela
 parse_truncate() {
 	dbg_prase "Func: cmd_truncate"
@@ -38,7 +56,6 @@ parse_truncate() {
 			continue
 		fi
 		echo " -- ${TKN}"
-
 
 		SQLOBJ[TABLE_TOTAL]=1
 		SQLOBJ[TABLE_1]="${TKN}"
@@ -378,6 +395,9 @@ parser() {
 			;;
 		DELETE)
 			parse_delete
+			;;
+		CREATE)
+			parse_create
 			;;
 		*)
 			LOGGER_MSG="Command |${TOKENS[0]}| not found"

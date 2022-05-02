@@ -9,6 +9,7 @@ readonly CTABLE_TYPES=4
 readonly CTABLE_FUNCTIONS=5
 readonly CTABLE_INDEX=6
 readonly CTABLE_LANG=7
+readonly CTABLE_SEQUENCES=8
 
 ### Types Sizes
 readonly SZ_SMALLINT=2

@@ -9,7 +9,8 @@ VAR_INCLUDED=1
 DEBUG=1
 
 # BDDATA
-#   This point to BD Data Directory
+#   This point to BD Data folder
+#	"data" is the default
 BDDATA=data
 
 # ERRCODE

@@ -153,6 +153,9 @@ bootstrap() {
 
 	mkdir $1 && cd $1
 
+	## Create temp folder
+	mkdir temp
+
 	##############################
 	## Table: schemas
 	# id   = integer
@@ -171,6 +174,40 @@ bootstrap() {
 	row_append_simple ${CTABLE_SCHEMAS}
 
 	eval $LOGGER LOG "Table schemas: OK"
+
+	##############################
+	## Table: sequences
+	# id   		 	integer
+	# schema_id  	integer
+	# name		 	200
+	# last_value	integer
+	storage_create_file "TABLE" ${CTABLE_SEQUENCE}
+
+	readonly BOOT_SEQUENCE_SEQUENCE=(1 1 sq_sequence 2)
+	readonly BOOT_SEQUENCE_LANGUAGE=(2 1 sq_language 1)
+	readonly BOOT_SEQUENCE_TYPES=(3 1 sq_types 2)
+	readonly BOOT_SEQUENCE_SCHEMAS=(4 1 sq_schemas 2)
+	readonly BOOT_SEQUENCE_TABLES=(5 1 sq_table 8)
+	readonly BOOT_SEQUENCE_FUNCTIONS=(6 1 sq_functions 6)
+	readonly BOOT_SEQUENCE_INDEX=(7 1 sq_index 0)
+	readonly BOOT_SEQUENCE_ATTRS=(8 1 sq_attrs 26)
+
+	unset ROW
+	declare -A row
+
+	row_init int int 200 int
+	row_add_value ${BOOT_SEQUENCE_SEQUENCE[@]}
+	row_add_value ${BOOT_SEQUENCE_LANGUAGE[@]}
+	row_add_value ${BOOT_SEQUENCE_TYPES[@]}
+	row_add_value ${BOOT_SEQUENCE_SCHEMAS[@]}
+	row_add_value ${BOOT_SEQUENCE_TABLES[@]}
+	row_add_value ${BOOT_SEQUENCE_FUNCTIONS[@]}
+	row_add_value ${BOOT_SEQUENCE_INDEX[@]}
+	row_add_value ${BOOT_SEQUENCE_ATTRS[@]}
+
+	row_append_simple ${CTABLE_SEQUENCE}
+
+	eval $LOGGER LOG "Table sequences: OK"
 
 	############################
 	## Table: language
@@ -287,38 +324,43 @@ bootstrap() {
 	## name		200
 	## types_id	int
 	## size		int
+	## default	200
 	storage_create_file "TABLE" ${CTABLE_ATTRS}
 
 	# Types
 	# 1 - Integer
 	# 2 - Char
-	readonly BOOT_SCHEMAS_ID=(1 ${CTABLE_SCHEMAS} id 1 -1)
-	readonly BOOT_SCHEMAS_NAME=(2 ${CTABLE_SCHEMAS} name 1 -1)
-	readonly BOOT_LANG_ID=(3 ${CTABLE_LANG} id 1 -1)
-	readonly BOOT_LANG_NAME=(4 ${CTABLE_LANG} name 2 200)
-	readonly BOOT_LANG_HAND=(5 ${CTABLE_LANG} handler 2 200)
-	readonly BOOT_TYPES_ID=(6 ${CTABLE_TYPES} id 1 -1)
-	readonly BOOT_TYPES_NAME=(7 ${CTABLE_TYPES} name 2 200)
-	readonly BOOT_TYPES_FNC=(8 ${CTABLE_TYPES} fnc_out 2 200)
-	readonly BOOT_TYPES_SIZE=(9 ${CTABLE_TYPES} size 1 -1)
-	readonly BOOT_TABLES_ID=(10 ${CTABLE_TABLES} id 1 -1)
-	readonly BOOT_TABLES_NAME=(11 ${CTABLE_TABLES} name 2 200)
-	readonly BOOT_TABLES_SCHEMAID=(12 ${CTABLE_TABLES} schema_id 1 -1)
-	readonly BOOT_ATTRS_ID=(13 ${CTABLE_ATTRS} id 1 -1)
-	readonly BOOT_ATTRS_TABLEID=(14 ${CTABLE_ATTRS} table_id 1 -1)
-	readonly BOOT_ATTRS_NAME=(15 ${CTABLE_ATTRS} name 2 200)
-	readonly BOOT_ATTRS_TYPES=(16 ${CTABLE_ATTRS} types_id 1 -1)
-	readonly BOOT_ATTRS_SIZE=(17 ${CTABLE_ATTRS} size 1 -1)
-	readonly BOOT_FUNCTIONS_ID=(18 ${CTABLE_FUNCTIONS} id 1 -1)
-	readonly BOOT_FUNCTIONS_NAME=(19 ${CTABLE_FUNCTIONS} name 2 200)
-	readonly BOOT_INDEX_ID=(20 ${CTABLE_INDEX} id 1 -1)
-	readonly BOOT_INDEX_NAME=(21 ${CTABLE_INDEX} name 2 200)
-	readonly BOOT_INDEX_FIELDS=(22 ${CTABLE_INDEX} fields 2 200)
+	readonly BOOT_SCHEMAS_ID=(1 ${CTABLE_SCHEMAS} id 1 -1 "sequence:4")
+	readonly BOOT_SCHEMAS_NAME=(2 ${CTABLE_SCHEMAS} name 1 -1 "")
+	readonly BOOT_LANG_ID=(3 ${CTABLE_LANG} id 1 -1 "sequence:2")
+	readonly BOOT_LANG_NAME=(4 ${CTABLE_LANG} name 2 200 "")
+	readonly BOOT_LANG_HAND=(5 ${CTABLE_LANG} handler 2 200 "")
+	readonly BOOT_TYPES_ID=(6 ${CTABLE_TYPES} id 1 -1 "sequence:3")
+	readonly BOOT_TYPES_NAME=(7 ${CTABLE_TYPES} name 2 200 "")
+	readonly BOOT_TYPES_FNC=(8 ${CTABLE_TYPES} fnc_out 2 200 "")
+	readonly BOOT_TYPES_SIZE=(9 ${CTABLE_TYPES} size 1 -1 "")
+	readonly BOOT_TABLES_ID=(10 ${CTABLE_TABLES} id 1 -1 "sequence:5")
+	readonly BOOT_TABLES_NAME=(11 ${CTABLE_TABLES} name 2 200 "")
+	readonly BOOT_TABLES_SCHEMAID=(12 ${CTABLE_TABLES} schema_id 1 -1 "")
+	readonly BOOT_ATTRS_ID=(13 ${CTABLE_ATTRS} id 1 -1 "")
+	readonly BOOT_ATTRS_TABLEID=(14 ${CTABLE_ATTRS} table_id 1 -1 "")
+	readonly BOOT_ATTRS_NAME=(15 ${CTABLE_ATTRS} name 2 200 "")
+	readonly BOOT_ATTRS_TYPES=(16 ${CTABLE_ATTRS} types_id 1 -1 "")
+	readonly BOOT_ATTRS_SIZE=(17 ${CTABLE_ATTRS} size 1 -1 "")
+	readonly BOOT_FUNCTIONS_ID=(18 ${CTABLE_FUNCTIONS} id 1 -1 "sequence:6")
+	readonly BOOT_FUNCTIONS_NAME=(19 ${CTABLE_FUNCTIONS} name 2 200 "")
+	readonly BOOT_INDEX_ID=(20 ${CTABLE_INDEX} id 1 -1 "sequence:7")
+	readonly BOOT_INDEX_NAME=(21 ${CTABLE_INDEX} name 2 200 "")
+	readonly BOOT_INDEX_FIELDS=(22 ${CTABLE_INDEX} fields 2 200 "")
+	readonly BOOT_A_SEQUENCE_ID=(23 ${CTABLE_SEQUENCE} id 1 -1 "sequence:1")
+	readonly BOOT_A_SEQUENCE_SCHEMA=(24 ${CTABLE_SEQUENCE} schema_id 1 -1 "")
+	readonly BOOT_A_SEQUENCE_NAME=(25 ${CTABLE_SEQUENCE} name 2 200 "")
+	readonly BOOT_A_SEQUENCE_LAST=(26 ${CTABLE_SEQUENCE} last_value 1 -1 "")
 
 	unset ROW
 	declare -A ROW
 
-	row_init int int 200 int int
+	row_init int int 200 int int 200
 	row_add_value ${BOOT_SCHEMAS_ID[@]}
 	row_add_value ${BOOT_SCHEMAS_NAME[@]}
 	row_add_value ${BOOT_LANG_ID[@]}
@@ -341,6 +383,10 @@ bootstrap() {
 	row_add_value ${BOOT_INDEX_ID[@]}
 	row_add_value ${BOOT_INDEX_NAME[@]}
 	row_add_value ${BOOT_INDEX_FIELDS[@]}
+	row_add_value ${BOOT_A_SEQUENCE_ID[@]}
+	row_add_value ${BOOT_A_SEQUENCE_SCHEMA[@]}
+	row_add_value ${BOOT_A_SEQUENCE_NAME[@]}
+	row_add_value ${BOOT_A_SEQUENCE_LAST[@]}
 
 	row_append_simple ${CTABLE_ATTRS}
 

@@ -29,7 +29,7 @@ do_pre_init() {
 	# Set the program name
 	PROGRAM=$($PRG_BASENAME $0)
 
-	while getopts "?vhb:d:" arg; do
+	while getopts "?svhb:d:" arg; do
 		case $arg in
 			v)
 				LOGGER_MSG="Version: $VERSION"
@@ -49,8 +49,18 @@ do_pre_init() {
 			d)
 				BDDATA="${OPTARG}"
 				;;
+			s)
+				STRACE=1
+				;;
 		esac
 	done
+
+	if [ "$STRACE" == "1" ]; then
+		eval $LOGGER LOG "Starting strace"
+
+		PID=$$
+		sudo strace -s 100 -f -tt -p $PID -o temp/strace.tmp 2>/dev/null &
+	fi
 
 	# Run bootstrap process?
 	if [ $DO_BOOTSTRAP ]; then

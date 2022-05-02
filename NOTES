@@ -13,6 +13,7 @@ bashbd.types     [4]
 bashbd.functions [5]
 bashbd.index	 [6]
 bashbd.language  [7]
+bashbd.sequences [8]
 
 bashbd.schemas
 	id   		integer
@@ -35,6 +36,8 @@ bashbd.attrs
 	table_id	integer
 	name		char(200)
 	types_id	integer
+	size		integer
+	default		char(200)
 bashbd.functions
 	id			integer
 	name		char(200)
@@ -42,6 +45,11 @@ bashbd.index
 	id			integer
 	table_id	integer
 	fields		char(200)
+bashbd.sequences
+	id			integer
+	schema_id	integer
+	name		char(200)
+	last_value	integer
 
 integer = 4 bytes
 char = defined size

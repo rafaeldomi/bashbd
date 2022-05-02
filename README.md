@@ -9,7 +9,10 @@ by Rafael Domiciano
    .4 About "source" or "dot" to import
    .5 "variable" vs "constants"
    .6 Handling Errors
+   .7 Calling commands
 3. Structures
+   .1 Code Workflows
+   .2 File format
 
 ##################################################
 
@@ -121,6 +124,14 @@ Handling errors in bash at the first look seems hard or complex, but it shouldn'
 ## 2.7 Some conventions used
 * Prefer $(..) over `..` [http://mywiki.wooledge.org/BashFAQ/082]
 
+## 2.8 Calling commands
+Everytime a command is called, bash searchs $PATH for its location to execute. To perform better, bashbd searchs for those path commands, done by function->[find_binaries].
+The "find_binaries" save the path command in a variable with the following pattern: PRG_[COMMAND]. Some examples:
+ - seq    => PRG_SEQ
+ - printf => PRG_PRINTF
+ - echo   => PRG_ECHO
+   \_ $PRG_ECHO "Test"
+
 # 3. Structures
 
 As bash is not a programatically language, but a bunch of separated commands, and we do a lot steps to glue it together, it doesn't give the best performance perspective; so I have to do some decisions to not lose performance.
@@ -166,3 +177,9 @@ bd [main]
 	  | SELECT cmd_select [select_execute]
       | INSERT cmd_insert [insert_execute]
       | DELETE cmd_delete [delete_execute]
+
+## 3.2. File Format
+
+* Magic code of the type of object
+* Group/Record Separator
+* Field separator

@@ -1,13 +1,15 @@
 #!/bin/bash
 
+: <<'COMMENT'
 # $1 - The return value
 # $2..n - The input values
 
-# Todas as funções devem retornar um código de sucesso
-# 0 - OK
-# 1 - Falha
+All the functions should have a return code:
+ 0 - OK Sucess
+ 1 - Fault
 
-# Opcionalmente podem setar uma msg de erro em MSGERROR
+Optionally, the functions can set a error message in the MSGERROR variable
+COMMENT
 
 # Sum of values
 bashbd.sum() {

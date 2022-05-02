@@ -56,7 +56,7 @@ trim() {
 }
 
 : <<'FUNCTION'
-Description: Program help menu
+Description: Main program help menu
 FUNCTION
 show_help() {
 	writeln "Ajuda do programa"
@@ -65,13 +65,18 @@ show_help() {
 	writeln "            Default = bd.conf"
 	writeln " -d [dir]   Iniciar diretório do banco"
 	writeln " -b [dir]   Inicia um novo diretório de Data"
+	writeln " -s         Start with strace"
 
 	finish 0
 }
 
-# Ask for command aguarda o input do usuário
-# Retorna quando tiver ";" na string
-# Ou quando começar com "\" ou "help", sem considerar ;
+: <<'FUNCTION'
+Description: Ask client for some input
+	Returns when:
+	  - There is ';' in the string
+	  - Begins with '\'
+	  - Exactly 'help' or 'exit'
+FUNCTION
 ask_for_input() {
 	local TMP=""
 	INPUT_CMD=""
@@ -120,8 +125,11 @@ append_row_simple() {
 	echo -n "$1" | $PRG_DD of=$2 seek=$3 conv=notrunc status=none
 }
 
-# Check if the file, pointed in $1, is valid and is owned by us
-# $1 - Filename
+: <<'FUNCTION'
+Description: Check if the file, in $1, is valid and is owned by us
+Parameters:
+  $1 - Filename
+FUNCTION
 check_file() {
 	# Does file exists?
 	if [ ! -f $1 ]; then
@@ -171,8 +179,11 @@ is_bashbd() {
 	#fi
 }
 
-# Check if $1 is a dir and his a data directory for bashbd
-# $1 - DIR
+: <<'FUNCTION'
+Description: Check if $1 is a dir and his a data directory for bashbd
+Parameters>
+  $1 - DIR
+FUNCTION
 check_data_dir() {
 	# Directory exists?
 	if [ ! -d $BDDATA ]; then
@@ -188,11 +199,10 @@ check_data_dir() {
 # Search for some binaries in the system
 find_binaries() {
 	# List the commands to find the binaries
-	# These commands are built-in to bash:
+	# These commands are built-in to bash, dont need to search:
 	#  |  mapfile  |  let  |  shift    | eval
-	#  |  local    | read  |  command  | wc
-	#  |  awk	   | sed   |  column   | dd
-	local PRGS=(dd seq printf echo stat basename bash wc awk sed column)
+	#  |  local    | read  |  command 
+	local PRGS=(cut dd seq printf echo stat basename bash wc awk sed column cat rm)
 
 	for cmd in "${PRGS[@]}"; do
 		#local cmdpath=`which ${cmd}`
@@ -321,3 +331,94 @@ terminal_print_data() {
 
 	echo "($TER_TOT_ROWS rows)"
 }
+
+table_print() {
+    local -r delimiter="${1}"
+    local -r data="$(removeEmptyLines "${2}")"
+
+    if [[ "${delimiter}" != '' && "$(isEmptyString "${data}")" = 'false' ]]
+    then
+        local -r numberOfLines="$( $PRG_WC -l <<< "${data}")"
+
+        if [[ "${numberOfLines}" -gt '0' ]]
+        then
+            local table=''
+            local i=1
+
+            for ((i = 1; i <= "${numberOfLines}"; i = i + 1))
+            do
+                local line=''
+                line="$( $PRG_SED "${i}q;d" <<< "${data}")"
+
+                local numberOfColumns='0'
+                numberOfColumns="$( $PRG_AWK -F "${delimiter}" '{print NF}' <<< "${line}")"
+
+                # Add Line Delimiter
+
+                if [[ "${i}" -eq '1' ]]
+                then
+                    table="${table}$( $PRG_PRINTF '%s#+' "$(repeatString '#+' "${numberOfColumns}")")"
+                fi
+
+                # Add Header Or Body
+
+                table="${table}\n"
+
+                local j=1
+
+                for ((j = 1; j <= "${numberOfColumns}"; j = j + 1))
+                do
+                    table="${table}$( $PRG_PRINTF '#| %s' "$( $PRG_CUT -d "${delimiter}" -f "${j}" <<< "${line}")")"
+                done
+
+                table="${table}#|\n"
+
+                # Add Line Delimiter
+
+                if [[ "${i}" -eq '1' ]] || [[ "${numberOfLines}" -gt '1' && "${i}" -eq "${numberOfLines}" ]]
+                then
+                    table="${table}$( $PRG_PRINTF '%s#+' "$(repeatString '#+' "${numberOfColumns}")")"
+                fi
+            done
+	
+            if [[ "$(isEmptyString "${table}")" = 'false' ]]
+            then
+                echo -e "${table}" | $PRG_COLUMN -s '#' -t | awk '/^\+/{gsub(" ", "-", $0)}1'
+            fi
+        fi
+    fi
+}
+
+removeEmptyLines() {
+    local -r content="${1}"
+    $PRG_ECHO -e "${content}" | ${PRG_SED} '/^\s*$/d'
+}
+
+repeatString() {
+    local -r string="${1}"
+    local -r numberToRepeat="${2}"
+
+    if [[ "${string}" != '' && "${numberToRepeat}" =~ ^[1-9][0-9]*$ ]]
+    then
+        local -r result="$(${PRG_PRINTF} "%${numberToRepeat}s")"
+        $PRG_ECHO -e "${result// /${string}}"
+    fi
+}
+
+isEmptyString() {
+    local -r string="${1}"
+
+    if [[ "$(trimString "${string}")" = '' ]]
+    then
+        echo 'true' && return 0
+    fi
+
+    echo 'false' && return 1
+}
+
+trimString() {
+    local -r string="${1}"
+
+    $PRG_SED 's,^[[:blank:]]*,,' <<< "${string}" | $PRG_SED 's,[[:blank:]]*$,,'
+}
+
