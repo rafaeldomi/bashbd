@@ -1,0 +1,10 @@
+#!/bin/bash
+
+: <<'FUNCTION'
+Description: Check if the row is alive
+Parameters:
+ $1 - The metadata field
+FUNCTION
+tuple_is_alive() {
+	return "${1:0:1}"	
+}

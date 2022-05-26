@@ -8,6 +8,8 @@
 . log
 . executor
 . menu
+. tuple
+. table
 
 # Do some checks before initializang the program
 # $1- This MUST be the args received in the program
@@ -29,7 +31,7 @@ do_pre_init() {
 	# Set the program name
 	PROGRAM=$($PRG_BASENAME $0)
 
-	while getopts "?svhb:d:" arg; do
+	while getopts "?svhb:d:m:" arg; do
 		case $arg in
 			v)
 				LOGGER_MSG="Version: $VERSION"
@@ -51,6 +53,9 @@ do_pre_init() {
 				;;
 			s)
 				STRACE=1
+				;;
+			m)
+				MENUOPTION="${OPTARG}"
 				;;
 		esac
 	done
@@ -74,6 +79,15 @@ do_pre_init() {
 	check_data_dir $BDDATA
 
 	cd $BDDATA
+
+	if [ ! -z $MENUOPTION ]; then
+		case "$MENUOPTION" in
+			s) menu_list_schemas ;;
+			t) menu_list_tables ;;
+			S) menu_list_sequences ;;
+		esac
+		finish 0
+	fi
 }
 
 main_loop() {

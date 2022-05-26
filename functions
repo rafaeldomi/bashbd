@@ -50,8 +50,7 @@ Parameters:
 FUNCTION
 trim() {
 	local _RET=$1
-	local _VALUE=""
-	_VALUE=$(echo "$1")
+	local _VALUE="$2" #$($PRG_ECHO $2)
 	eval $_RET="${_VALUE}"
 }
 
@@ -205,8 +204,8 @@ find_binaries() {
 	local PRGS=(cut dd seq printf echo stat basename bash wc awk sed column cat rm)
 
 	for cmd in "${PRGS[@]}"; do
-		#local cmdpath=`which ${cmd}`
-		local cmdpath=`command -v ${cmd}`
+		local cmdpath=`which ${cmd}`
+		#local cmdpath=`command -v ${cmd}`
 
 		# Check if its Okay
 		RES=$?
@@ -410,10 +409,10 @@ isEmptyString() {
 
     if [[ "$(trimString "${string}")" = '' ]]
     then
-        echo 'true' && return 0
+        $PRG_ECHO 'true' && return 0
     fi
 
-    echo 'false' && return 1
+    $PRG_ECHO 'false' && return 1
 }
 
 trimString() {

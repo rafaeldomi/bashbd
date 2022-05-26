@@ -11,6 +11,23 @@ Description of ROW Vector:
 COMMENT
 
 : <<'FUNCTION'
+Description: Add value to the ROW variable
+$n - The values
+FUNCTION
+bootstrap_add_value() {
+	VALUES=("$@")
+	fn=0
+	let ROW[ROWS]=${ROW[ROWS]}+1
+	rown=${ROW[ROWS]}
+	for pos in `$PRG_SEQ 1 ${#VALUES[@]}`; do
+		# One more field/attribute
+		let fn=$fn+1
+
+		ROW[$rown,VALUE_$fn]="${VALUES[pos-1]}"
+	done
+}
+
+: <<'FUNCTION'
 Description: Initialize the ROW variable
  $n - Type or size of the attribute
  Example:
@@ -162,15 +179,14 @@ bootstrap() {
 	# name = 200
 	storage_create_file "TABLE" ${CTABLE_SCHEMAS}
 
-	readonly   BOOT_SCHEMA_BASH=(1 bashbd)
-	readonly BOOT_SCHEMA_PUBLIC=(2 public)
-	
 	unset ROW
 	declare -A ROW
 
 	row_init int 200
-	row_add_value ${BOOT_SCHEMA_BASH[@]}
-	row_add_value ${BOOT_SCHEMA_PUBLIC[@]}
+
+	bootstrap_add_value 1 bashbd
+	bootstrap_add_value 2 public
+
 	row_append_simple ${CTABLE_SCHEMAS}
 
 	eval $LOGGER LOG "Table schemas: OK"
@@ -181,31 +197,23 @@ bootstrap() {
 	# schema_id  	integer
 	# name		 	200
 	# last_value	integer
-	storage_create_file "TABLE" ${CTABLE_SEQUENCE}
-
-	readonly BOOT_SEQUENCE_SEQUENCE=(1 1 sq_sequence 2)
-	readonly BOOT_SEQUENCE_LANGUAGE=(2 1 sq_language 1)
-	readonly BOOT_SEQUENCE_TYPES=(3 1 sq_types 2)
-	readonly BOOT_SEQUENCE_SCHEMAS=(4 1 sq_schemas 2)
-	readonly BOOT_SEQUENCE_TABLES=(5 1 sq_table 8)
-	readonly BOOT_SEQUENCE_FUNCTIONS=(6 1 sq_functions 6)
-	readonly BOOT_SEQUENCE_INDEX=(7 1 sq_index 0)
-	readonly BOOT_SEQUENCE_ATTRS=(8 1 sq_attrs 26)
+	storage_create_file "TABLE" ${CTABLE_SEQUENCES}
 
 	unset ROW
-	declare -A row
+	declare -A ROW
 
 	row_init int int 200 int
-	row_add_value ${BOOT_SEQUENCE_SEQUENCE[@]}
-	row_add_value ${BOOT_SEQUENCE_LANGUAGE[@]}
-	row_add_value ${BOOT_SEQUENCE_TYPES[@]}
-	row_add_value ${BOOT_SEQUENCE_SCHEMAS[@]}
-	row_add_value ${BOOT_SEQUENCE_TABLES[@]}
-	row_add_value ${BOOT_SEQUENCE_FUNCTIONS[@]}
-	row_add_value ${BOOT_SEQUENCE_INDEX[@]}
-	row_add_value ${BOOT_SEQUENCE_ATTRS[@]}
 
-	row_append_simple ${CTABLE_SEQUENCE}
+	bootstrap_add_value 1 1 sq_sequence 2
+	bootstrap_add_value 2 1 sq_language 1
+	bootstrap_add_value 3 1 sq_types 2
+	bootstrap_add_value 4 1 sq_schemas 2
+	bootstrap_add_value 5 1 sq_table 8
+	bootstrap_add_value 6 1 sq_functions 8
+	bootstrap_add_value 7 1 sq_index 0
+	bootstrap_add_value 8 1 sq_attrs 26
+
+	row_append_simple ${CTABLE_SEQUENCES}
 
 	eval $LOGGER LOG "Table sequences: OK"
 
@@ -216,13 +224,13 @@ bootstrap() {
 	##  handler 200
 	storage_create_file "TABLE" ${CTABLE_LANG}
 
-	readonly BOOT_LANGUAGE_BASH=(1 builtin 0x0)
-
 	unset ROW
 	declare -A ROW
 
 	row_init int 200 200
-	row_add_value ${BOOT_LANGUAGE_BASH[@]}
+
+	bootstrap_add_value 1 builtin 0x0
+
 	row_append_simple ${CTABLE_LANG}
 
 	eval $LOGGER LOG "Table language OK"
@@ -235,14 +243,14 @@ bootstrap() {
 	## size		int
 	storage_create_file "TABLE" ${CTABLE_TYPES}
 
-	readonly BOOT_TYPES_INT=(1 int fnc_out 4)
-	readonly BOOT_TYPES_CHAR=(2 char 0x0 -1)
-
 	unset ROW
 	declare -A ROW
+
 	row_init int 200 200 int
-	row_add_value ${BOOT_TYPES_INT[@]}
-	row_add_value ${BOOT_TYPES_CHAR[@]}
+
+	bootstrap_add_value 1 int fnc_out 4
+	bootstrap_add_value 2 char 0x0 -1
+
 	row_append_simple ${CTABLE_TYPES}
 
 	eval $LOGGER LOG "Table types OK"
@@ -254,25 +262,18 @@ bootstrap() {
 	## schema_id	int
 	storage_create_file "TABLE" ${CTABLE_TABLES}
 
-	readonly BOOT_TABLE_SCHEMAS=(${CTABLE_SCHEMAS} schemas 1)
-	readonly BOOT_TABLE_TABLE=(${CTABLE_TABLES} tables 1)
-	readonly BOOT_TABLE_ATTRS=(${CTABLE_ATTRS} attrs 1)
-	readonly BOOT_TABLE_TYPES=(${CTABLE_TYPES} types 1)
-	readonly BOOT_TABLE_FUNCTIONS=(${CTABLE_FUNCTIONS} functions 1)
-	readonly BOOT_TABLE_INDEX=(${CTABLE_INDEX} index 1)
-	readonly BOOT_TABLE_LANGUAGE=(${CTABLE_LANG} language 1)
-
 	unset ROW
 	declare -A ROW
 
 	row_init int 200 int
-	row_add_value ${BOOT_TABLE_SCHEMAS[@]}
-	row_add_value ${BOOT_TABLE_TABLE[@]}
-	row_add_value ${BOOT_TABLE_ATTRS[@]}
-	row_add_value ${BOOT_TABLE_TYPES[@]}
-	row_add_value ${BOOT_TABLE_FUNCTIONS[@]}
-	row_add_value ${BOOT_TABLE_INDEX[@]}
-	row_add_value ${BOOT_TABLE_LANGUAGE[@]}
+
+	bootstrap_add_value $CTABLE_SCHEMAS schemas 1
+	bootstrap_add_value $CTABLE_TABLES tables 1
+	bootstrap_add_value $CTABLE_ATTRS attrs 1
+	bootstrap_add_value $CTABLE_TYPES types 1
+	bootstrap_add_value $CTABLE_FUNCTIONS functions 1
+	bootstrap_add_value $CTABLE_INDEX index 1
+	bootstrap_add_value $CTABLE_LANG language 1
 
 	row_append_simple ${CTABLE_TABLES}
 
@@ -286,23 +287,19 @@ bootstrap() {
 	## lang_id	int
 	storage_create_file "TABLE" ${CTABLE_FUNCTIONS}
 
-	readonly BOOT_FNC_SUM=(1 sum bashbd.sum 1)
-	readonly BOOT_FNC_COALESCE=(2 coalesce bashbd.coalesce 1)
-	readonly BOOT_FNC_MAX=(3 max bashbd.max 1)
-	readonly BOOT_FNC_MIN=(4 min bashbd.min 1)
-	readonly BOOT_FNC_COUNT=(5 count bashbd.count 1)
-	readonly BOOT_FNC_AVG=(6 avg bashbd.avg 1)
-
 	unset ROW
 	declare -A ROW
 
 	row_init int 200 200 int
-	row_add_value ${BOOT_FNC_SUM[@]}
-	row_add_value ${BOOT_FNC_COALESCE[@]}
-	row_add_value ${BOOT_FNC_MAX[@]}
-	row_add_value ${BOOT_FNC_MIN[@]}
-	row_add_value ${BOOT_FNC_COUNT[@]}
-	row_add_value ${BOOT_FNC_AVG[@]}
+
+	bootstrap_add_value 1 sum bashbd.sum 1
+	bootstrap_add_value 2 coalesce bashbd.coalesce 1
+	bootstrap_add_value 3 max bashbd.max 1
+	bootstrap_add_value 4 min bashbd.min 1
+	bootstrap_add_value 5 count bashbd.count 1
+	bootstrap_add_value 6 avg bashbd.avg 1
+	bootstrap_add_value 7 nextval bashbd.nextval 1
+	bootstrap_add_value 8 currval bashbd.currval 1
 
 	row_append_simple ${CTABLE_FUNCTIONS}
 

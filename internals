@@ -1,22 +1,23 @@
 #!/bin/bash
 
-# Search for the table ID
-# $1 - OUT ID
-# $2 - SCHEMA
-# $3 - TABLE
+: <<'FUNCTION'
+Description: Search for the table ID
+Parameters:
+ $1 - OUT ID
+ $2 - SCHEMA
+ $3 - TABLE
+FUNCTION
 get_table_id_simple() {
 	:
 }
 
-# Search for schema ID
-# $1 - OUT ID
-# $2 - SCHEMA
+: <<'FUNCTION'
+Description: Search for the schema ID
+Parameters:
+ $1 - OUT ID
+ $2 - SCHEMA
+FUNCTION
 get_schema_id_simple() {
 	:
 }
 
-# Returns true if row is alive
-# $1 - ROW
-row_is_alive() {
-	:
-}

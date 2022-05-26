@@ -48,11 +48,21 @@ storage_file_exists() {
 	fi
 }
 
-# $1 = OBJECT
-# $2 = NAME
+: <<'FUNCTION'
+Description: Function to create file
+Parameters:
+ $1 = OBJECT
+ $2 = NAME
+FUNCTION
 storage_create_file() {
 	local _OBJ=$1
 	local _FILE=$2
+
+	if [ -z $2 ]; then
+		LOGGER_MSG="Parametro 2 não informado"
+		eval $LOGGER ERROR
+		return -1
+	fi
 
 	storage_file_exists $_FILE
 	RES=$?
@@ -65,6 +75,9 @@ storage_create_file() {
 	get_magic_code MGC $_OBJ
 	storage_append_magic $MGC $_FILE
 	storage_append_magic $MAGIC_CODE_SEP $_FILE
+
+	LOGGER_MSG="File ($_FILE) successfully created"
+	eval $LOGGER DEBUG3
 
 	return 0
 }

@@ -14,10 +14,15 @@ cmd_menu() {
 	# Vim shows that using "$array_var[x]:init:end" is wrong, but is correct
 	case "${TKN[0]:1:1}" in
 		q)  finish 0;;
+		## TODO
+		## Find a better place to put the menu_list functions
 		t)	menu_list_tables;;	 	# [ menu ]
 		s)  menu_list_schemas;;  	# [ menu ]
 		f)  menu_list_functions;;	# [ menu ]
-		l)  menu_list_lang;;
+		S)  menu_list_sequences;;	# [ menu ]
+		y)  menu_list_types;;		# [ menu ]
+		l)  menu_list_lang;;		# [ menu ]
+		i)  menu_list_index;;		# [ menu ]
 		c)  menu_warm_cache "${TKN[1]}";;
 		\?)	menu_show_help;;
 		*)  echo "Menu Comando $PAR não reconhecido"
@@ -36,6 +41,8 @@ menu_show_help() {
 	writeln "\\f       List functions"
 	writeln "\\l       List languages"
 	writeln "\\S       List sequences"
+	writeln "\\y       List Types"
+	writeln "\\i       List Indexes"
 	writeln ""
 	writeln "\\c [obj] Warm cache"
 	writeln "   schemas"
@@ -48,73 +55,32 @@ menu_show_help() {
 
 ###################################################
 ###################################################
-menu_list_schemas() {
-	TMPFILE="temp/data.tmp"
-	$PRG_ECHO "id,name" > $TMPFILE
+map_file_rows() {
 	unset rows
+	mapfile -t -s 1 -O 1 -d `$PRG_ECHO -e -n "\x1E"` rows < $1
+}
 
-	mapfile -t -s1 -O 1 -d `$PRG_ECHO -e -n "\x1E"` rows < $CTABLE_SCHEMAS
-	for row in "${rows[@]}"; do
-		mapfile -t -O 1 -d `$PRG_ECHO -en "\x1D"` fields <<<$( $PRG_ECHO "$row")
-		fn=0
-		rowa=""
-		vir=""
-		for f in "${fields[@]}"; do
-			inf=$(echo $f)
-			if [ "$fn" -eq 0 ]; then
-				if [ ! "${inf:0:1}" -eq 1 ]; then
-					break
-				fi
-				let fn++
-				continue
-			fi
+map_fields() {
+	unset fields
+	mapfile -t -O 1 -d `$PRG_ECHO -en "\x1D"` fields <<<$( $PRG_ECHO "$1")
+}
 
-			rowa="$rowa$vir$inf"
-			vir=","
-		done
-		echo "$rowa" >> $TMPFILE
-	done
+###################################################
+###################################################
+menu_list_sequences() {
+	table_display_dump_table "Listing Sequences" $CTABLE_SEQUENCES "id,schema_id,name,last_value"
+}
 
-	table_print ',' "$( $PRG_CAT $TMPFILE)"
-
+menu_list_schemas() {
+	table_display_dump_table "Listing Schemas" $CTABLE_SCHEMAS "id,name"
 }
 
 menu_list_tables() {
-	TMPFILE="temp/data.tmp"
-
-	$PRG_ECHO "id,name,schema_id" > $TMPFILE
-
-	unset rows
-	mapfile -t -s 1 -O 1 -d `$PRG_ECHO -e -n "\x1E"` rows < $CTABLE_TABLES
-	for row in "${rows[@]}"; do
-		mapfile -t -O  1 -d `$PRG_ECHO -en "\x1D"` fields <<<$( $PRG_ECHO "$row")
-
-		fn=0
-		rowa=""
-		vir=""
-		for f in "${fields[@]}"; do
-			inf=$(echo $f)
-			if [ $fn -eq 0 ]; then
-				if [ ! "${inf:0:1}" -eq 1 ]; then
-					break
-				fi
-				let fn++
-				continue
-			fi
-
-			rowa="$rowa$vir$inf"
-			vir=","
-		done
-		echo "$rowa" >> $TMPFILE
-	done
-
-	table_print ',' "$( $PRG_CAT $TMPFILE)"
-
-	$PRG_RM -f $TMPFILE
+	table_display_dump_table "Listing Tables" $CTABLE_TABLES "id,name,schema_id"
 }
 
 menu_list_functions() {
-	:
+	table_display_dump_table "Listing functions" $CTABLE_FUNCTIONS "id,name,handler,lang_id"
 }
 
 menu_warm_cache() {
@@ -122,20 +88,13 @@ menu_warm_cache() {
 	cache_do_cache $CTABLE_SCHEMAS
 }
 
+menu_list_types() {
+	table_display_dump_table "Listing Types" $CTABLE_TYPES "id,name,fnc_out,size"
+}
+
 menu_list_lang() {
-	terminal_init_output "List of languages"
-	terminal_set_columns id name fnc_out size
-
-	# Read raw file
-	mapfile -t -s 1 -O 1 -d `echo -en "\x1E"` rows < $CTABLE_LANG
-	if [ ! "$?" == "0" ]; then
-		eval $LOGGER ERROR "Fail to open table bashbd.languages"
-		return 1
-	fi
-
-	for row in "${rows[@]}"; do
-		terminal_add_row "$row"
-	done
-
-	terminal_print_data
+	table_display_dump_table "Listing Languages" $CTABLE_LANG "id,name,handler"
+}
+menu_list_index() {
+	table_display_dump_table "Listing Indexes" $CTABLE_INDEX "id,table_id,fields"
 }

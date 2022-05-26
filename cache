@@ -25,7 +25,6 @@ cache_do_cache() {
 	if cache_has_cache $1; then
 		return 0
 	fi
-
 	
 	return 0
 }

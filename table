@@ -1,0 +1,49 @@
+#!/bin/bash
+
+table_display_init() {
+	TMPDISPLAYFILE="temp/data.tmp"
+	$PRG_ECHO "$1" > $TMPDISPLAYFILE
+}
+
+table_display_add_row() {
+	$PRG_ECHO "$1" >> $TMPDISPLAYFILE
+}
+
+table_display_print() {
+	table_print ',' "$( $PRG_CAT $TMPDISPLAYFILE )"
+}
+
+# $1 - Title
+# $2 - Table code
+# $3 - Fields names
+table_display_dump_table() {
+	TITLE=$1
+	CODTABLE=$2
+
+	table_display_init "$3"
+
+	map_file_rows $CODTABLE
+	for row in "${rows[@]}"; do
+		map_fields "$row"
+
+		fn=0
+		rowa=""
+		vir=""
+
+		for f in "${fields[@]}"; do
+			trim inf $f
+			if [ "$fn" -eq 0 ]; then
+				if tuple_is_alive $inf; then
+					break
+				fi
+				let fn++
+				continue
+			fi
+			rowa="$rowa$vir$inf"
+			vir=","
+		done
+		table_display_add_row "$rowa"
+	done
+	echo "$TITLE"
+	table_display_print
+}

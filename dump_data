@@ -10,6 +10,10 @@
 . functions
 . log
 
+# Initialize this variable with a default value to not break
+#  LOGGER calls
+PRG_PRINTF="printf"
+
 find_binaries
 
 declare -A ATABLE
