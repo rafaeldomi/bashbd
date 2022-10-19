@@ -9,7 +9,7 @@ readonly CTABLE_TYPES=4
 readonly CTABLE_FUNCTIONS=5
 readonly CTABLE_INDEX=6
 readonly CTABLE_LANG=7
-readonly CTABLE_SEQUENCES=8
+readonly CTABLE_SEQUENCE=8
 
 ### Types Sizes
 readonly SZ_SMALLINT=2
@@ -21,8 +21,6 @@ readonly SZ_CHAR=1
 readonly MAGIC_CODE_TABLE="0A"
 readonly MAGIC_CODE_INDEX="0B"
 readonly MAGIC_CODE_SEQUENCE="0C"
-readonly MAGIC_CODE_FUNCTION="0D"
-readonly MAGIC_CODE_TRIGGER="0E"
 
 readonly MAGIC_CODE_NULL="00"	# Null code
 readonly MAGIC_CODE_SEP="1E"	# Record separator

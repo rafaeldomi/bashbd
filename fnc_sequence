@@ -1,0 +1,16 @@
+#!/bin/bash
+
+: <<'FUNCTION'
+Description: Get the actual value of a sequence
+Parameters:
+ $1 = OUTPUT value
+ $2 = ID of the sequence
+Notes: The caller is responsible to get the sequence id before calling this function
+FUNCTION
+sequence_get_value() {
+	local _RET=$1
+	local IDS=$2
+
+
+}
+

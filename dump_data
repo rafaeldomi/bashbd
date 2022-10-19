@@ -4,6 +4,12 @@
 # Program to dump file contents
 ##############
 
+FILE=$1
+if [ ! -f $FILE ]; then
+	echo "File '$FILE' not found. Exiting"
+	exit 1
+fi
+
 . const
 . storage
 . temp/table
@@ -14,15 +20,10 @@
 #  LOGGER calls
 PRG_PRINTF="printf"
 
+# [ functions ]
 find_binaries
 
 declare -A ATABLE
-FILE=$1
-
-if [ ! -f $FILE ]; then
-	echo "File $FILE not found. Exiting"
-	exit 1
-fi
 
 # $1 - Field N
 # $2 - Value

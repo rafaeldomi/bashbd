@@ -1,0 +1,39 @@
+#!/bin/bash
+
+create_schema_execute() {
+	SCHEMA=${SQLOBJ[NAME]}
+
+	LOGGER_MSG="Criar schema: $SCHEMA"
+	eval $LOGGER DEBUG2
+
+	# Loop in the schemas to create
+
+	TOT=${SQLOBJ[TOTAL]}
+
+	LOGGER_MSG="Total Schemas: $TOT"
+	eval $LOGGER DEBUG2
+
+	for pos in `$PRG_SEQ 1 $TOT`; do
+		NAME="${SQLOBJ[NAME_$pos]}"
+
+		LOGGER_MSG="Create schema: $NAME"
+		eval $LOGGER DEBUG1
+
+		# Check schema name not exists
+		# Can we check in the Cache??
+
+		# Get new id sequence
+
+		# Insert the new tuple		
+		unset ROW
+		declare -A ROW
+
+		row_init int 200
+
+		row_add_value 3 $NAME
+
+		row_append_simple ${CTABLE_SCHEMAS}
+
+		# Update the cache control
+	done
+}

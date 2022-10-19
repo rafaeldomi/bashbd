@@ -68,7 +68,7 @@ map_fields() {
 ###################################################
 ###################################################
 menu_list_sequences() {
-	table_display_dump_table "Listing Sequences" $CTABLE_SEQUENCES "id,schema_id,name,last_value"
+	table_display_dump_table "Listing Sequences" $CTABLE_SEQUENCE "id,schema_id,name,last_value"
 }
 
 menu_list_schemas() {

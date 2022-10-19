@@ -7,10 +7,11 @@ COMMAND=(TABLE SELECT INSERT UPDATE DELETE "ALTER TABLE" "CREATE TABLE" "CREATE 
 #SEPARATOR=,
 #SPACE=" "
 #JOINS=(INNER "INNER JOIN" "LEFT" "LEFT JOIN" "RIGHT" "RIGHT JOIN")
-DEBUG=1
+
+PARSE_DEBUG=1
 
 dbg_parse() {
-	if [ "$DEBUG" == 1 ]; then
+	if [ "$PARSE_DEBUG" == 1 ]; then
 		echo "$1"
 	fi
 }
@@ -63,6 +64,61 @@ parse_table() {
 		SQLOBJ[TABLE_1]="${O_TABLE}"
 		SQLOBJ[TABLE_1_SCHEMA]="${O_SCHEMA}"
 	done
+}
+
+parse_create() {
+	dbg_parse "Func: cmd_create"
+
+	for pos in `seq 1 ${#TOKENS[@]}`; do
+		TKN="${TOKENS[pos]}"
+		NEXTTKN="${TOKENS[pos+1]}"
+
+		if [ "${TKN}" == "" ]; then
+			continue
+		fi
+
+		# CREATE SCHEMA [name]
+		if [ "${TKN^^}" == "SCHEMA" ]; then
+			parse_create_schema $pos
+			break
+		fi
+	done
+}
+parse_create_schema() {
+	echo "input pos: $pos"
+	let pos=$pos+1
+	number=0
+
+	SQLOBJ[TYPE]="SCHEMA"
+
+	# CREATE SCHEMA name;
+	# CREATE SCHEMA name1, name2
+
+	for pos in `seq $pos ${#TOKENS[@]}`; do
+		TKN="${TOKENS[pos]}"
+		if [ "$TKN" == "" ]; then
+			continue
+		fi
+
+		echo "  | ${TOKENS[pos]}"
+		NAME="${TOKENS[pos]}"
+
+		# Remover , ou ;
+		if [[ "${NAME: -1}" == "," ]] ||
+		   [[ "${NAME: -1}" == ";" ]]; then
+			NAME="${NAME:0: -1}"
+		fi
+
+		IFS=","
+		NAMES=($NAME)
+		unset IFS
+		for name in ${NAMES[@]}; do
+			let number=$number+1
+			SQLOBJ[NAME_$number]="$name"
+		done
+	done 
+
+	SQLOBJ[TOTAL]=$number
 }
 
 parse_delete() {
@@ -299,6 +355,18 @@ print_sqlobj() {
 	echo "Full SQL: ${SQLOBJ[ORIG]}"
 	echo "COMMAND: ${SQLOBJ[CMD]}"
 
+	if [ ! -z "${SQLOBJ[TYPE]}" ]; then
+		echo "TYPE: ${SQLOBJ[TYPE]}"
+	fi
+
+	if [ ! -z "${SQLOBJ[TOTAL]}" ]; then
+		echo "TOTAL: ${SQLOBJ[TOTAL]}"
+
+		for pos in `seq 1 ${SQLOBJ[TOTAL]}`; do
+			echo "${SQLOBJ[NAME_$pos]}"
+		done
+	fi
+
 	if [ "${SQLOBJ[FIELDS_TOTAL]}" -gt 0 ]; then
 		echo "FIELDS TOTAL: ${SQLOBJ[FIELDS_TOTAL]}"
 		for i in `seq 1 ${SQLOBJ[FIELDS_TOTAL]}`; do
@@ -377,6 +445,9 @@ parser() {
 			DELETE)
 				parse_delete
 				;;
+			CREATE)
+				parse_create
+				;;
 		esac
 
 		print_sqlobj
@@ -404,3 +475,6 @@ parser() {
 #parser "delete tabela"
 #parser "delete from tabela where 1 = 1"
 #parser "table bashbd.schemas"
+#parser "create schema asd;"
+#parser "create schema schema1, schema2"
+#parser "create schema asd,asd"

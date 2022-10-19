@@ -1,5 +1,13 @@
 #!/bin/bash
 
+: <<'COMMENT'
+Description of ROW Vector:
+	ROWS      => Total row number in the vector
+	FIELDS    => Total fields number in the row
+	FIELDS_n  => The type of the attributes
+    n,VALUE_y => The number of the row, and the values of its attibutes
+COMMENT
+
 # Return a string of the magic code
 # $1 - OBJECT
 # $2 - RETURN
@@ -13,10 +21,6 @@ get_magic_code() {
 			eval $_RET="$MAGIC_CODE_INDEX" ;;
 		SEQUENCE)
 			eval $_RET="$MAGIC_CODE_SEQUENCE" ;;
-		FUNCTION)
-			eval $_RET="$MAGIC_CODE_FUNCTION" ;;
-		TRIGGER)
-			eval $_RET="$MAGIC_CODE_TRIGGER" ;;
 		*)
 			$PRG_ECHO "Unknown Magic Code $2"
 			;;
@@ -31,8 +35,6 @@ get_magic_code_name() {
 		$MAGIC_CODE_TABLE)	  eval $_RET="TABLE" ;;
 		$MAGIC_CODE_INDEX)    eval $_RET="INDEX" ;;
 		$MAGIC_CODE_SEQUENCE) eval $_RET="SEQUENCE" ;;
-		$MAGIC_CODE_FUNCTION) eval $_RET="FUNCTION" ;;
-		$MAGIC_CODE_TRIGGER)  eval $_RET="TRIGGER" ;;
 	esac
 }
 
@@ -106,3 +108,94 @@ storage_check_mgc() {
 	fi
 }
 
+: <<'FUNCTION'
+Description: Simple function to insert into table
+# The values must be present in the $ROW variable
+# $1 - Table to append data
+FUNCTION
+row_append_simple() {
+	local _TABLE=$1
+
+	CROW=""
+
+	# Loop na quantidade de rows inseridos no vetor
+	for i in `$PRG_SEQ 1 ${ROW[ROWS]}`; do
+		# In this first level of the loop we are in the Record level
+
+		# Work the metadata
+		CROW="${CROW}1`storage_print_magic ${MAGIC_CODE_FLD}`"
+
+		for f in `$PRG_SEQ 1 ${ROW[FIELDS]}`; do
+			# Here we are looping through the fields
+
+			I_VALUE="${ROW[$i,VALUE_$f]}"
+			SIZE="${ROW[FIELDS_$f]}"
+
+			#echo "|$I_VALUE|"
+
+			# Verifica se tem que tratar o dado
+			case ${SIZE} in
+				int)
+					# Let keep it simple by now, without doing any type of conversion
+					#dec_to_hex OUTPUT $I_VALUE
+					#CROW=`printf "%s%s" "${CROW}" "${OUTPUT}"`
+					CROW=`$PRG_PRINTF "%s%8s" "${CROW}" "${I_VALUE}"`
+					;;
+
+				*)
+					CROW=`$PRG_PRINTF "%s%${SIZE}s" "${CROW}" "${I_VALUE}"`
+					;;
+			esac
+
+			# Put a Field Separator
+			if [ ! "$f" == "${ROW[FIELDS]}" ]; then
+				CROW="${CROW}`storage_print_magic ${MAGIC_CODE_FLD}`"
+			fi
+		done
+
+		# The row data finished, put a Record Separator
+		#if [ ! "$i" == "${ROW[ROWS]}" ]; then
+			CROW="${CROW}`storage_print_magic ${MAGIC_CODE_SEP}`"
+		#fi
+	done
+
+	# Just echo the value to the table
+	$PRG_ECHO -n "${CROW}" >> $_TABLE
+
+	# Data is inserted by now
+}
+
+: <<'FUNCTION'
+Description: Initialize the ROW variable
+ $n - Type or size of the attribute
+ Example:
+  row_init int 200
+    $1 - type int
+    $2 - size 200
+FUNCTION
+row_init() {
+	VALUES=($@)
+
+	# METADATA
+	# #1 - Row is alive? 0 No 1 Yes
+	ROW[META]="0"
+	ROW[FIELDS]="${#}"
+	ROW[ROWS]=0
+
+	for i in `$PRG_SEQ 1 ${#}`; do
+		ROW[FIELDS_$i]="${VALUES[i-1]}"
+	done
+}
+
+row_add_value() {
+	VALUES=("$@")
+	fn=0
+	let ROW[ROWS]=${ROW[ROWS]}+1
+	rown=${ROW[ROWS]}
+	for pos in `$PRG_SEQ 1 ${#VALUES[@]}`; do
+		# one more field/attribute
+		let fn=$fn+1
+
+		ROW[$rown,VALUE_$fn]="${VALUES[pos-1]}"
+	done
+}

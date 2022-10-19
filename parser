@@ -22,24 +22,6 @@ tokenize() {
 	dbg_parse "Total Tokens: ${#TOKENS[@]}"
 }
 
-parse_create() {
-	dbg_parse "Func: cmd_create"
-
-	for pos in `$PRG_SEQ 1 ${#TOKENS[@]}`; do
-		TKN="${TOKENS[pos]}"
-		NEXTTKN="${TOKENS[pos+1]}"
-
-		if [ "${TKN}" == "" ]; then
-			continue
-		fi
-
-		# CREATE SEQUENCE [name]
-		if [ "${TKN^^}" == "SCHEMA" ]; then
-			:
-		fi
-	done
-}
-
 # TRUNCATE [TABLE] tabela
 parse_truncate() {
 	dbg_prase "Func: cmd_truncate"
@@ -83,6 +65,63 @@ parse_table() {
 		SQLOBJ[TABLE_$tablen]="${O_TABLE}"
 		SQLOBJ[TABLE_${tablen}_SCHEMA]="${O_SCHEMA}"
 	done
+}
+
+parse_create() {
+	dbg_parse "Func: cmd_create"
+
+	TKN="${TOKENS[1]}"
+	if [ "${TKN}" == "" ]; then
+		echo "Comando create invalido"
+		return
+	fi
+
+	# CREATE SCHEMA [name]
+	if [ "${TKN^^}" == "SCHEMA" ]; then
+		parse_create_schema 2
+		return 0
+	fi
+
+	echo "Comando ${TKN} não existe, ou não programado ^^"
+}
+parse_create_schema() {
+	pos=$1
+	echo "input pos: $pos"
+	number=0
+
+	SQLOBJ[TYPE]="SCHEMA"
+
+	# CREATE SCHEMA name;
+	# CREATE SCHEMA name1, name2
+	# CREATE SCHEMA nasd,asd;
+
+	for pos in `seq $pos ${#TOKENS[@]}`; do
+		TKN="${TOKENS[pos]}"
+		if [ "$TKN" == "" ]; then
+			continue
+		fi
+
+		echo "  | ${TOKENS[pos]}"
+		NAME="${TOKENS[pos]}"
+
+		# Remover , ou ;
+		if [[ "${NAME: -1}" == "," ]] ||
+		   [[ "${NAME: -1}" == ";" ]]; then
+			NAME="${NAME:0: -1}"
+		fi
+
+		IFS=","
+		NAMES=($NAME)
+		unset IFS
+		for name in ${NAMES[@]}; do
+			let number=$number+1
+			SQLOBJ[NAME_$number]=$name
+		done
+
+		SQLOBJ[NAME_$number]="$NAME"
+	done 
+
+	SQLOBJ[TOTAL]=$number
 }
 
 parse_delete() {
@@ -322,6 +361,19 @@ print_sqlobj() {
 	echo "Full SQL: ${SQLOBJ[ORIG]}"
 	echo "COMMAND: ${SQLOBJ[CMD]}"
 
+
+	if [ ! -z "${SQLOBJ[TYPE]}" ]; then
+		echo "TYPE: ${SQLOBJ[TYPE]}"
+	fi
+
+	if [ ! -z "${SQLOBJ[TOTAL]}" ]; then
+		echo "TOTAL: ${SQLOBJ[TOTAL]}"
+
+		for pos in `seq 1 ${SQLOBJ[TOTAL]}`; do
+			echo "${SQLOBJ[NAME_$pos]}"
+		done
+	fi
+
 	if [ "${SQLOBJ[FIELDS_TOTAL]}" -gt 0 ]; then
 		echo "FIELDS TOTAL: ${SQLOBJ[FIELDS_TOTAL]}"
 		for i in `$PRG_SEQ 1 ${SQLOBJ[FIELDS_TOTAL]}`; do
@@ -408,3 +460,26 @@ parser() {
 	print_sqlobj
 	return 0
 }
+
+
+#parser "select 1=1"
+#parser "TABLE tabela1"
+#parser  "  SELECT * FROM tabela2"
+#parser "select field1, field2, field3 from tabela3 order by field1 desc"
+#parser "select field1, field2, field3 from tabela3 tab order by field1 desc"
+#parser "select field1, field2, field3 from tabela3 order by field1 desc, field2 asc"
+#parser "select id, count(*) from tabela1 group by 1"
+#parser "sel tabela1" # Wrong
+#parser "select * from tabela where field1 = 'asd'";
+#parser "select * from tabela where field1 = '1' and field2 = 'asd'";
+parser "select * from tabela where field1 >= '1' and field2 = 'asd' and asd = true";
+#parser "select al.valor from table al"
+#parser "truncate tabela1"
+#parser "select field, from tab" # Wrong
+#parser "select field as campo from tabela ca where ca.field = 1"
+#parser "delete from tabela"
+#parser "delete tabela"
+#parser "delete from tabela where 1 = 1"
+#parser "table bashbd.schemas"
+#parser "create schema asd;"
+#parser "create schema schema1, schema2"

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "Loading.."
+
 # Source some files
 . var
 . const
@@ -10,6 +12,7 @@
 . menu
 . tuple
 . table
+. storage
 
 # Do some checks before initializang the program
 # $1- This MUST be the args received in the program

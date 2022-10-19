@@ -11,6 +11,7 @@ table_display_add_row() {
 
 table_display_print() {
 	table_print ',' "$( $PRG_CAT $TMPDISPLAYFILE )"
+	echo "(${#rows[@]} rows fetched)"
 }
 
 # $1 - Title

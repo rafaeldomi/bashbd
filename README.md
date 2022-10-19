@@ -13,6 +13,7 @@ by Rafael Domiciano
 3. Structures
    .1 Code Workflows
    .2 File format
+4. Metadata
 
 ##################################################
 
@@ -97,7 +98,7 @@ The function must have all the parameters declared, like this:
 concat() {
 	local _RET=$1
 
-	eval $_RET="$1$2"
+	eval $_RET="$2$3"
 }
 
 ## 2.4 About "source" or "dot" to import
@@ -177,9 +178,24 @@ bd [main]
 	  | SELECT cmd_select [select_execute]
       | INSERT cmd_insert [insert_execute]
       | DELETE cmd_delete [delete_execute]
+	  | CREATE cmd_create
+	  |   SCHEMA
 
 ## 3.2. File Format
 
 * Magic code of the type of object
 * Group/Record Separator
 * Field separator
+
+## 4. Metadata
+bashbd.schemas
+bashbd.tables
+bashbd.attrs
+bashbd.types
+bashbd.functions
+bashbd.index
+bashbd.lang
+bashbd.sequences
+
+
+

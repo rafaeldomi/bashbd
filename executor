@@ -4,6 +4,7 @@
 . functions
 . parser
 . cmd_table
+. cmd_create
 
 execute() {
 	# Clear this "object" (I know, variable, OK)
@@ -29,6 +30,11 @@ execute() {
 	case "${SQLOBJ[CMD]^^}" in
 		TABLE)
 			table_execute
+			;;
+		CREATE)
+			case "${SQLOBJ[TYPE]^^}" in
+				SCHEMA)	create_schema_execute ;;
+			esac
 			;;
 		*)
 			LOGGER_MSG="Unknown command: ${SQLOBJ[CMD]}"

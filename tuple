@@ -8,3 +8,12 @@ FUNCTION
 tuple_is_alive() {
 	return "${1:0:1}"	
 }
+
+: <<'FUNCTION'
+Parameters:
+ $1 - ID of the table relation
+ $2 - Value of the field
+FUNCTION
+tuple_get_tuple_field1() {
+	:
+}

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+parser() {
+
+}
+
+SQL="CREATE SCHEMA asd;"
+
+parser "$SQL"
