@@ -5,6 +5,7 @@
 . parser
 . cmd_table
 . cmd_create
+. cmd_set
 
 execute() {
 	# Clear this "object" (I know, variable, OK)
@@ -28,6 +29,10 @@ execute() {
 	eval $LOGGER DEBUG1
 
 	case "${SQLOBJ[CMD]^^}" in
+		SET)
+			# [ set ]
+			set_execute
+			;;
 		TABLE)
 			table_execute
 			;;

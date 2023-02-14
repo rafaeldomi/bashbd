@@ -22,7 +22,8 @@ readonly MAGIC_CODE_TABLE="0A"
 readonly MAGIC_CODE_INDEX="0B"
 readonly MAGIC_CODE_SEQUENCE="0C"
 
-readonly MAGIC_CODE_NULL="00"	# Null code
+# The NULL code should be "00", but passing hx00 as parameter does not work in bash
+readonly MAGIC_CODE_NULL="14"	# Null code
 readonly MAGIC_CODE_SEP="1E"	# Record separator
 readonly MAGIC_CODE_FLD="1D"	# Group separator / Field Separator
 

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+. log
+. functions
+
+IS_IN_SIGNAL=0
+
+signal_trap() {
+	if [ "$IS_IN_SIGNAL" == "1" ]; then
+		return
+	else
+		IS_IN_SIGNAL=1
+	fi
+
+	eval $LOGGER LOG "Get signal $1"
+
+	if [ "$1" == "INT" ]; then
+		eval $LOGGER LOG "CTRL+C or INT signal received. Exiting"
+		finish 0
+	fi
+
+	IS_IN_SIGNAL=0
+}
+
+signal_install() {
+	trap "signal_trap INT" INT
+
+	eval $LOGGER LOG "Signals installed"
+}

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+. log
+
+set_execute() {
+	eval $LOGGER DEBUG "Iniciando"
+
+	
+}

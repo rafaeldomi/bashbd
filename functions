@@ -82,6 +82,13 @@ ask_for_input() {
 
 	while [ true ]; do
 		read -r -e -p "bashbd> " TMP
+
+		# if the return code is 1, means that (probably) got a CTRL+D
+		#   so, finish the program
+		RES=$?
+		if [ $RES == 1 ]; then
+			finish 0
+		fi
 		INPUT_CMD="$INPUT_CMD$TMP"
 
 		if [ "${TMP:0:1}" == "\\" ] ||
@@ -201,7 +208,7 @@ find_binaries() {
 	# These commands are built-in to bash, dont need to search:
 	#  |  mapfile  |  let  |  shift    | eval
 	#  |  local    | read  |  command 
-	local PRGS=(cut dd seq printf echo stat basename bash wc awk sed column cat rm)
+	local PRGS=(cut dd seq printf echo stat basename bash wc awk sed column cat rm xxd)
 
 	for cmd in "${PRGS[@]}"; do
 		local cmdpath=`which ${cmd}`

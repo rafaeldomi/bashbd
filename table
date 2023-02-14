@@ -31,6 +31,7 @@ table_display_dump_table() {
 		rowa=""
 		vir=""
 
+		# Loop all the fields
 		for f in "${fields[@]}"; do
 			trim inf $f
 			if [ "$fn" -eq 0 ]; then
@@ -40,7 +41,18 @@ table_display_dump_table() {
 				let fn++
 				continue
 			fi
-			rowa="$rowa$vir$inf"
+			local VAL="$inf"
+			if [ ${#VAL} == 1 ]; then
+				local p=$(echo -en "$VAL" | ${PRG_XXD} -p)
+				if [ "$p" == "$MAGIC_CODE_NULL" ]; then
+					VAL="$NULL_DISPLAY"
+				fi
+			fi
+
+			#rowa="$rowa$vir$inf"
+			rowa="$rowa$vir${VAL}"
+
+			# Separator
 			vir=","
 		done
 		table_display_add_row "$rowa"

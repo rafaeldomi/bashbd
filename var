@@ -28,4 +28,7 @@ PROGRAM="-1"
 declare -A CACHE_SCHEMA
 declare -A CACHE_TABLE
 
+### Null display
+NULL_DISPLAY="(null)"
+
 fi

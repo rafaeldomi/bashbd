@@ -42,12 +42,15 @@ check_size() {
 
 echo "Dumping: $FILE"
 
-TMP=$($PRG_DD if=$FILE ibs=1 count=1 conv=notrunc status=none | xxd -p)
+TMP=$($PRG_DD if=$FILE ibs=1 count=1 conv=notrunc status=none | ${PRG_XXD} -p)
 VALUE=${TMP^^}
 
 get_magic_code_name OUT $VALUE
 
 echo "  Type: $VALUE ($OUT)"
+
+# Using the 1E hex code we want to split one row per array
+#  1E = Record delimiter
 
 # -t = Remove delimitador no final de cada linha (sem enter)
 # -s = Descarta a primeira linha (File Type)
@@ -64,6 +67,7 @@ TABFLD="Row N, Alive"
 
 # Loop in the records
 for i_row in "${DATA[@]}"; do
+	# 1D is Field Delimiter
 	# Break the row
 	mapfile -t -O 1 -d `echo -en "\x1D"` FLD <<<$(echo "${i_row[@]}")
 
@@ -78,7 +82,7 @@ for i_row in "${DATA[@]}"; do
 
 	for f in "${FLD[@]}"; do
 		# Like a trim
-		inf=$(echo $f)
+		inf="$(echo $f)"
 
 		# Check size
 		check_size $rowf "${inf}"
@@ -89,7 +93,7 @@ for i_row in "${DATA[@]}"; do
 			#echo "Metadata"
 			#echo "   Alive? ${inf:0:1}"
 		else
-			#echo " $rowf = $inf"
+			echo " $rowf = $inf (`echo -n $inf | hexdump -v -e '/1 "%02X "'`)"
 			if [ "${rown}" -eq 1 ]; then
 				TABFLD="$TABFLD,Fld${rowf}"
 			fi
@@ -97,16 +101,29 @@ for i_row in "${DATA[@]}"; do
 
 		let rowf++
 
-		TABDATA="${TABDATA},${inf}"
+		VAL="${inf}"
+		# Check if value is null
+		if [ ${#VAL} == 1 ]; then
+			RET=$(echo -en "$VAL" | xxd -p)
+			echo " == $RET"
+			if [ "$RET" == "$MAGIC_CODE_NULL" ]; then
+				VAL="(null)"
+			fi
+		fi
+
+		#TABDATA="${TABDATA},${inf}"
+		TABDATA="${TABDATA},${VAL}"
 		TABSEP=","
 
-		ATABLE[${rown}_${rowf}]="$inf"
+		#ATABLE[${rown}_${rowf}]="$inf"
+		ATABLE[${rown}_${rowf}]="$VAL"
 	done
 
+	# Do not remove the enter in the next line
 	TABDATA="$TABDATA
 "
 
-	# Só no primeiro registro
+	# Just in the Row #1 (That must be the header of the object)
 	if [ "$rown" == 1 ]; then
 		ATABLE[TF]=$rowf
 	fi

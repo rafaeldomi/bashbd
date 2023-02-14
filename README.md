@@ -1,15 +1,29 @@
 #					BASH BD
 by Rafael Domiciano
 
+# Fast reading
+## Initialize database
+./bd -b data
+
+## Open the database
+./bd data
+
+For help type \?
+
+# Long reading
+
 1. BashBD. What is it?
-2. Code conventions
+2. Code
    .1 Functions prototypes
    .2 Returning values
    .3 Comment on the header of the function
    .4 About "source" or "dot" to import
    .5 "variable" vs "constants"
    .6 Handling Errors
-   .7 Calling commands
+   .7 Some conventions used
+   .8 Calling commands
+   .9 Logging
+   .10 dump_data script
 3. Structures
    .1 Code Workflows
    .2 File format
@@ -91,10 +105,12 @@ The function must have all the parameters declared, like this:
 
 #!/bin/bash
 
-# Concatenate 2 values
-# $1 - Output variable
-# $2 - String to concatenate
-# $3 - String to concatenate
+: <<'FUNCTION'
+Description: A short description
+Parameters:
+ $1 - Param1
+ $2 - Param2
+FUNCTION
 concat() {
 	local _RET=$1
 
@@ -132,6 +148,28 @@ The "find_binaries" save the path command in a variable with the following patte
  - printf => PRG_PRINTF
  - echo   => PRG_ECHO
    \_ $PRG_ECHO "Test"
+
+## 2.9 Logging
+To generate log use the log function, like this:
+
+```bash
+# Source
+. log
+
+some_function() {
+	eval $LOGGER LOG "Message to log"
+}
+```
+
+You can use these log Level:
+* FATAL
+	This level finish the program with functions.finish 1
+* LOG
+* ERROR
+
+## 2.10 dump_data script
+Something there is need to debug the table, you can use the dump_data script:
+./dump_data data/1
 
 # 3. Structures
 

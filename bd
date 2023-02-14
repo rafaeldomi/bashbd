@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Loading.."
+echo "Loading files.."
 
 # Source some files
 . var
@@ -13,11 +13,15 @@ echo "Loading.."
 . tuple
 . table
 . storage
+. signals
+
+echo "Loaded"
 
 # Do some checks before initializang the program
 # $1- This MUST be the args received in the program
 do_pre_init() {
 	# This must be the first procedure to be called
+	# [ functions ]
 	find_binaries
 
 	eval $LOGGER LOG "Iniciando"
@@ -70,24 +74,33 @@ do_pre_init() {
 		sudo strace -s 100 -f -tt -p $PID -o temp/strace.tmp 2>/dev/null &
 	fi
 
+	# Install signals trap
+	# [ signals ]
+	signal_install
+
 	# Run bootstrap process?
 	if [ $DO_BOOTSTRAP ]; then
 		# Import the necessary file
 		. bootstrap
 
+		# [ bootstrap ]
 		bootstrap $BDDATA
 		finish 0
 	fi
 
+	# [ functions ]
 	check_data_dir $BDDATA
 
 	cd $BDDATA
 
 	if [ ! -z $MENUOPTION ]; then
 		case "$MENUOPTION" in
+			# [ menu ]
 			s) menu_list_schemas ;;
 			t) menu_list_tables ;;
 			S) menu_list_sequences ;;
+			l) menu_list_lang ;;
+			y) menu_list_types ;;
 		esac
 		finish 0
 	fi

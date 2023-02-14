@@ -22,6 +22,61 @@ tokenize() {
 	dbg_parse "Total Tokens: ${#TOKENS[@]}"
 }
 
+# SET key=value
+parse_set() {
+	dbg_parse "Func: cmd_set"
+
+	TKN="${TOKENS[1]}"
+	if [ "${TKN}" == "" ]; then
+		echo "Set command incomplete"
+		return
+	fi
+
+	SQLOBJ[TYPE]="SET"
+
+	# SET display_null="(null)"
+
+	in_key=1
+	in_sep=0
+	in_val=0
+
+	for pos in `${PRG_SEQ} 1 ${#TOKENS[@]}`; do
+		TKN="${TOKENS[pos]}"
+		NTKN="${TOKENS[pos+1]}"
+
+		# Token without value
+		if [ "${TKN}" == "" ]; then
+			continue
+		fi
+
+		# Search for the key part
+		if [ $in_key == 1 ]; then
+			SQLOBJ[KEY]="$TKN"
+
+			# Set that the next part should be the sep
+			in_key=0
+			in_sep=1
+		fi
+
+		if [ $in_sep == 1 ]; then
+			if [ ! $TKN == "=" ]; then
+				echo "The separator between key and value must be = signal"
+				return 1
+			fi
+
+			# The next part should be the value
+			in_sep=0
+			in_val=1
+		fi
+
+		if [ $in_val == 1 ]; then
+			SQLOBJ[VALUE]="$TKN"
+
+			in_val=0
+		fi
+	done
+}
+
 # TRUNCATE [TABLE] tabela
 parse_truncate() {
 	dbg_prase "Func: cmd_truncate"
@@ -84,6 +139,7 @@ parse_create() {
 
 	echo "Comando ${TKN} não existe, ou não programado ^^"
 }
+
 parse_create_schema() {
 	pos=$1
 	echo "input pos: $pos"
@@ -95,7 +151,7 @@ parse_create_schema() {
 	# CREATE SCHEMA name1, name2
 	# CREATE SCHEMA nasd,asd;
 
-	for pos in `seq $pos ${#TOKENS[@]}`; do
+	for pos in `${PRG_SEQ} $pos ${#TOKENS[@]}`; do
 		TKN="${TOKENS[pos]}"
 		if [ "$TKN" == "" ]; then
 			continue
@@ -369,10 +425,16 @@ print_sqlobj() {
 	if [ ! -z "${SQLOBJ[TOTAL]}" ]; then
 		echo "TOTAL: ${SQLOBJ[TOTAL]}"
 
-		for pos in `seq 1 ${SQLOBJ[TOTAL]}`; do
+		for pos in `${PRG_SEQ} 1 ${SQLOBJ[TOTAL]}`; do
 			echo "${SQLOBJ[NAME_$pos]}"
 		done
 	fi
+
+	if [ "${SQLOBJ[TYPE]^^}" == "SET" ]; then
+		echo "Key: ${SQLOBJ[KEY]}"
+		echo "Value: ${SQLOBJ[VALUE]}"
+		return
+	fi 
 
 	if [ "${SQLOBJ[FIELDS_TOTAL]}" -gt 0 ]; then
 		echo "FIELDS TOTAL: ${SQLOBJ[FIELDS_TOTAL]}"
@@ -436,6 +498,10 @@ parser() {
 	SQLOBJ[CMD]="${TOKENS[0]^^}"	
 
 	case "${TOKENS[0]^^}" in
+		## Set commands, special commands
+		SET)
+			parse_set
+			;;
 		TABLE)
 			parse_table
 			;;
@@ -472,7 +538,7 @@ parser() {
 #parser "sel tabela1" # Wrong
 #parser "select * from tabela where field1 = 'asd'";
 #parser "select * from tabela where field1 = '1' and field2 = 'asd'";
-parser "select * from tabela where field1 >= '1' and field2 = 'asd' and asd = true";
+#parser "select * from tabela where field1 >= '1' and field2 = 'asd' and asd = true";
 #parser "select al.valor from table al"
 #parser "truncate tabela1"
 #parser "select field, from tab" # Wrong

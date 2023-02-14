@@ -90,15 +90,29 @@ storage_append_magic() {
 	$PRG_ECHO -en "\x$1" >> $2
 }
 
+: <<'FUNCTION'
+Description: Convert a ASCII value to his hex representation
+Parameters:
+ $1 - ASCII value with 2 bytes
+FUNCTION
 storage_print_magic() {
+	# Check length 2 bytes
+	if [ ! ${#1} == 2 ]; then
+		eval $LOGGER ERROR "Value must have 2 bytes"
+		return 1
+	fi
+
 	$PRG_ECHO -en "\x$1"
 }
 
-# Check if the object is of the desired type
-# $1 - Kind of Object (TABLE, INDEX...)
-# $2 - File
+: <<'FUNCTION'
+Description: Check if object is of the desired type
+Parameters:
+ $1 - Kind of object (TABLE, INDEX...)
+ $2 - File
+FUNCTION
 storage_check_mgc() {
-	TMP=`$PRG_DD if=$2 ibs=1 count=1 conv=notrunc status=none | xxd -p`
+	TMP=`$PRG_DD if=$2 ibs=1 count=1 conv=notrunc status=none | ${PRG_XXD} -p`
 	VALUE=${TMP^^}
 
 	get_magic_code MGC $1
@@ -118,22 +132,25 @@ row_append_simple() {
 
 	CROW=""
 
-	# Loop na quantidade de rows inseridos no vetor
+	# Loop in the ROW variable, that can contain one or more rows
 	for i in `$PRG_SEQ 1 ${ROW[ROWS]}`; do
 		# In this first level of the loop we are in the Record level
 
 		# Work the metadata
 		CROW="${CROW}1`storage_print_magic ${MAGIC_CODE_FLD}`"
 
+		# Now, loop the fields in this row
 		for f in `$PRG_SEQ 1 ${ROW[FIELDS]}`; do
-			# Here we are looping through the fields
 
+			# Get the value of the field
 			I_VALUE="${ROW[$i,VALUE_$f]}"
+
+			# The size of the field
 			SIZE="${ROW[FIELDS_$f]}"
 
 			#echo "|$I_VALUE|"
 
-			# Verifica se tem que tratar o dado
+			# Check if the data need some special treatment
 			case ${SIZE} in
 				int)
 					# Let keep it simple by now, without doing any type of conversion

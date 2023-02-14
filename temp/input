@@ -1,0 +1,21 @@
+#!/bin/bash
+
+ask_for_input() {
+	A=""
+
+	echo "input> "
+	while true; do
+		read -e -n 1 TMP
+		echo "* |'${TMP}'|"
+
+		A="$A${TMP}"
+
+		if [ "$TMP" == ";" ]; then
+			echo "#"
+			echo "$A"
+			break
+		fi
+	done
+}
+
+ask_for_input

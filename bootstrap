@@ -15,14 +15,24 @@ Description: Add value to the ROW variable
 $n - The values
 FUNCTION
 bootstrap_add_value() {
-	VALUES=("$@")
-	fn=0
+	# Load all the parrrameters in VALUE var
+	local VALUES=("$@")
+
+	# Initialize counter
+	local fn=0
+
+	# Increment the number of rows
 	let ROW[ROWS]=${ROW[ROWS]}+1
+
+	# Number of this ROW
 	rown=${ROW[ROWS]}
+
+	# Loop through all the parameters
 	for pos in `$PRG_SEQ 1 ${#VALUES[@]}`; do
 		# One more field/attribute
 		let fn=$fn+1
 
+		# The matrix format is [ROW,FIELD]=ATTR_NAME
 		ROW[$rown,VALUE_$fn]="${VALUES[pos-1]}"
 	done
 }
@@ -152,7 +162,7 @@ bootstrap() {
 
 	row_init int 200 200
 
-	bootstrap_add_value 1 builtin 0x0
+	bootstrap_add_value 1 builtin `storage_print_magic ${MAGIC_CODE_NULL}`
 
 	row_append_simple ${CTABLE_LANG}
 
@@ -172,7 +182,7 @@ bootstrap() {
 	row_init int 200 200 int
 
 	bootstrap_add_value 1 int fnc_out 4
-	bootstrap_add_value 2 char 0x0 -1
+	bootstrap_add_value 2 char `storage_print_magic "${MAGIC_CODE_NULL}"` -1
 
 	row_append_simple ${CTABLE_TYPES}
 
