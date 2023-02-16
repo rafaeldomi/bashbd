@@ -1,3 +1,618 @@
 #!/bin/bash
 
-STX_SELECT=("SELECT")
+declare -A SQLOBJ
+declare -A TOKENS
+declare DEF		# Definition atual
+
+: <<'COMMENT'
+6 fields
+
+field 1
+i = identifier / fixo
+s = string / input do usuario
+m = apenas dar match sem nenhuma interação
+g = aponta para outra definição
+e = final da definição
+o = uma lista de opções, alguma tem que dar match
+n = pega o proximo token se der match
+
+field 2 = modificadores / opcionais
+o = campo opcional
+l = campo do tipo lista
+e = caso f1 = m (match) indica que:
+   - se der match continua
+   - se não der match não pode mais strings
+
+field 3 = token pra ser igual
+se for grupo (f1 = g) aponta para outra definição
+se for opções (f1 = o) aponta para uma lista de valores/opções
+
+field 4 = aonde salvar o valor na var TOKEN
+se for grupo (f1 = g) indica o prefix no TOKENS
+
+field 5 = aponta para algum DEF se der match
+se for f2 = opcional, se der match chama essa definição de forma obrigatoria
+
+COMMENT
+
+# Axuiliares
+declare DEF_KV=(s:::KEY m::=: s:::VALUE)
+
+# Commands
+declare DEF_TRUNCATE=(i::TRUNCATE:CMD i:o:TABLE: s:l::TABLE e:)
+declare DEF_TABLE=(i::TABLE:CMD s:::TABLE e:)
+declare DEF_SET=(i::SET:CMD g::DEF_KV:KV: e:)
+declare DEF_SHOW=(i::SHOW:CMD s:::VALUE e:)
+declare DEF_REINDEX=(i::REINDEX:CMD o::DEF_REINDEX_VALUES:OBJECT s:::VALUE e:)
+declare DEF_REINDEX_VALUES=(INDEX TABLE)
+
+# Creates
+declare DEF_CREATE_SCHEMA=(i::CREATE:CMD i::SCHEMA:OBJECT i:o:IFNOTEXISTS:EXISTS g::DEF_SCHEMA:SCHEMA e:)
+declare DEF_SCHEMA=(s:::SCHEMA)
+
+declare DEF_CREATE_TABLE=(i::CREATE:CMD i::TABLE:OBJECT s:::NAME m::\(: g:l:DEF_FIELD:FIELD m::\):  e:)
+declare DEF_FIELD=(s:::NAME s:::TYPE)
+
+declare DEF_CREATE_INDEX=(i::CREATE:CMD i:o:UNIQUE:UNIQUE i::INDEX:OBJECT i:o:IFNOTEXISTS:EXISTS \
+						  s:::NAME m::ON: s:::TABLE m::\(: s:l::COL m::\): e:)
+
+# Drops
+declare DEF_DROP_SCHEMA=(i::DROP:CMD i::SCHEMA:OBJECT i:o:IFEXISTS:EXISTS s:::SCHEMA e:)
+declare DEF_DROP_TABLE=(i::DROP:CMD i::TABLE:OBJECT s:::TABLE e:)
+
+# SELECT
+declare DEF_SELECT=(i::SELECT:CMD g:l:DEF_SEL_FIELDS:FIELD m:oe:FROM: g:l:DEF_SEL_TABLES:TABLES e:)
+declare DEF_SEL_FIELDS=(s:::FIELD o:o:DEF_PO:PO:DEF_SEL_PO o:o:DEF_OPERS:OPER:DEF_STRING n:o:AS:ALIAS)
+declare DEF_SEL_TABLES=(s:::TABLE s:o::ALIAS)
+declare DEF_STRING=(s:::VALUE)
+
+declare DEF_SEL_PO=(g::DEF_SEL_FIELDS:FP m::\):)
+
+declare DEF_OPERS=(- \+ '\*' / \=)
+# PO - Parenthesis Open
+declare DEF_PO=(\()
+# PC - Parenthesis Close
+declare DEF_PC=(\))
+
+declare -A PARSE_DEF
+readonly PARSE_DEF=(
+	[TRUNCATE]=DEF_TRUNCATE
+	[TABLE]=DEF_TABLE
+	[CREATE_SCHEMA]=DEF_CREATE_SCHEMA
+	[CREATE_TABLE]=DEF_CREATE_TABLE
+	[CREATE_INDEX]=DEF_CREATE_INDEX
+	[DROP_SCHEMA]=DEF_DROP_SCHEMA
+	[DROP_TABLE]=DEF_DROP_TABLE
+	[SET]=DEF_SET
+	[SHOW]=DEF_SHOW
+	[REINDEX]=DEF_REINDEX
+	[SELECT]=DEF_SELECT
+)
+
+tn=1
+value=""
+in_tkn=0
+in_str=0
+in_lit=0
+pos=""
+level=0
+multi=""
+
+declare RESERVED=(TRUNCATE TABLE SELECT CREATE SCHEMA AND OR DESC ASC DELETE \
+		WHERE ORDER BY GROUP AS FROM INDEX SET VALUES INSERT INTO IFNOTEXISTS \
+		SELECT DROP IFEXISTS SHOW ALL REINDEX)
+
+parse() {
+	local CMD=${TOKENS[1]}
+	local OBJ=${TOKENS[2]}
+	local TKN=""
+
+	if [[ "$CMD" == "CREATE" ||
+	      "$CMD" == "DROP" ]]; then
+		TKN="${CMD}_${OBJ}"
+	else
+		TKN="${CMD}"
+	fi
+	echo "Vai usar: $TKN"
+
+	declare -n CMD_DEF="${PARSE_DEF[$TKN]}"
+	do_parse
+}
+
+make_prop() {
+	local IFS=":"
+	echo "$1"
+	DEF=($1)
+
+	declare -p DEF
+}
+
+do_parse() {
+	echo ""
+	echo "** DO PARSE"
+	echo "** DEF PRINCIPAL: ${CMD_DEF[@]}"
+
+	# Global variable
+	export pos_sql=1 # Aonde estamos no SQL
+	export level=0
+
+	do_loop CMD_DEF
+
+	echo "FINALIZOU"
+	for key in $(echo "${!TOKENS[@]}" | tr ' ' '\n' | sort); do
+	   echo "$key=${TOKENS[$key]}"
+	done
+	declare -p TOKENS
+}
+
+do_loop() {
+	let level++
+
+	# Local variables
+	local pos_def=0 # Aonde estou no array do definition main
+	local pref=""
+	local g=0
+	local mod_opc=0
+	local mod_list=0
+	local mod_end=0
+
+	declare -n DEF_CMD="$1"
+
+	echo "
+(((((((((((((((((((((((((((
+((((((((((((((((((((((((((("
+	echo "Iniciou novo loop apontando para $1 ($pos_def)"
+	echo "${DEF_CMD[@]} => ${DEF_CMD[0]}"
+
+	while true; do
+		echo "
+*=><><><> LOOP <><><><><>
+ - level: $level (loop: $g - pos_sql: $pos_sql - pos_def: $pos_def)
+"
+
+		if [ -z ${DEF_CMD[$pos_def]} ]; then
+			echo "Não tem mais valores"
+			break
+		fi
+
+		make_prop "${DEF_CMD[$pos_def]}"
+
+		# Trabalhar modificadores
+		mod_opc=0
+		mod_list=0
+		mod_end=0
+		if [ ! -z "${DEF[1]}" ]; then
+			echo "Modificadores: ${DEF[1]}"
+
+			let sz=${#DEF[1]}-1
+			for i in `seq 0 $sz`; do
+				sv="${DEF[1]:$i:1}"
+				echo "$sv"
+				case $sv in
+					o) mod_opc=1
+						;;
+					l) mod_list=1
+						;;
+					e) mod_end=1
+						;;
+				esac
+			done
+
+			echo "Modificados:"
+			echo "  Opcional: $mod_opc | List: $mod_list | End: $mod_end"
+		fi
+
+		value_token="${DEF[2]}"
+		value_sql="${TOKENS[$pos_sql]}"
+
+		echo "VALUE_SQL: $value_sql | VALUE_TOKEN: $value_token"
+
+		# Se for ; e tipo e no TOKENS e nao for DEF[0] = e podemos dar erro
+		if [[ "$value_sql" == ";" &&
+			  "${TOKENS[${pos_sql}_t]}" == "e" &&
+			  ! "${DEF[0]}" == "e" ]]; then
+			echo "Termino de SQL antes do esperado"
+			break
+		fi
+
+		# DEF
+		#  0 = identificador -- i s e g
+		case ${DEF[0]} in
+			# Pega o proximo token se der match
+			n)  echo "Proximo Token"
+				if [ "$value_sql" == "${DEF[2]}" ]; then
+					echo "achou"
+					let pos_sql++
+					let pos_def++
+					value_sql="${TOKENS[$pos_sql]}"
+					if [ ! -z $multi ]; then
+						add="_$multi"
+					fi
+					TOKENS[${DEF[3]}${add}]="$value_sql"
+
+					echo "Achou valor: $value_sql"
+					let pos_sql++
+				else
+					# Verifica se é opcional ou não
+
+					if [ "${DEF[1]}" == "o" ]; then
+						let pos_def++
+						continue
+					else
+						echo "Erro de sintaxe SQL. Verificar"
+						break
+					fi
+				fi
+			   ;;
+
+			# Trabalhar quando for opções
+			o)	echo "Opções multi-valores"
+				echo ${DEF[2]}
+				achou=0
+
+				if [ ! -z $multi ]; then
+					add="_$multi"
+				fi
+
+				unset A
+				declare -n A=${DEF[2]}
+				for i in ${A[@]}; do
+					echo "$i (${i:0:1})== $value_sql"
+					if [ "${i:0:1}" == "\\" ]; then
+						j=${i:1:1}
+						echo "j: $j"
+					else
+						j="$i"
+					fi
+					if [ "$j" == "$value_sql" ]; then
+						echo "$j == $value_sql Deu MATCH"
+						TOKENS[${DEF[3]}${add}]="$value_sql"
+						achou=1
+						break
+					fi
+				done
+
+				if [[ $achou == 0 && ! "${DEF[1]}" == "o" ]]; then
+					echo "SQL nao formado corretamente"
+					echo "Opcional? ${DEF[1]}"
+					break
+				fi
+
+
+				# Verifica se devemos chamar outro definition
+				if [[ "$achou" == 1 && ! -z ${DEF[4]} ]]; then
+					local tgrp="${DEF[4]}"
+					let pos_sql++
+					echo "Trabalhar o grupo $tgrp"
+					do_loop $tgrp
+				fi
+
+				echo "Não vai fazer nada"
+
+				let pos_def++
+				;;
+
+			# Trabalhar quando é grupo
+			g)	local tgrp="${DEF[2]}"
+				echo "Trabalhar o grupo $tgrp"
+				pref="${DEF[3]}"
+
+				a=1
+
+				while true; do
+					export multi="$a"
+
+					do_loop $tgrp
+
+					unset multi
+
+					value_la=${TOKENS[$pos_sql]}
+
+					TOKENS[${pref}_total]=$a
+
+					if [ "$value_la" == "," ]; then
+						let pos_sql++
+					else
+						break
+					fi
+
+					let a++
+					if [ $a -gt 100 ]; then
+						echo "Something wrong"
+						break
+					fi
+				done
+
+				let pos_def++
+				;;
+
+			# Só precisa dar match nao faz nada
+			m)	echo "Procurar por $value_token literal na posição $pos_sql"
+				if [ "$value_sql" == "$value_token" ]; then
+					let pos_sql++
+					let pos_def++
+					continue
+				fi
+
+				if [[ -z ${TOKENS[$pos_sql]} && $mod_end == 1 ]]; then
+					echo "Tudo certo, não precisa mais continuar"
+					break
+				fi
+
+				if [ $mod_opc == 1 ]; then
+					let pos_def++
+				else
+					echo "Erro de sintaxe SQL. Conferir SQL"
+					break
+				fi
+	
+				;;
+			# Identificador / literal
+			i) 
+				echo "Procurar por $value_token literal na posição $pos_sql"
+
+				if [ "$value_sql" == "$value_token" ]; then
+					echo "achou"
+					if [ ! -z ${DEF[3]} ]; then
+						# Salvar o nosso valor de m no def[3]
+						TOKENS[${DEF[3]}]="$value_sql"
+					fi
+				else
+					# Se for um identifer opcional podemos pular para o proximo da nossa def
+					if [ "${DEF[1]}" == "o" ]; then
+						let pos_def++
+						continue
+					else
+						echo "SQL mal formado. Verificar sintaxe"
+						return
+					fi
+				fi
+
+				let pos_sql++
+				let pos_def++
+				;;
+			s)
+				echo "Procurar por valor informado pelo usuario na posição $pos_sql"
+				pref="${DEF[3]}"
+
+				echo "Prefixo: $pref"
+
+				local tot=1
+
+				# se tiver modificador podemos ter lista simples de valores
+				while true; do
+					echo " Achou valor |$value_sql|"
+
+					# não tem mais valor aqui
+					if [ "$value_sql" == "" ]; then
+						break
+					fi
+
+					echo "   * Considerar: $value_sql"
+
+					let pos_sql++
+
+					if [ ! -z "$multi" ]; then
+						add="_$multi"
+					fi
+
+					# Modificador 'l' indicando que é uma lista de valores
+					if [ "${DEF[1]}" == "l" ]; then
+						TOKENS[${pref}_total]=$tot
+						TOKENS[${pref}_$tot]="$value_sql"
+
+						let tot++
+					else
+						TOKENS[${pref}${add}]="$value_sql"
+
+						break
+					fi
+
+					# Look ahead e checa se é separador
+					value_la=${TOKENS[$pos_sql]}
+					if [ "$value_la" == "," ]; then
+						# temos um separador, vamos avançar mais um e continuar
+						let pos_sql++
+						continue
+					fi
+
+					if [[ "$value_la" == ";" ||
+					      "$value_la" == ")" ]]; then
+						break
+					fi
+
+					if [ $tot -gt 10 ]; then
+						return
+					fi
+				done
+
+				# Aqui podemos andar na definition
+				let pos_def++
+				;;
+			e)
+				echo "Não é pra ter mais nenhuma informação no array de tokens"
+
+				if [ "$value_sql" == ";" ]; then
+					echo "OK. finalizou com ;"
+					break
+				fi
+
+				if [ ! -z ${TOKENS[$pos_sql]} ]; then
+					echo "Valores a mais encontrados no SQL. Favor verificar a sintaxe"
+					return 1
+				else
+					echo "OK. Finalizado com sucesso"
+					return 0
+				fi
+				;;
+			*)
+				echo "ID ${DEF[0]} não tratado"
+				;;
+		esac
+
+		declare -p TOKENS
+
+		let g++
+		if [ $g -gt 20 ]; then
+			echo ""
+			echo "mmais de 100loops. saindo"
+			break
+		fi
+	done
+
+	let level--
+}
+
+create_tkn() {
+	echo "create_tkn -> $1 - $2"
+
+	local tmp="${1^^}"
+	local val="${1}"
+	local typ="$2"
+
+	# Check if is reserved (SQL especify)
+	if [[ $in_str == 0 && $in_lit == 0 ]]; then
+		for t in ${RESERVED[@]}; do
+			if [ "$t" == "${tmp}" ]; then
+				typ="reserved"
+				val="${1^^}"
+			fi
+		done
+	fi
+
+	TOKENS[$tn]="$val"
+	TOKENS[${tn}_t]="$typ"
+	TOKENS[${tn}_pos]="$pos"
+	TOKENS[total]=$tn
+	TOKENS[${tn}_l]="$level"
+
+	value=""
+	in_tkn=0
+	unset type
+	unset pos
+
+	let tn=$tn+1
+}
+
+parse_sql() {
+	ts=${#1}
+	export par="$1"
+
+	TOKENS[SQL]="$1"
+
+	echo "Total Size char: $ts"
+
+	for i in `seq 0 $ts`; do
+		c="${par:i:1}"
+
+		echo "** Evaluating |$c| Size: ${#c}"
+
+		#echo "1. Check length = 0"
+		if [ "${#c}" == 0 ]; then
+			echo "Tamanho zero"
+			break
+		fi
+
+		#echo "2. Check space"
+		if [ "$c" == " " ]; then
+			if [ $in_tkn == 0 ]; then
+				echo "Pulando"
+				continue
+			else
+				echo "Criar tkn $tn"
+				create_tkn "$value" "generic"
+				continue
+			fi
+		fi
+
+		#echo "3. Check separator"
+		# Any separator or operator
+		if [[ $in_str == 0 && $in_lit == 0 ]]; then
+			case "$c" in
+				\;)
+					# e = end of sql command
+					if [ ${#value} -gt 0 ]; then
+						create_tkn "$value" "generic"
+					fi
+					create_tkn "$c" e
+					continue
+					;;
+					
+				=|\(|\)|,|+|-|/|\*)
+					if [ ! ${#value} == 0 ]; then
+						pos="left"
+						create_tkn "$value" "generic"
+					fi
+
+					# o = operator
+					# s = separator
+					# gi = group init
+					# ge = group end
+					# u = unkown
+					case "$c" in
+						=|-|+|/|\*) oper="o";;
+						,) oper="s";;
+						\() oper="gi"; let level++;;
+						\)) oper="ge"; let level--;;
+						*) oper="u";;				
+					esac
+
+					create_tkn "$c" $oper
+					pos="right"
+					continue
+					;;
+			esac
+		fi
+
+		#echo "4. Check \""
+		if [ "$c" == "\"" ]; then
+			if [ $in_str == 0 ]; then
+				in_str=1
+				continue
+			else
+				in_str=0
+				create_tkn "$value" "string"
+				continue
+			fi
+		fi
+
+		#echo "5. Check '"
+		if [ "$c" == "'" ]; then
+			#echo "Iniciou literal '"
+
+			if [ "$in_lit" == 0 ]; then
+				in_lit=1
+				continue
+			else
+				in_lit=0
+				create_tkn "$value" "literal"
+				continue
+			fi
+		fi
+
+		#echo "6. Add value"
+		in_tkn=1
+
+		value="$value$c"
+		echo "|$value|"
+	done
+
+	if [ $in_tkn == 1 ]; then
+		create_tkn "$value" "generic"
+	fi
+
+	declare -p TOKENS
+
+	let sz=${TOKENS[total]}
+	for tot in `seq 1 $sz`; do
+		#echo "$tot"
+		echo "KEY: ${TOKENS[$tot]}"
+		echo "  type: ${TOKENS[${tot}_t]}  | pos: ${TOKENS[${tot}_pos]}  | level: ${TOKENS[${tot}_l]}"
+	done
+
+	# Do the real work now
+	#declare -p CMD
+	#echo "Chamar: |${CMD[${TOKENS[1]}]}|"
+	#${CMD[${TOKENS[1]}]}
+	parse
+}

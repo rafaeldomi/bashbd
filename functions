@@ -13,6 +13,7 @@ Parameters:
   $1 - The exit desired exit code
 FUNCTION
 finish() {
+	eval $LOGGER LOG "Sucesfully finished!"
 	exit $1
 }
 
@@ -87,6 +88,7 @@ ask_for_input() {
 		#   so, finish the program
 		RES=$?
 		if [ $RES == 1 ]; then
+			echo
 			finish 0
 		fi
 		INPUT_CMD="$INPUT_CMD$TMP"

@@ -1,4 +1,2 @@
-id,name
-1,bashbd
-2,public
-3,teste
+id,name,handler
+1,builtin,(null)
