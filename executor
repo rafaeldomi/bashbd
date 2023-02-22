@@ -3,6 +3,7 @@
 . log
 . functions
 . parser
+. parserv2
 . cmd_table
 . cmd_create
 . cmd_set
@@ -14,35 +15,41 @@ execute() {
 
 	# [ parser ]
 	# Aqui preenchemos o objeto SQLOBJ
-	parser "${INPUT_CMD}"
+	#parser "${INPUT_CMD}"
+	parse_sql "${INPUT_CMD}" > /dev/null
 	RET="$?"
 
 	if [ ! "$RET" == "0" ]; then
-		eval $LOGGER ERROR "Some error ocurred in parser"
+		LOGGER_MSG="There is a error in the SQL: ${ERROR[msg]}"
+		eval $LOGGER ERROR
+
 		return $RET
 	fi
 
 	# Buscar código dos objetos
 	#post_parser
 
-	LOGGER_MSG="Command |${SQLOBJ[CMD]}|"
+	CMD="${TOKENS[CMD]}"
+
+	LOGGER_MSG="Command |$CMD|"
 	eval $LOGGER DEBUG1
 
-	case "${SQLOBJ[CMD]^^}" in
+	case "${CMD}" in
 		SET)
-			# [ set ]
+			# [ cmd_set ]
 			set_execute
 			;;
 		TABLE)
+			# [ cmd_table ]
 			table_execute
 			;;
 		CREATE)
-			case "${SQLOBJ[TYPE]^^}" in
+			case "${TOKENS[OBJECT]}" in
 				SCHEMA)	create_schema_execute ;;
 			esac
 			;;
 		*)
-			LOGGER_MSG="Unknown command: ${SQLOBJ[CMD]}"
+			LOGGER_MSG="Unknown command: ${CMD}"
 			eval $LOGGER ERROR
 			;;
 	esac

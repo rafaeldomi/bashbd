@@ -1,0 +1,391 @@
+#!/bin/bash
+
+. parserv2
+
+main() {
+	echo "** Iniciando Checagem parser"
+	echo "**   Total Avaliar ${#SQLS[@]}"
+	echo
+
+	local sz_sqls
+    let sz_sqls=${#SQLS[@]}-1
+	local p
+
+	for p in `seq 0 $sz_sqls`; do
+		SQL="${SQLS[p]}"
+		echo "
+=== TESTE: $p"
+		echo "    SQL: $SQL"
+
+		#parse_sql "$SQL"
+		parse_sql "$SQL" > /dev/null
+
+		#declare -p TOKENS
+		R="RESULT_${p}"
+		#echo "$R"
+		declare -n J=$R
+
+		local erro=0
+		if [ ${#J[@]} == 0 ]; then
+			echo "Result nao encontrado. erro"
+			erro=1
+		fi
+
+		for i in "${!J[@]}"; do
+			#echo $i
+
+			mk="${TOKENS[$i]}"
+			ml="${J[$i]}"
+
+			if [ -z "$mk" ]; then
+				echo "não achou token $i. ERRO"
+				erro=1
+				declare -p TOKENS
+				break
+			fi
+
+			#echo "Comparar $mk = $ml"
+
+			if [ ! "$mk" == "$ml" ]; then
+				echo "Os valores não são iguais. ERRO"
+				echo "Comparar $mk = $ml"
+				declare -p TOKENS
+				erro=1
+				break
+			fi
+		done
+
+		if [ $erro == 1 ]; then
+			echo "SQL ou parser inválido. Avaliar"
+		else
+			echo "Checagem OK"
+		fi
+	done
+}
+
+declare SQLS
+SQLS=('set display="text"'
+	'set a=b, c=d'
+	'truncate table tab;'
+	'truncate table tab1, tab2'
+	'table tab'  #4
+	'show all'
+	'show display'
+	'drop schema sc1'
+	'drop schema ifexists sc2' # 8
+	'reindex table asd'
+	'create schema sc1'
+	'create schema sc1,sc2' #11
+	'truncate tab'
+	'create index idx01 on tab (col1)' #13
+	'create index idx02 on tab(col2, col3)'
+	'reindex index bcc'
+	'select 1'
+	'select 1 as fld'
+	'select col1, col2 as fld from table1' #18
+	'select col1 as fld from table1 tab'
+	'select a.col1 as fld, b.col2 as fld1 from table1 a, table2 b'
+	'select *, tab.col from table1 tab'
+	'select 1=2'  # 22
+	'select col1=col2 as fld'
+	'select col1=col2 as fld, col3=tab.col2 as fld2 from table1 tab'
+	'select 3-2 as value'
+	'select "abc bcd" as fld from table1 tab'
+	'drop table tab1'
+	'drop table ifexists tab2'
+	'select col as fld from table1 as tab'  #29
+	'delete from table1'
+	'update table1 set col1=col2'
+)
+
+for i in `seq 0 ${#SQLS[@]}`; do
+	declare -A RESULT_${i}
+done
+
+# set display="text"
+RESULT_0=(
+	[CMD]="SET"
+	[KEY_1]="display"
+	[VALUE_1]="text"
+	[KV_total]=1
+)
+
+# 'set a=b, c=d'
+RESULT_1=(
+	[CMD]="SET"
+	[KEY_1]='a'
+	[VALUE_1]='b'
+	[KEY_2]='c'
+	[VALUE_2]='d'
+	[KV_total]=2
+)
+
+# 'truncate table tab;'
+RESULT_2=(
+	[CMD]="TRUNCATE"
+	[TABLE_1]="tab"
+	[TABLE_total]=1
+)
+
+# 'truncate table tab1, tab2'
+RESULT_3=(
+	[CMD]="TRUNCATE"
+	[TABLE_1]="tab1"
+	[TABLE_2]="tab2"
+	[TABLE_total]=2
+)
+
+# 'table tab'
+RESULT_4=(
+	[CMD]="TABLE"
+	[TABLE]="tab"
+)
+
+# 'show all'
+RESULT_5=(
+	[CMD]="SHOW"
+	[VALUE]="ALL"
+)
+
+# 'show display'
+RESULT_6=(
+	[CMD]="SHOW"
+	[VALUE]="display"
+)
+
+# 'drop schema sc1'
+RESULT_7=(
+	[CMD]="DROP"
+	[OBJECT]="SCHEMA"
+	[IFEXISTS]="false"
+	[SCHEMA]="sc1"
+)
+
+# 'drop schema ifexists sc2'
+RESULT_8=(
+	[CMD]="DROP"
+	[OBJECT]="SCHEMA"
+	[IFEXISTS]="true"
+	[SCHEMA]="sc2"
+)
+
+#	'reindex table asd'
+RESULT_9=(
+	[CMD]="REINDEX"
+	[OBJECT]="TABLE"
+	[VALUE]="asd"
+)
+
+# 'create schema sc1'
+RESULT_10=(
+	[CMD]="CREATE"
+	[OBJECT]="SCHEMA"
+	[SCHEMA_1]="sc1"
+	[SCHEMA_total]=1
+)
+
+# 'create schema sc1,sc2' #11
+RESULT_11=(
+	[CMD]="CREATE"
+	[OBJECT]="SCHEMA"
+	[SCHEMA_1]="sc1"
+	[SCHEMA_2]="sc2"
+	[SCHEMA_total]=2
+)
+
+#	'truncate tab'
+RESULT_12=(
+	[CMD]="TRUNCATE"
+	[TABLE_1]="tab"
+	[TABLE_total]=1
+)
+
+# 'create index idx01 on tab (col1)' #13
+RESULT_13=(
+	[CMD]="CREATE"
+	[OBJECT]="INDEX"
+	[NAME]="idx01"
+	[COL_1]="col1"
+	[COL_total]=1
+	[TABLE]="tab"
+)
+
+#	'create index idx02 on tab(col2, col3)'
+RESULT_14=(
+	[CMD]="CREATE"
+	[OBJECT]="INDEX"
+	[NAME]="idx02"
+	[COL_1]="col2"
+	[COL_2]="col3"
+	[COL_total]=2
+	[TABLE]="tab"
+)
+
+#	'reindex index bcc'
+RESULT_15=(
+	[CMD]="REINDEX"
+	[OBJECT]="INDEX"
+	[VALUE]="bcc"
+)
+
+# select 1
+RESULT_16=(
+	[CMD]="SELECT"
+	[FIELD_1]="1"
+	[FIELD_total]=1
+)
+
+# 'select 1 as fld'
+RESULT_17=(
+	[CMD]="SELECT"
+	[FIELD_1]="1"
+	[FIELD_total]=1
+	[ALIAS_1]="fld"
+)
+
+#	'select col1, col2 as fld from table1' #18
+RESULT_18=(
+	[CMD]="SELECT"
+	[FIELD_1]="col1"
+	[FIELD_2]="col2"
+	[ALIAS_2]="fld"
+	[FIELD_total]=2
+	[TABLE_1]="table1"
+)
+
+# 'select col1 as fld from table1 tab'
+RESULT_19=(
+	[CMD]="SELECT"
+	[FIELD_1]="col1"
+	[ALIAS_1]="fld"
+	[FIELD_total]=1
+	[TABLE_1]="table1"
+	[TABLE_total]=1
+	[TAB_ALIAS_1]="tab"
+)
+
+# 'select a.col1 as fld, b.col2 as fld1 from table1 a, table2 b'
+RESULT_20=(
+	[CMD]="SELECT"
+	[FIELD_1]="a.col1"
+	[FIELD_2]="b.col2"
+	[FIELD_total]=2
+	[ALIAS_1]="fld"
+	[ALIAS_2]="fld1"
+	[TABLE_1]="table1"
+	[TABLE_2]="table2"
+	[TABLE_total]=2
+	[TAB_ALIAS_1]="a"
+	[TAB_ALIAS_2]="b"
+)
+
+# 'select *, tab.col from table1 tab'
+RESULT_21=(
+	[CMD]="SELECT"
+	[FIELD_1]="*"
+	[FIELD_2]="tab.col"
+	[FIELD_total]=2
+	[TABLE_1]="table1"
+	[TAB_ALIAS_1]="tab"
+	[TABLE_total]=1
+)
+
+# 'select 1=2'  # 22
+RESULT_22=(
+	[CMD]="SELECT"
+	[FIELD_1]="1"
+	[VALUE_1]="2"
+	[FIELD_total]=1
+	[OPER_1]="="
+)
+
+# 'select col1=col2 as fld'
+RESULT_23=(
+	[CMD]="SELECT"
+	[FIELD_1]="col1"
+	[OPER_1]="="
+	[VALUE_1]="col2"
+	[FIELD_total]=1
+	[ALIAS_1]="fld"
+)
+
+#	'select col1=col2 as fld, col3=tab.col2 as fld2 from table1 tab'
+RESULT_24=(
+	[CMD]="SELECT"
+	[FIELD_1]="col1"
+	[VALUE_1]="col2"
+	[ALIAS_1]="fld"
+	[FIELD_2]="col3"
+	[VALUE_2]="tab.col2"
+	[ALIAS_2]="fld2"
+	[OPER_1]="="
+	[OPER_2]="="
+	[FIELD_total]=2
+	[TABLE_1]="table1"
+	[TAB_ALIAS_1]="tab"
+	[TABLE_total]=1
+)
+
+#	'select 3-2 as value'
+RESULT_25=(
+	[CMD]="SELECT"
+	[FIELD_1]="3"
+	[OPER_1]="-"
+	[VALUE_1]="2"
+	[FIELD_total]=1
+	[ALIAS_1]="value"
+)
+
+# 'select "abc bcd" as fld from table1 tab'
+RESULT_26=(
+	[CMD]="SELECT"
+	[FIELD_1]="abc bcd"
+	[FIELD_total]=1
+	[ALIAS_1]="fld"
+	[TABLE_1]="table1"
+	[TAB_ALIAS_1]="tab"
+)
+
+# 'drop table tab1'
+RESULT_27=(
+	[CMD]="DROP"
+	[OBJECT]="TABLE"
+	[IFEXISTS]="false"
+	[TABLE]="tab1"
+)
+
+# 'drop table ifexists tab2'
+RESULT_28=(
+	[CMD]="DROP"
+	[OBJECT]="TABLE"
+	[IFEXISTS]="true"
+	[TABLE]="tab2"
+)
+
+# 	'select col as fld from table1 as tab'  #29
+RESULT_29=(
+	[CMD]="SELECT"
+	[FIELD_1]="col"
+	[FIELD_total]=1
+	[ALIAS_1]="fld"
+	[TABLE_1]="table1"
+	[TAB_ALIAS_1]="tab"
+	[TABLE_total]=1
+)
+
+# 'delete from table1'
+RESULT_30=(
+	[CMD]="DELETE"
+	[TABLE]="table1"	
+)
+
+#	'update table1 set col1=col2'
+RESULT_31=(
+	[CMD]="UPDATE"
+	[KV_total]=1
+	[KEY_1]="col1"
+	[VALUE_1]="col2"
+)
+
+# ---
+main

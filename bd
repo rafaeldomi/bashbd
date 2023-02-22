@@ -110,6 +110,7 @@ main_loop() {
 	# [ bd ]
 	do_pre_init "$@"
 
+	eval $LOGGER DEBUG1 "Utilizando database fir: $BDDATA"
 	eval $LOGGER LOG "Program ready"
 	eval $LOGGER LOG "Type help for menu or exit to finish"
 

@@ -45,7 +45,7 @@ table_display_dump_table() {
 			if [ ${#VAL} == 1 ]; then
 				local p=$(echo -en "$VAL" | ${PRG_XXD} -p)
 				if [ "$p" == "$MAGIC_CODE_NULL" ]; then
-					VAL="$NULL_DISPLAY"
+					VAL="$GC_NULL_DISPLAY"
 				fi
 			fi
 

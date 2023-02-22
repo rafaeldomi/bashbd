@@ -5,5 +5,26 @@
 set_execute() {
 	eval $LOGGER DEBUG "Iniciando"
 
-	
+	LOGGER_MSG="Total configuration: ${TOKENS[KV_total]}"
+	eval $LOGGER DEBUG
+
+	local sz=${TOKENS[KV_total]}
+	local i=0
+	for i in `seq 1 $sz`; do
+		local set_key="${TOKENS[KEY_$i]}"
+		local set_value="${TOKENS[VALUE_$i]}"
+
+		LOGGER_MSG="Key: $set_key => Value: $set_value"
+		eval $LOGGER DEBUG1
+
+		case "${set_key^^}" in
+			DISPLAY_NULL)
+				GC_NULL_DISPLAY="$set_value"
+				;;
+			*)
+				LOGGER_MSG="Command ${set_key} not found"
+				eval $LOGGER ERROR
+				;;
+		esac
+	done
 }
