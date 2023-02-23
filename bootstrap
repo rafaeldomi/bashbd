@@ -15,7 +15,7 @@ Description: Add value to the ROW variable
 $n - The values
 FUNCTION
 bootstrap_add_value() {
-	# Load all the parrrameters in VALUE var
+	# Load all the parameters in VALUE var
 	local VALUES=("$@")
 
 	# Initialize counter
@@ -162,7 +162,7 @@ bootstrap() {
 
 	row_init int 200 200
 
-	bootstrap_add_value 1 builtin `storage_print_magic ${MAGIC_CODE_NULL}`
+	bootstrap_add_value 1 builtin ${MAGIC_CODE_NULL}
 
 	row_append_simple ${CTABLE_LANG}
 
@@ -182,7 +182,7 @@ bootstrap() {
 	row_init int 200 200 int
 
 	bootstrap_add_value 1 int fnc_out 4
-	bootstrap_add_value 2 char `storage_print_magic "${MAGIC_CODE_NULL}"` -1
+	bootstrap_add_value 2 char "${MAGIC_CODE_NULL}" -1
 
 	row_append_simple ${CTABLE_TYPES}
 

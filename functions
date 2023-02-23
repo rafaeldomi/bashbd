@@ -430,3 +430,20 @@ trimString() {
     $PRG_SED 's,^[[:blank:]]*,,' <<< "${string}" | $PRG_SED 's,[[:blank:]]*$,,'
 }
 
+: <<'FUNCTION'
+Description: Convert a integer to his hex representation
+Parameters:
+  $1 - Output
+  $2 - Format bytes
+  $3 - Input Integer
+FUNCTION
+int_to_hex() {
+	local _RET=$1
+	local sizebytes=$2
+	local int="$3"
+	local value=""
+
+	value=$(printf "%0$2x" "$int")
+	eval $_RET="$value"
+}
+

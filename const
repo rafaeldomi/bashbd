@@ -18,14 +18,24 @@ readonly SZ_BIGINT=8
 readonly SZ_CHAR=1
 
 ### MAGIC CODES
-readonly MAGIC_CODE_TABLE="0A"
-readonly MAGIC_CODE_INDEX="0B"
-readonly MAGIC_CODE_SEQUENCE="0C"
+readonly S_MAGIC_CODE_TABLE="30"
+readonly S_MAGIC_CODE_INDEX="31"
+readonly S_MAGIC_CODE_SEQUENCE="32"
+
+readonly MAGIC_CODE_TABLE=$(echo -en "\x30")
+readonly MAGIC_CODE_INDEX=$(echo -en "\x31")
+readonly MAGIC_CODE_SEQUENCE=$(echo -en "\x32")
 
 # The NULL code should be "00", but passing hx00 as parameter does not work in bash
-readonly MAGIC_CODE_NULL="14"	# Null code
-readonly MAGIC_CODE_SEP="1E"	# Record separator
-readonly MAGIC_CODE_FLD="1D"	# Group separator / Field Separator
+readonly S_MAGIC_CODE_NULL="14"	# Null code
+readonly S_MAGIC_CODE_SEP="1E"	# Record separator
+readonly S_MAGIC_CODE_FLD="1D"	# Group separator / Field Separator
+readonly S_MAGIC_CODE_HEADER="02" # Finish of the header and begin of the record
+
+readonly MAGIC_CODE_NULL=$(echo -en "\x14")
+readonly MAGIC_CODE_SEP=$(echo -en "\x1E")
+readonly MAGIC_CODE_FLD=$(echo -en "\x1D")
+readonly MAGIC_CODE_HEADER=$(echo -en "\x02")
 
 ### STAMP
 readonly STAMP_FILE=bashbd.stamp

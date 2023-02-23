@@ -1,0 +1,13 @@
+#!/bin/bash
+
+. storagev2
+
+declare -gA CONTENT
+CONTENT[file]="file_data"
+
+init_file CONTENT
+
+next_record CONTENT
+
+#declare -p CONTENT
+#echo ${CONTENT[data]}

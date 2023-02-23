@@ -1,0 +1,7 @@
+#!/bin/bash
+
+. storage
+
+readonly MAGIC_CODE_SEP=$(echo -en "\x1E")
+
+echo $MAGIC_CODE_SEP | hexdump -C

@@ -1,4 +1,16 @@
 
+Data File Anatomy
+
+Position 1 - Byte indicating type of relation (const)
+Position 2... -- records
+
+Record Anatomy
+Pos 1 - 1E == New record, init header
+    1.1 - alive?
+    1.2 - size of row
+02 -- start of the record
+
+
 * 1 file per relation (table / index)
 * sequence is a special relation
 * utilizar seek https://unix.stackexchange.com/questions/307186/what-is-the-difference-between-seek-and-skip-in-dd-command/307188 

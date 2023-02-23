@@ -74,9 +74,13 @@ storage_create_file() {
 		return -1
 	fi
 
+	# [ storage ]
 	get_magic_code MGC $_OBJ
-	storage_append_magic $MGC $_FILE
-	storage_append_magic $MAGIC_CODE_SEP $_FILE
+
+	#echo "Found magic code: $MGC `echo $MGC | hexdump -C`"
+
+	echo -en "$MGC" > $_FILE
+	echo -en "$MAGIC_CODE_SEP" >> $_FILE
 
 	LOGGER_MSG="File ($_FILE) successfully created"
 	eval $LOGGER DEBUG3
@@ -129,15 +133,15 @@ Description: Simple function to insert into table
 FUNCTION
 row_append_simple() {
 	local _TABLE=$1
-
-	CROW=""
+	local CROW=""	# Used to hold all the records
+	local IROW=""	# Used in the inner record
+	local METADATA=""
+	local rec_size=0
 
 	# Loop in the ROW variable, that can contain one or more rows
 	for i in `$PRG_SEQ 1 ${ROW[ROWS]}`; do
 		# In this first level of the loop we are in the Record level
-
-		# Work the metadata
-		CROW="${CROW}1`storage_print_magic ${MAGIC_CODE_FLD}`"
+		IROW=""
 
 		# Now, loop the fields in this row
 		for f in `$PRG_SEQ 1 ${ROW[FIELDS]}`; do
@@ -148,32 +152,46 @@ row_append_simple() {
 			# The size of the field
 			SIZE="${ROW[FIELDS_$f]}"
 
-			#echo "|$I_VALUE|"
+			#echo "|$I_VALUE| `echo -n $I_VALUE | hexdump -C`"
 
-			# Check if the data need some special treatment
-			case ${SIZE} in
-				int)
-					# Let keep it simple by now, without doing any type of conversion
-					#dec_to_hex OUTPUT $I_VALUE
-					#CROW=`printf "%s%s" "${CROW}" "${OUTPUT}"`
-					CROW=`$PRG_PRINTF "%s%8s" "${CROW}" "${I_VALUE}"`
-					;;
-
-				*)
-					CROW=`$PRG_PRINTF "%s%${SIZE}s" "${CROW}" "${I_VALUE}"`
-					;;
-			esac
+			if [ "${I_VALUE}" == "${CODE_MAGIC_NULL}" ]; then
+				# echo "|$I_VALUE| `echo -n $I_VALUE | hexdump -C`"
+				# Se for nulo não faz nada
+				:
+			else
+				# Check if the data need some special treatment
+				case ${SIZE} in
+					int)
+						# Just check the size -1 and convert to null
+						if [ "${I_VALUE}" -eq -1 ]; then
+							IROW="${IROW}${MAGIC_CODE_NULL}"
+						else
+							int_to_hex rec_size 8 ${I_VALUE}
+							IROW="${IROW}${rec_size}"
+						fi
+						;;
+					*)
+						#IROW=`$PRG_PRINTF "%s%${SIZE}s" "${IROW}" "${I_VALUE}"`
+						IROW="${IROW}${I_VALUE}"
+						;;
+				esac
+			fi
 
 			# Put a Field Separator
 			if [ ! "$f" == "${ROW[FIELDS]}" ]; then
-				CROW="${CROW}`storage_print_magic ${MAGIC_CODE_FLD}`"
+				IROW="${IROW}${MAGIC_CODE_FLD}"
 			fi
 		done
 
+		int_to_hex rec_size 4 ${#IROW}
+
+		# This is the end of the ROW, lets put our metadata
+		METADATA="1${MAGIC_CODE_FLD}${rec_size}${MAGIC_CODE_HEADER}"
+
 		# The row data finished, put a Record Separator
-		#if [ ! "$i" == "${ROW[ROWS]}" ]; then
-			CROW="${CROW}`storage_print_magic ${MAGIC_CODE_SEP}`"
-		#fi
+		#IROW="${METADATA}${IROW}${MAGIC_CODE_SEP}"
+
+		CROW="${CROW}${METADATA}${IROW}${MAGIC_CODE_SEP}"
 	done
 
 	# Just echo the value to the table

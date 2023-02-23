@@ -9,6 +9,8 @@ function printTable()
     then
         local -r numberOfLines="$($PRG_WC -l <<< "${data}")"
 
+		echo "Lines: $numberOfLines"
+
         if [[ "${numberOfLines}" -gt '0' ]]
         then
             local table=''
@@ -104,3 +106,22 @@ function trimString()
 #$ printTable ',' "$(cat data-3.txt)"
 #
 #printTable ',' "$(cat data-3.txt)"
+
+printTablev2() {
+	declare -n PRINT=$1
+
+	local nOC=${PRINT[fields]}
+	let nOC=$nOC+3
+	local table=""
+
+	delimiter="$(printf "%s${MAGIC_CODE_FLD}+" "$(repeatString "${MAGIC_CODE_FLD}+" $nOC)")"
+	table="${delimiter}\n${PRINT[header]}\n${delimiter}\n"
+
+	for i in `seq 1 ${PRINT[rows]}`; do
+		line="${PRINT[$i]}"
+
+		table="${table}${line}\n"
+	done
+
+	echo -e "${table}\n${delimiter}" | column -t -s"${MAGIC_CODE_FLD}" | awk '/^\+/{gsub(" ", "-", $0)}1'
+}

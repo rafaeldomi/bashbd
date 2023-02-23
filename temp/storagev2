@@ -1,0 +1,39 @@
+#!/bin/bash
+
+. storage
+
+# 8 kbyte
+R=8
+
+init_file() {
+	declare -n DATA=$1
+
+	DATA[pos]=1
+	DATA[data]=$(head -c 8K ${DATA[file]})
+	DATA[record_num]=0
+	DATA[record]=""
+	DATA[type]="U"
+
+	echo "${DATA[file]}"
+
+	tmp=$(dd if=${DATA[file]} ibs=1 count=1 conv=notrunc status=none | xxd -p)
+	value=${tmp^^}
+
+	get_magic_code_name OUT $value
+	echo " Type: $value $OUT"
+
+	DATA[type]="$OUT"
+}
+
+next_record() {
+	declare -n DATA="$1"
+	ROW="${DATA[data]:1:300}"
+
+	echo "${DATA[data]}"
+	echo -n "$ROW" | hexdump -C
+
+	mapfile -t -O 1 -d `echo -en "\x1D"` FLD <<<$(echo "$ROW")
+	for f in "${FLD[@]}"; do
+		echo "$f"
+	done
+}

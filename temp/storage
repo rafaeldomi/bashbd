@@ -1,53 +1,222 @@
 #!/bin/bash
-readonly CODE_MAGIC_TABLE="0A"
-readonly CODE_MAGIC_INDEX="0B"
-readonly CODE_MAGIC_SEQUENCE="0C"
 
+: <<'COMMENT'
+Description of ROW Vector:
+	ROWS      => Total row number in the vector
+	FIELDS    => Total fields number in the row
+	FIELDS_n  => The type of the attributes
+    n,VALUE_y => The number of the row, and the values of its attibutes
+COMMENT
+
+# Return a string of the magic code
 # $1 - OBJECT
 # $2 - RETURN
 get_magic_code() {
-	local _RET=$2
+	local _RET=$1
 
-	case "$1" in
+	case "$2" in
 		TABLE)
-			eval $_RET="$CODE_MAGIC_TABLE" ;;
+			eval $_RET="$MAGIC_CODE_TABLE" ;;
 		INDEX)
-			eval $_RET="$CODE_MAGIC_INDEX" ;;
+			eval $_RET="$MAGIC_CODE_INDEX" ;;
 		SEQUENCE)
-			eval $_RET="$CODE_MAGIC_SEQUENCE" ;;
+			eval $_RET="$MAGIC_CODE_SEQUENCE" ;;
 		*)
-			echo "Não tratado $1"
+			$PRG_ECHO "Unknown Magic Code $2"
 			;;
 	esac
 }
 
-# $1 = OBJECT
-# $2 = NAME
-storage_create_file() {
-	if [ -z $1 ] || [ -z $2 ]; then
-		echo "Faltando parametros de entrada"
+# $1 - Retorno
+# $2 - MGC
+get_magic_code_name() {
+	local _RET=$1
+	case $2 in
+		$MAGIC_CODE_TABLE)	  eval $_RET="TABLE" ;;
+		$MAGIC_CODE_INDEX)    eval $_RET="INDEX" ;;
+		$MAGIC_CODE_SEQUENCE) eval $_RET="SEQUENCE" ;;
+	esac
+}
+
+# Check if file exists
+#  Return 0: File exists
+#  Return 1: File NOT exists
+# $1 - Filename
+storage_file_exists() {
+	if [ -f $1 ]; then
+		return 0
+	else
 		return 1
 	fi
+}
 
+: <<'FUNCTION'
+Description: Function to create file
+Parameters:
+ $1 = OBJECT
+ $2 = NAME
+FUNCTION
+storage_create_file() {
 	local _OBJ=$1
-	local _NAME=$2
+	local _FILE=$2
 
-	get_magic_code $_OBJ MGC
+	if [ -z $2 ]; then
+		LOGGER_MSG="Parametro 2 não informado"
+		eval $LOGGER ERROR
+		return -1
+	fi
 
-	echo -e -n "\x$MGC" > "$_NAME"
+	storage_file_exists $_FILE
+	RES=$?
+	if [ "$RES" -eq "0" ]; then
+		LOGGER_MSG="Cannot create file. File ($_FILE) already exists"
+		eval $LOGGER ERROR
+		return -1
+	fi
+
+	get_magic_code MGC $_OBJ
+	storage_append_magic $MGC $_FILE
+	storage_append_magic $MAGIC_CODE_SEP $_FILE
+
+	LOGGER_MSG="File ($_FILE) successfully created"
+	eval $LOGGER DEBUG3
+
 	return 0
 }
 
-# $1 - OBJECT
-# $2 - NAME
+# $1 - Hex Magic Code
+# $2 - File
+storage_append_magic() {
+	$PRG_ECHO -en "\x$1" >> $2
+}
+
+: <<'FUNCTION'
+Description: Convert a ASCII value to his hex representation
+Parameters:
+ $1 - ASCII value with 2 bytes
+FUNCTION
+storage_print_magic() {
+	# Check length 2 bytes
+	if [ ! ${#1} == 2 ]; then
+		eval $LOGGER ERROR "Value must have 2 bytes"
+		return 1
+	fi
+
+	$PRG_ECHO -en "\x$1"
+}
+
+: <<'FUNCTION'
+Description: Check if object is of the desired type
+Parameters:
+ $1 - Kind of object (TABLE, INDEX...)
+ $2 - File
+FUNCTION
 storage_check_mgc() {
-	TMP=`dd if=$2 ibs=1 count=1 conv=notrunc status=none | xxd -p`
+	TMP=`$PRG_DD if=$2 ibs=1 count=1 conv=notrunc status=none | ${PRG_XXD} -p`
 	VALUE=${TMP^^}
 
-	get_magic_code $1 MGC
+	get_magic_code MGC $1
 
 	if [ ! "$VALUE" == "$MGC" ]; then
-		echo "Tipo de objeto não é valido"
+		$PRG_ECHO "Invalid kind of object"
 	fi
 }
 
+: <<'FUNCTION'
+Description: Simple function to insert into table
+# The values must be present in the $ROW variable
+# $1 - Table to append data
+FUNCTION
+row_append_simple() {
+	local _TABLE=$1
+	local CROW=""
+	local rec_size=0
+
+	# Loop in the ROW variable, that can contain one or more rows
+	for i in `$PRG_SEQ 1 ${ROW[ROWS]}`; do
+		# In this first level of the loop we are in the Record level
+
+		# Work the metadata
+		#CROW="${CROW}1`storage_print_magic ${MAGIC_CODE_FLD}`"
+
+		# Now, loop the fields in this row
+		for f in `$PRG_SEQ 1 ${ROW[FIELDS]}`; do
+
+			# Get the value of the field
+			I_VALUE="${ROW[$i,VALUE_$f]}"
+
+			# The size of the field
+			SIZE="${ROW[FIELDS_$f]}"
+
+			#echo "|$I_VALUE|"
+
+			# Check if the data need some special treatment
+			case ${SIZE} in
+				int)
+					# Let keep it simple by now, without doing any type of conversion
+					#dec_to_hex OUTPUT $I_VALUE
+					#CROW=`printf "%s%s" "${CROW}" "${OUTPUT}"`
+					CROW=`$PRG_PRINTF "%s%8s" "${CROW}" "${I_VALUE}"`
+					;;
+
+				*)
+					CROW=`$PRG_PRINTF "%s%${SIZE}s" "${CROW}" "${I_VALUE}"`
+					;;
+			esac
+
+			# Put a Field Separator
+			if [ ! "$f" == "${ROW[FIELDS]}" ]; then
+				CROW="${CROW}`storage_print_magic ${MAGIC_CODE_FLD}`"
+			fi
+			#let rec_size=$rec_size+1+${#I_VALUE}
+		done
+
+		# The row data finished, put a Record Separator
+		#if [ ! "$i" == "${ROW[ROWS]}" ]; then
+			CROW="${CROW}`storage_print_magic ${MAGIC_CODE_SEP}`"
+		#fi
+	done
+
+	# Insert the metadata
+	$PRG_ECHO -n "1`storage_print_magic ${MAGIC_CODE_SEP}`${#CROW}`storage_print_magic ${MAGIC_CODE_HEADER}`" >> $_TABLE
+
+	# Just echo the value to the table
+	$PRG_ECHO -n "${CROW}" >> $_TABLE
+
+	# Data is inserted by now
+}
+
+: <<'FUNCTION'
+Description: Initialize the ROW variable
+ $n - Type or size of the attribute
+ Example:
+  row_init int 200
+    $1 - type int
+    $2 - size 200
+FUNCTION
+row_init() {
+	VALUES=($@)
+
+	# METADATA
+	# #1 - Row is alive? 0 No 1 Yes
+	ROW[META]="0"
+	ROW[FIELDS]="${#}"
+	ROW[ROWS]=0
+
+	for i in `$PRG_SEQ 1 ${#}`; do
+		ROW[FIELDS_$i]="${VALUES[i-1]}"
+	done
+}
+
+row_add_value() {
+	VALUES=("$@")
+	fn=0
+	let ROW[ROWS]=${ROW[ROWS]}+1
+	rown=${ROW[ROWS]}
+	for pos in `$PRG_SEQ 1 ${#VALUES[@]}`; do
+		# one more field/attribute
+		let fn=$fn+1
+
+		ROW[$rown,VALUE_$fn]="${VALUES[pos-1]}"
+	done
+}

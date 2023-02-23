@@ -24,7 +24,6 @@ PRG_PRINTF="printf"
 find_binaries
 
 declare -A ATABLE
-declare -A TAB_PRINT
 
 # $1 - Field N
 # $2 - Value
@@ -43,7 +42,7 @@ check_size() {
 
 echo "Dumping: $FILE"
 
-TMP=$($PRG_DD if=$FILE ibs=1 count=1 conv=notrunc status=none)
+TMP=$($PRG_DD if=$FILE ibs=1 count=1 conv=notrunc status=none | ${PRG_XXD} -p)
 VALUE=${TMP^^}
 
 get_magic_code_name OUT $VALUE
@@ -54,70 +53,78 @@ echo "  Type: $VALUE ($OUT)"
 #  1E = Record delimiter
 
 # -t = Remove delimitador no final de cada linha (sem enter)
-# -s = Descarta a primeira position (File Type)
+# -s = Descarta a primeira linha (File Type)
 # -O = Inicia atribuição no index x
 # -d = Delimitador de record
-mapfile -t -s 1 -O 1 -d ${MAGIC_CODE_SEP} DATA < $FILE
+mapfile -t -s 1 -O 1 -d `echo -en "\x1E"` DATA < $FILE
 
-echo "Total Rows: ${#DATA[@]}"
+#echo "Total Rows: ${#DATA[@]}"
 ATABLE[ROWS]=${#DATA[@]}
 
 rown=0
 TABDATA=""
-TABFLD="| N${MAGIC_CODE_FLD}| Size${MAGIC_CODE_FLD}| Alive"
+TABFLD="Row N, Alive"
 
 # Loop in the records
 for i_row in "${DATA[@]}"; do
-	# Fist he need to break by the header sep 02
-	mapfile -t -O 1 -d ${MAGIC_CODE_HEADER} HEADER <<<$(echo -n "${i_row[@]}")
-
-	## Break the record header
-	mapfile -t -O 1 -d ${MAGIC_CODE_FLD} HFLD <<<$(echo -n "${HEADER[1]}")
-
-	# HEADER[0] == header
-	# HEADER[1] == Data
-
 	# 1D is Field Delimiter
 	# Break the row
-	mapfile -t -O 1 -d ${MAGIC_CODE_FLD} FLD <<<$(echo "${HEADER[2]}")
-
-	# rown = total records
-	# rowf = total fields / columns
+	mapfile -t -O 1 -d `echo -en "\x1D"` FLD <<<$(echo "${i_row[@]}")
 
 	let rown++
+	#echo "Row: ${rown}"
+
 	# Loop in the fields on the record
 	rowf=0
+	TABSEP=""
 
-	TABDATA="| $rown${MAGIC_CODE_FLD}| ${HFLD[2]:0:4}${MAGIC_CODE_FLD}| ${HFLD[1]}"
+	TABDATA="${TABDATA}$rown"
 
-	# Loop in the fields
 	for f in "${FLD[@]}"; do
 		# Like a trim
-		inf="$(echo -n $f)"
+		inf="$(echo $f)"
+
+		# Check size
+		check_size $rowf "${inf}"
+
+		# Metadata
+		if [ "$rowf" -eq 0 ]; then
+			:
+			#echo "Metadata"
+			#echo "   Alive? ${inf:0:1}"
+		else
+			echo " $rowf = $inf (`echo -n $inf | hexdump -v -e '/1 "%02X "'`)"
+			if [ "${rown}" -eq 1 ]; then
+				TABFLD="$TABFLD,Fld${rowf}"
+			fi
+		fi
 
 		let rowf++
 
 		VAL="${inf}"
 		# Check if value is null
-		if [[ ${#VAL} == 1 && "${VAL}" == "${MAGIC_CODE_NULL}" ]]; then
-			VAL="(null)"
+		if [ ${#VAL} == 1 ]; then
+			RET=$(echo -en "$VAL" | xxd -p)
+			echo " == $RET"
+			if [ "$RET" == "$MAGIC_CODE_NULL" ]; then
+				VAL="(null)"
+			fi
 		fi
 
-		TABDATA="${TABDATA}${MAGIC_CODE_FLD}| ${VAL}"
+		#TABDATA="${TABDATA},${inf}"
+		TABDATA="${TABDATA},${VAL}"
+		TABSEP=","
 
-		# Preenche o header da tabela de saida apenas no primeiro ow
-		if [ "${rown}" -eq 1 ]; then
-			TABFLD="$TABFLD${MAGIC_CODE_FLD}| Fld${rowf}"
-		fi
-		
+		#ATABLE[${rown}_${rowf}]="$inf"
 		ATABLE[${rown}_${rowf}]="$VAL"
 	done
 
-	TAB_PRINT[${rown}]="$TABDATA ${MAGIC_CODE_FLD}|"
+	# Do not remove the enter in the next line
+	TABDATA="$TABDATA
+"
 
 	# Just in the Row #1 (That must be the header of the object)
 	if [ "$rown" == 1 ]; then
-		# TF for Total Fields
 		ATABLE[TF]=$rowf
 	fi
 done
@@ -126,9 +133,7 @@ echo "Total fields: ${ATABLE[TF]}"
 echo "Total Rows: ${ATABLE[ROWS]}"
 echo ""
 
-TAB_PRINT[header]="${TABFLD} ${MAGIC_CODE_FLD}|"
-TAB_PRINT[rows]="${ATABLE[ROWS]}"
-TAB_PRINT[fields]="${ATABLE[TF]}"
+#echo "||${TABFLD},${TABDATA}||"
 
-# Print Table
-time printTablev2 TAB_PRINT
+printTable ',' "${TABFLD}
+${TABDATA}"

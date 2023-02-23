@@ -64,15 +64,21 @@ ATABLE[ROWS]=${#DATA[@]}
 
 rown=0
 TABDATA=""
-TABFLD="| N${MAGIC_CODE_FLD}| Size${MAGIC_CODE_FLD}| Alive"
+TABFLD="| Row N ${MAGIC_CODE_FLD}| Size ${MAGIC_CODE_FLD}| Alive "
 
 # Loop in the records
 for i_row in "${DATA[@]}"; do
 	# Fist he need to break by the header sep 02
 	mapfile -t -O 1 -d ${MAGIC_CODE_HEADER} HEADER <<<$(echo -n "${i_row[@]}")
 
+	#echo "Header: ${HEADER[1]}"
+
 	## Break the record header
 	mapfile -t -O 1 -d ${MAGIC_CODE_FLD} HFLD <<<$(echo -n "${HEADER[1]}")
+
+	#declare -p HFLD
+
+	#TABFLD="RowN,Alive"
 
 	# HEADER[0] == header
 	# HEADER[1] == Data
@@ -81,10 +87,8 @@ for i_row in "${DATA[@]}"; do
 	# Break the row
 	mapfile -t -O 1 -d ${MAGIC_CODE_FLD} FLD <<<$(echo "${HEADER[2]}")
 
-	# rown = total records
-	# rowf = total fields / columns
-
 	let rown++
+	#echo "Row: ${rown}"
 	# Loop in the fields on the record
 	rowf=0
 
@@ -94,6 +98,10 @@ for i_row in "${DATA[@]}"; do
 	for f in "${FLD[@]}"; do
 		# Like a trim
 		inf="$(echo -n $f)"
+
+		# Check size
+		#check_size $rowf "${inf}"
+
 
 		let rowf++
 
@@ -113,7 +121,7 @@ for i_row in "${DATA[@]}"; do
 		ATABLE[${rown}_${rowf}]="$VAL"
 	done
 
-	TAB_PRINT[${rown}]="$TABDATA ${MAGIC_CODE_FLD}|"
+	TAB_PRINT[${rown}]="$TABDATA |"
 
 	# Just in the Row #1 (That must be the header of the object)
 	if [ "$rown" == 1 ]; then
@@ -126,9 +134,17 @@ echo "Total fields: ${ATABLE[TF]}"
 echo "Total Rows: ${ATABLE[ROWS]}"
 echo ""
 
-TAB_PRINT[header]="${TABFLD} ${MAGIC_CODE_FLD}|"
+#echo "||${TABFLD}||${TABDATA}||"
+
+#printTable ',' "${TABFLD}
+#${TABDATA}"
+
+TAB_PRINT[header]="${TABFLD} |"
 TAB_PRINT[rows]="${ATABLE[ROWS]}"
 TAB_PRINT[fields]="${ATABLE[TF]}"
 
-# Print Table
-time printTablev2 TAB_PRINT
+#declare -p TAB_PRINT
+
+#echo "${TAB_PRINT[1]}" | hexdump -C
+
+printTablev2 TAB_PRINT
