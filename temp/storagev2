@@ -12,28 +12,72 @@ init_file() {
 	DATA[data]=$(head -c 8K ${DATA[file]})
 	DATA[record_num]=0
 	DATA[record]=""
-	DATA[type]="U"
+	DATA[type]="U"	# Unknown
 
-	echo "${DATA[file]}"
+	#echo "${DATA[file]}"
 
-	tmp=$(dd if=${DATA[file]} ibs=1 count=1 conv=notrunc status=none | xxd -p)
-	value=${tmp^^}
+	#tmp=$(dd if=${DATA[file]} ibs=1 count=1 conv=notrunc status=none | xxd -p)
+	#value=${tmp^^}
 
-	get_magic_code_name OUT $value
-	echo " Type: $value $OUT"
+	#value="${DATA[data]:0:1}"
+	#echo ${DATA[data]:0:1} | hexdump -C
+
+	#get_magic_code_name OUT $value
+	get_magic_code_name OUT ${DATA[data]:0:1}
+	echo " Type: $OUT"
 
 	DATA[type]="$OUT"
 }
 
 next_record() {
 	declare -n DATA="$1"
-	ROW="${DATA[data]:1:300}"
+	let DATA[record_num]++
 
-	echo "${DATA[data]}"
-	echo -n "$ROW" | hexdump -C
+	echo "Pos: ${DATA[pos]} - recordnum: ${DATA[record_num]}"
 
-	mapfile -t -O 1 -d `echo -en "\x1D"` FLD <<<$(echo "$ROW")
-	for f in "${FLD[@]}"; do
-		echo "$f"
-	done
+	# Checa se essa row está viva e pega o tamanho
+	# O tamanho do header é fixo
+	SH_LIVE=1	# Position in header for the "live value"
+	SH_SIZE=3	# Position in header for the "record size value"
+	SH=8		# Total size of the header
+	# 1 -- Record init
+	# 2 -- Live or not?
+	# 3 -- Field Separator
+	# 4..7 -- size
+	# 8 -- Data Init
+
+	pos=${DATA[pos]}
+
+	# A nossa posição atual tem que ser um E1
+	tmp=${DATA[data]:$pos:1}
+	if [ ! "$tmp" == "$MAGIC_CODE_SEP" ]; then
+		echo "Magic code não presente. Posição errada"
+		return
+	fi
+
+	#echo -n $tmp | hexdump -C
+
+	live="${DATA[data]:(($pos+$SH_LIVE)):1}"
+	hsz="${DATA[data]:(($pos+$SH_SIZE)):4}"
+	sz=$((0x$hsz))
+
+	echo "  | Live? $live"
+	echo "  | Size? $hsz ($sz)"
+
+	fields="${DATA[data]:(($pos+$SH)):$sz}"
+
+	echo "|$fields|"
+	echo -n "$fields" | hexdump -C
+
+	# Break fields
+	mapfile -t -O 1 -d${MAGIC_CODE_FLD} FLD < <(echo -n "$fields")
+
+	declare -p FLD
+
+	# Andar o pos
+	# sz - size of the record
+	# SZ_SIZE - size of the header
+	echo "Andar: $pos + $sz + $SH"
+	let walk=$pos+$sz+$SH
+	DATA[pos]=$walk
 }

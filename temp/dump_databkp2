@@ -13,7 +13,6 @@ fi
 . const
 . storage
 . temp/table
-. printer
 . functions
 . log
 
@@ -69,7 +68,7 @@ TABFLD="| N${MAGIC_CODE_FLD}| Size${MAGIC_CODE_FLD}| Alive"
 
 # Loop in the records
 for i_row in "${DATA[@]}"; do
-	# First we need to break by the header sep 02
+	# Fist he need to break by the header sep 02
 	mapfile -t -O 1 -d ${MAGIC_CODE_HEADER} HEADER <<<$(echo -n "${i_row[@]}")
 
 	## Break the record header
@@ -131,10 +130,7 @@ TAB_PRINT[header]="${TABFLD} ${MAGIC_CODE_FLD}|"
 TAB_PRINT[rows]="${ATABLE[ROWS]}"
 TAB_PRINT[fields]="${ATABLE[TF]}"
 
-let TAB_PRINT[fields]=${TAB_PRINT[fields]}+3
-
 echo "iniciando printable"
 
 # Print Table
-#time printTablev2 TAB_PRINT
-printer TAB_PRINT
+time printTablev2 TAB_PRINT

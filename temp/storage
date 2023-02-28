@@ -1,5 +1,7 @@
 #!/bin/bash
 
+. const
+
 : <<'COMMENT'
 Description of ROW Vector:
 	ROWS      => Total row number in the vector

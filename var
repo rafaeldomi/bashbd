@@ -8,10 +8,10 @@ VAR_INCLUDED=1
 #   1 = True
 DEBUG=1
 
-# BDDATA
-#   This point to BD Data folder
+# DBDATA
+#   This point to DB Data folder
 #	"data" is the default
-BDDATA=data
+DBDATA=data
 
 # ERRCODE
 #	Could be set for further analysis
@@ -31,6 +31,8 @@ declare -A CACHE_TABLE
 #####################
 # GLOBAL CONFIG - GC
 #####################
-GC_NULL_DISPLAY="(null)"
+declare -A GC
+GC[NULL_TEXT]="(null)"
+GC[TESTE]="value"
 
 fi

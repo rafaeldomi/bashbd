@@ -197,6 +197,9 @@ row_append_simple() {
 	# Just echo the value to the table
 	$PRG_ECHO -n "${CROW}" >> $_TABLE
 
+	# Change to use here-doc that is not affected by the ARG_MAX "limitation"
+	#$PRG_CAT -n <<<"${CROW}" >> $_TABLE
+
 	# Data is inserted by now
 }
 

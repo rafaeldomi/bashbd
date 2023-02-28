@@ -169,7 +169,7 @@ parse() {
 		declare -n CMD_DEF="$U"
 	else
 		ERROR[CODE]=4
-		ERROR[msg]="Command $TKN Not found"
+		ERROR[MSG]="Command $TKN Not found"
 		return ${ERROR[CODE]}
 	fi
 

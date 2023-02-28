@@ -17,14 +17,14 @@ set_execute() {
 		LOGGER_MSG="Key: $set_key => Value: $set_value"
 		eval $LOGGER DEBUG1
 
-		case "${set_key^^}" in
-			DISPLAY_NULL)
-				GC_NULL_DISPLAY="$set_value"
-				;;
-			*)
-				LOGGER_MSG="Command ${set_key} not found"
-				eval $LOGGER ERROR
-				;;
-		esac
+		# Check if exists
+		# Check the available values in var
+		# Need a new value? Add a new array in the GC variable in var file
+		if [ ! -z ${GC[${set_key^^}]} ]; then
+			GC[${set_key^^}]="$set_value"
+		else		
+			LOGGER_MSG="Command ${set_key} not found"
+			eval $LOGGER ERROR
+		fi
 	done
 }

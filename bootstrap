@@ -312,5 +312,30 @@ bootstrap() {
 
 	eval $LOGGER LOG "Table attrs OK"
 
+	######
+	## Table testes
+	## id 		int
+	## uuid		36
+	## number	int
+	storage_create_file "TABLE" 9
+	unset ROW
+	declare -A ROW
+	row_init int 36 int
+
+	local uis=36
+
+	for i in {1..500}; do
+		local i=$RANDOM
+		if [ ${uis} == 36 ]; then
+			uis=1
+			local uuid=$(uuidgen)
+		fi
+		let uis++
+
+		bootstrap_add_value $i ${uuid:0:$uis} $i
+	done
+
+	row_append_simple 9
+
 	bootstrap_stamp_dir
 }

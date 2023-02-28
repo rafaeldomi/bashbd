@@ -5,15 +5,16 @@ echo "Loading files.."
 # Source some files
 . var
 . const
+. log
 . internals
 . functions
-. log
 . executor
 . menu
 . tuple
-. table
+. table.old
 . storage
 . signals
+. printer
 
 echo "Loaded"
 
@@ -38,7 +39,7 @@ do_pre_init() {
 	# Set the program name
 	PROGRAM=$($PRG_BASENAME $0)
 
-	while getopts "?svhb:d:m:" arg; do
+	while getopts "?svhb:d:m:c:" arg; do
 		case $arg in
 			v)
 				LOGGER_MSG="Version: $VERSION"
@@ -56,13 +57,17 @@ do_pre_init() {
 				DO_BOOTSTRAP=1
 				;;
 			d)
-				BDDATA="${OPTARG}"
+				DBDATA="${OPTARG}"
 				;;
 			s)
 				STRACE=1
 				;;
 			m)
 				MENUOPTION="${OPTARG}"
+				;;
+			c)
+				INPUT_COMMAND=1
+				CMD="${OPTARG}"
 				;;
 		esac
 	done
@@ -84,14 +89,14 @@ do_pre_init() {
 		. bootstrap
 
 		# [ bootstrap ]
-		bootstrap $BDDATA
+		bootstrap $DBDATA
 		finish 0
 	fi
 
 	# [ functions ]
-	check_data_dir $BDDATA
+	check_data_dir $DBDATA
 
-	cd $BDDATA
+	cd $DBDATA
 
 	if [ ! -z $MENUOPTION ]; then
 		case "$MENUOPTION" in
@@ -110,14 +115,20 @@ main_loop() {
 	# [ bd ]
 	do_pre_init "$@"
 
-	eval $LOGGER DEBUG1 "Utilizando database fir: $BDDATA"
+	eval $LOGGER DEBUG1 "Using database folder: $DBDATA"
 	eval $LOGGER LOG "Program ready"
 	eval $LOGGER LOG "Type help for menu or exit to finish"
 
 	# This is the program main loop, ethernal
 	while [ true ]; do
 		# [ functions ]
-		ask_for_input
+		if [ -z $INPUT_COMMAND ]; then
+			ask_for_input
+		else
+			LOGGER_MSG="Command: $CMD"
+			eval $LOGGER DEBUG1
+			INPUT_CMD="${CMD}"
+		fi
 
 		LOGGER_MSG="Input '${INPUT_CMD}'"
 		eval $LOGGER DEBUG1
@@ -141,6 +152,10 @@ main_loop() {
 		# So, lets process this (probably) SQL command
 		# [ executor ]
 		execute "$INPUT_CMD"
+
+		if [ ! -z $INPUT_COMMAND ]; then
+			return 0
+		fi
 	done
 }
 

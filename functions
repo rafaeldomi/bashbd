@@ -194,12 +194,12 @@ Parameters>
 FUNCTION
 check_data_dir() {
 	# Directory exists?
-	if [ ! -d $BDDATA ]; then
+	if [ ! -d $DBDATA ]; then
 		eval $LOGGER FATAL "Could not find data structure"
 	fi
 
 	# Is a directory stampped by bashbd?
-	if [ ! -f $BDDATA/$STAMP_FILE ]; then
+	if [ ! -f $DBDATA/$STAMP_FILE ]; then
 		eval $LOGGER FATAL "This directory is not a bashbd dir"
 	fi
 }

@@ -37,12 +37,6 @@ readonly MAGIC_CODE_SEP=$(echo -en "\x1E")
 readonly MAGIC_CODE_FLD=$(echo -en "\x1D")
 readonly MAGIC_CODE_HEADER=$(echo -en "\x02")
 
-# The same thing, but less verbose
-readonly MGC_NULL=${MAGIC_CODE_NULL}
-readonly MGC_SEP=${MAGIC_CODE_SEP}
-readonly MGC_FLD=${MAGIC_CODE_FLD}
-readonly MGC_HEADER=${MAGIC_CODE_HEADER}
-
 ### STAMP
 readonly STAMP_FILE=bashbd.stamp
 

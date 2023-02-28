@@ -3,10 +3,14 @@
 . storagev2
 
 declare -gA CONTENT
-CONTENT[file]="file_data"
+#CONTENT[file]="file_data"
+CONTENT[file]="3"
 
 init_file CONTENT
 
+next_record CONTENT
+next_record CONTENT
+next_record CONTENT
 next_record CONTENT
 
 #declare -p CONTENT
