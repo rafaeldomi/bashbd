@@ -447,3 +447,7 @@ int_to_hex() {
 	eval $_RET="$value"
 }
 
+fn_exist() {
+	declare -F "$1" > /dev/null
+	return $?
+}

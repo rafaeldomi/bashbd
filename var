@@ -35,4 +35,7 @@ declare -A GC
 GC[NULL_TEXT]="(null)"
 GC[TESTE]="value"
 
+# To save the original values before the FIRST change
+declare -A GC_ORIGINAL
+
 fi

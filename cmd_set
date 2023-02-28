@@ -1,17 +1,13 @@
 #!/bin/bash
 
-. log
-
 set_execute() {
-	eval $LOGGER DEBUG "Iniciando"
-
 	LOGGER_MSG="Total configuration: ${TOKENS[KV_total]}"
 	eval $LOGGER DEBUG
 
 	local sz=${TOKENS[KV_total]}
 	local i=0
 	for i in `seq 1 $sz`; do
-		local set_key="${TOKENS[KEY_$i]}"
+		local set_key="${TOKENS[KEY_$i]^^}"
 		local set_value="${TOKENS[VALUE_$i]}"
 
 		LOGGER_MSG="Key: $set_key => Value: $set_value"
@@ -20,8 +16,12 @@ set_execute() {
 		# Check if exists
 		# Check the available values in var
 		# Need a new value? Add a new array in the GC variable in var file
-		if [ ! -z ${GC[${set_key^^}]} ]; then
-			GC[${set_key^^}]="$set_value"
+		if [ ! -z ${GC[$set_key]} ]; then
+			if [ -z ${GC_ORIGINAL[$set_key]} ]; then
+				GC_ORIGINAL[$set_key]="${GC[$set_key]}"
+			fi
+
+			GC[$set_key]="$set_value"
 		else		
 			LOGGER_MSG="Command ${set_key} not found"
 			eval $LOGGER ERROR

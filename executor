@@ -8,6 +8,7 @@
 . cmd_create
 . cmd_set
 . cmd_show
+. cmd_reset
 
 execute() {
 	# Clear this "object" (I know, variable, OK)
@@ -35,27 +36,17 @@ execute() {
 	LOGGER_MSG="Command |$CMD|"
 	eval $LOGGER DEBUG1
 
-	case "${CMD}" in
-		SHOW)
-			# [ cmd_show ]
-			show_execute
-			;;
-		SET)
-			# [ cmd_set ]
-			set_execute
-			;;
-		TABLE)
-			# [ cmd_table ]
-			table_execute
-			;;
-		CREATE)
-			case "${TOKENS[OBJECT]}" in
-				SCHEMA)	create_schema_execute ;;
-			esac
-			;;
-		*)
-			LOGGER_MSG="Unknown command: ${CMD}"
-			eval $LOGGER ERROR
-			;;
-	esac
+	# The name of the function is standardized
+	local fnc_call="${CMD,,}_execute"
+
+	fn_exist $fnc_call
+	RES=$?
+
+	if [ ! "$RES" == "0" ]; then
+		LOGGER_MSG="Unknown command: ${CMD}"
+		eval $LOGGER ERROR
+		return 1
+	fi
+
+	eval $fnc_call	
 }

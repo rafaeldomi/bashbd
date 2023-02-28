@@ -1,0 +1,21 @@
+#!/bin/bash
+
+reset_execute() {
+	LOGGER_MSG="Reset option: ${TOKENS[VALUE]}"
+	eval $LOGGER DEBUG
+
+	local option="${TOKENS[VALUE]^^}"
+
+	# Check if the option exists in the original
+	local value="${GC_ORIGINAL[$option]:-${GC[$option]}}"
+
+	GC[$option]="$value"
+
+	declare -A TAB_PRINTER
+	TAB_PRINTER[header]="| Result${MGC_FLD}|"
+	TAB_PRINTER[fields]=1
+	TAB_PRINTER[rows]=1
+	TAB_PRINTER[1]="| OK${MGC_FLD}|"
+
+	printer TAB_PRINTER
+}
