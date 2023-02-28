@@ -3,7 +3,10 @@
 . log
 
 table_execute() {
-	eval $LOGGER DEBUG1 "Iniciando"
+	LOGGER_MSG="Table: ${TOKENS[TABLE]}"
+	eval $LOGGER DEBUG
 
-
+	local value="${TOKENS[TABLE]}"
+	
+	# Search for the table definition
 }

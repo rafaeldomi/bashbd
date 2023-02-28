@@ -1,12 +1,26 @@
 #!/bin/bash
 
 show_execute() {
-	eval $LOGGER DEBUG "Iniciando"
-
 	LOGGER_MSG="Config to show: ${TOKENS[VALUE]}"
 	eval $LOGGER DEBUG
 
 	local option="${TOKENS[VALUE]^^}"
+
+	if [ "$option" == "RESERVED" ]; then
+		declare -A TAB_PRINTER
+
+		TAB_PRINTER[header]="| value${MGC_FLD}|"
+		TAB_PRINTER[fields]=1
+
+		local k
+		for k in `seq 0 ${#RESERVED[@]}`; do
+			TAB_PRINTER[$((k+1))]="| ${RESERVED[$k]} ${MGC_FLD}|"
+		done
+		TAB_PRINTER[rows]=$k
+
+		printer TAB_PRINTER
+		return 0
+	fi
 
 	# check if value exists
 	if [[ ! "$option" == "ALL" && -z ${GC[$option]} ]]; then

@@ -48,10 +48,9 @@ codes
 2 - Infinite Loop
 3 - Syntax error. Expected operator not found
 4 - SQL Command not found
-
 COMMENT
 
-# Axuiliares
+# Auxs
 declare DEF_KV=(s:::KEY m::=: s:::VALUE)
 
 # Commands
@@ -107,7 +106,7 @@ declare DEF_DELETE=(i::DELETE:CMD m::FROM s:::TABLE e:)
 declare DEF_UPDATE=(i::UPDATE:CMD s:::TABLE m::SET g::DEF_KV:KV e: )
 
 # SELECT
-declare DEF_SELECT=(i::SELECT:CMD g:l:DEF_SEL_FIELDS:FIELD m:oe:FROM: g:l:DEF_SEL_TABLES:TABLE m:ol:WHERE:DEF_WHERE  e:)
+declare DEF_SELECT=(i::SELECT:CMD g:l:DEF_SEL_FIELDS:FIELD m:oe:FROM: g:l:DEF_SEL_TABLES:TABLE m:ol:WHERE:DEF_WHERE e:)
 declare DEF_SEL_FIELDS=(s:::FIELD o:o:DEF_PO:PO:DEF_SEL_PO o:o:DEF_OPERS:OPER:DEF_STRING n:o:AS:ALIAS)
 declare DEF_SEL_TABLES=(s:::TABLE m:o:AS s:o::TAB_ALIAS)
 declare DEF_STRING=(s:::VALUE)
@@ -139,7 +138,6 @@ readonly PARSE_DEF=(
 	[DELETE]=DEF_DELETE
 	[UPDATE]=DEF_UPDATE
 )
-
 
 declare RESERVED=(TRUNCATE TABLE SELECT CREATE SCHEMA AND OR DESC ASC DELETE \
 		WHERE ORDER BY GROUP AS FROM INDEX SET VALUES INSERT INTO IFNOTEXISTS \
