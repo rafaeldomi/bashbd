@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# $1 - Variable Name Associative Array
+attrs_search() {
+	# FA = FindAttrs
+	declare -n FA=$1
+
+	# FA[total]=total attrs
+	# FA[#_name]=name of the attr
+	# FA[#_type]=type of the attr
+
+	declare -A DATA
+	# We are reading the table attrs
+	DATA[file]=$CTABLE_ATTRS
+	init_file DATA
+
+	local i=0
+	# Loop in all records of the table attrs
+	while next_record DATA REC; do
+		local val=""
+
+		# REC[2] = Table_id
+		# REC[3] = name of the attr
+		# REC[4] = type
+		hex_to_int val ${REC[2]}
+
+		if [ "${FA[id]}" == "$val" ]; then
+			let i++
+			FA[${i}_name]="${REC[3]}"
+			FA[${i}_type]="${REC[4]}"
+		fi
+	done
+	FA[total]=$i
+}
+
+# $1 - Array variable
+attrs_get_header() {
+	declare -n FA=$1
+	local i=0
+	local val="|"
+	for i in `$PRG_SEQ 1 ${FA[total]}`; do
+		val="$val ${FA[${i}_name]} ${MGC_FLD}|"
+	done
+	FA[header]="$val"
+}

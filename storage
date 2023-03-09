@@ -279,10 +279,10 @@ next_record() {
 	# 8 -- Data Init
 
 	# Actual pos
-	pos=${STG_DATA[pos]}
+	local pos=${STG_DATA[pos]}
 
 	# Out actual position must be an E1 hex
-	tmp=${STG_DATA[data]:$pos:1}
+	local tmp=${STG_DATA[data]:$pos:1}
 
 	if [ "$tmp" == "" ]; then
 		eval $LOGGER DEBUG "Next variable is empty. There is no more data"
@@ -295,11 +295,11 @@ next_record() {
 		return 2
 	fi
 
-	live="${STG_DATA[data]:(($pos+$SH_LIVE)):1}"
-	hsz="${STG_DATA[data]:(($pos+$SH_SIZE)):4}"
-	sz=$((0x$hsz))
+	local live="${STG_DATA[data]:(($pos+$SH_LIVE)):1}"
+	local hsz="${STG_DATA[data]:(($pos+$SH_SIZE)):4}"
+	local sz=$((0x$hsz))
 
-	fields="${STG_DATA[data]:(($pos+$SH)):$sz}"
+	local fields="${STG_DATA[data]:(($pos+$SH)):$sz}"
 
 	if [ "$fields" == "" ]; then
 		eval $LOGGER DEBUG "Next variable is empty. There is no more data"

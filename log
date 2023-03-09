@@ -63,6 +63,7 @@ log () {
 	else
 		VALUES=($@)
 		SPC=""
+		local i=0
 		for i in `$PRG_SEQ 3 ${#}`; do
 			MSG="$MSG${SPC}${VALUES[i]}"
 			SPC=" "

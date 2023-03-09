@@ -69,15 +69,15 @@ map_fields() {
 ###################################################
 ###################################################
 menu_list_sequences() {
-	table_display_dump_table "Listing Sequences" $CTABLE_SEQUENCE "id,schema_id,name,last_value"
+	printer_dump_table "Listing Sequences" $CTABLE_SEQUENCE
 }
 
 menu_list_schemas() {
-	table_display_dump_table "Listing Schemas" $CTABLE_SCHEMAS "id,name"
+	printer_dump_table "Listing Schemas" $CTABLE_SCHEMAS
 }
 
 menu_list_tables() {
-	printer_dump_table "Listing Tables" $CTABLE_TABLES "id,name,schema_id"
+	printer_dump_table "Listing Tables" $CTABLE_TABLES
 }
 
 menu_list_functions() {
@@ -90,14 +90,14 @@ menu_warm_cache() {
 }
 
 menu_list_types() {
-	table_display_dump_table "Listing Types" $CTABLE_TYPES "id,name,fnc_out,size"
+	printer_dump_table "Listing Types" $CTABLE_TYPES
 }
 
 menu_list_lang() {
-	table_display_dump_table "Listing Languages" $CTABLE_LANG "id,name,handler"
+	printer_dump_table "Listing Languages" $CTABLE_LANG
 }
 menu_list_index() {
-	table_display_dump_table "Listing Indexes" $CTABLE_INDEX "id,table_id,fields"
+	printer_dump_table "Listing Indexes" $CTABLE_INDEX
 }
 
 menu_call_function() {

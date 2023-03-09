@@ -48,26 +48,33 @@ printer() {
 printer_dump_table() {
 	local _TITLE=$1
 	local _TABLE=$2
-	local _HEADER=$3
-
-	local HEADER="|${_HEADER//,/${MGC_FLD}|}${MGC_FLD}|"
 
 	# Lets find the attrs of this relation
 	declare -A TAB_ATTR
 	TAB_ATTR[id]=$2
-	find_attrs TAB_ATTR
-	declare -p TAB_ATTR
+	attrs_search TAB_ATTR
+	attrs_get_header TAB_ATTR
 
 	declare -A TAB_PRINT
-	printer_init TAB_PRINT 3 "$HEADER"
+	printer_init TAB_PRINT ${TAB_ATTR[total]} "${TAB_ATTR[header]}"
 
 	declare -A DATA
 	DATA[file]=$_TABLE
 	init_file DATA
 
+	unset REC
 	while next_record DATA REC; do
-		local ROW=""
-		ROW="|${REC[1]}${MGC_FLD}|${REC[2]} ${MGC_FLD}|${REC[3]} ${MGC_FLD}|"
+		local ROW="|"
+		local k=0
+
+		for k in `$PRG_SEQ 1 ${#REC[@]}`; do
+			# Check if value is null
+			if [ ${REC[$k]} == $MGC_NULL ]; then
+				ROW="$ROW${GC[NULL_TEXT]}${MGC_FLD}|"
+			else
+				ROW="$ROW${REC[$k]}${MGC_FLD}|"
+			fi
+		done
 
 		printer_add TAB_PRINT "$ROW"
 	done
