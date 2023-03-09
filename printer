@@ -50,13 +50,19 @@ printer_dump_table() {
 	local _TABLE=$2
 
 	# Lets find the attrs of this relation
-	declare -A TAB_ATTR
-	TAB_ATTR[id]=$2
-	attrs_search TAB_ATTR
-	attrs_get_header TAB_ATTR
+	declare -A ATTRS
+	ATTRS[id]=$2
+	attrs_search ATTRS
+	RES=$?
+	if [ ! $RES = 0 ]; then
+		LOGGER_MSG="Attributes for relation $2 not found"
+		eval $LOGGER ERROR
+		return 1
+	fi
+	attrs_get_header ATTRS
 
 	declare -A TAB_PRINT
-	printer_init TAB_PRINT ${TAB_ATTR[total]} "${TAB_ATTR[header]}"
+	printer_init TAB_PRINT ${ATTRS[total]} "${ATTRS[header]}"
 
 	declare -A DATA
 	DATA[file]=$_TABLE
@@ -66,13 +72,29 @@ printer_dump_table() {
 	while next_record DATA REC; do
 		local ROW="|"
 		local k=0
+		local value=""
 
+		# Loop the fields in the record struct
 		for k in `$PRG_SEQ 1 ${#REC[@]}`; do
 			# Check if value is null
 			if [ ${REC[$k]} == $MGC_NULL ]; then
 				ROW="$ROW${GC[NULL_TEXT]}${MGC_FLD}|"
 			else
-				ROW="$ROW${REC[$k]}${MGC_FLD}|"
+				value="${REC[$k]}"
+				# Check the type of this attr
+				if [ "${ATTRS[${k}_type]}" == "1" ]; then
+					# IV = Int Value
+					hex_to_int IV "${REC[$k]}"
+					RES=$?
+					if [ ! $RES == 0 ]; then
+						LOGGER_MSG="Fail to convert value ${REC[$k]}"
+						eval $LOGGER ERROR
+						return 1
+					fi
+					value="$IV"
+				fi
+				
+				ROW="$ROW${value}${MGC_FLD}|"
 			fi
 		done
 

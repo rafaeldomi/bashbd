@@ -152,12 +152,8 @@ row_append_simple() {
 			# The size of the field
 			SIZE="${ROW[FIELDS_$f]}"
 
-			#echo "|$I_VALUE| `echo -n $I_VALUE | hexdump -C`"
-
 			if [ "${I_VALUE}" == "${MGC_NULL}" ]; then
-				# echo "|$I_VALUE| `echo -n $I_VALUE | hexdump -C`"
-				# Se for nulo não faz nada
-				:
+				IROW="${IROW}${I_VALUE}"
 			else
 				# Check if the data need some special treatment
 				case ${SIZE} in
@@ -171,7 +167,6 @@ row_append_simple() {
 						fi
 						;;
 					*)
-						#IROW=`$PRG_PRINTF "%s%${SIZE}s" "${IROW}" "${I_VALUE}"`
 						IROW="${IROW}${I_VALUE}"
 						;;
 				esac
@@ -189,8 +184,6 @@ row_append_simple() {
 		METADATA="1${MGC_FLD}${rec_size}${MGC_HEADER}"
 
 		# The row data finished, put a Record Separator
-		#IROW="${METADATA}${IROW}${MGC_SEP}"
-
 		CROW="${CROW}${METADATA}${IROW}${MGC_SEP}"
 	done
 
@@ -198,6 +191,8 @@ row_append_simple() {
 	$PRG_ECHO -n "${CROW}" >> $_TABLE
 
 	# Change to use here-doc that is not affected by the ARG_MAX "limitation"
+	# This not work correctly, just left here to remember the attempt and not
+	#	waste time trying again
 	#$PRG_CAT -n <<<"${CROW}" >> $_TABLE
 
 	# Data is inserted by now
@@ -248,6 +243,11 @@ init_file() {
 	fi
 	declare -n IFD=$1
 
+	if [ "${IFD[file]}" == "" ]; then
+		eval $LOGGER ERROR "Table file is missing"
+		return 1
+	fi
+
 	# Position the cursor at the beginning
 	IFD[pos]=1
 	# Read 32Kb for now
@@ -270,6 +270,9 @@ init_file() {
 next_record() {
 	declare -n STG_DATA="$1"
 	declare -n TFLD="$2"
+
+	# Clear the variable
+	unset TFLD
 
 	# Check if the record is alive and get the values
 	# 1 -- Record init
@@ -314,6 +317,15 @@ next_record() {
 	if [ ! "$RES" == 0 ]; then
 		eval $LOGGER ERROR "Error in mapfile to get fields"
 		return 2
+	fi
+
+	# When the last field is empty, like a char = "" does not "open" correctly
+	# So, if the last value of the fields variable is 1D=MGC_FLD
+	#	we must create a new field in the end of the TFLD
+	# The extra space is needed, another way to do is ${VAR:0-1}
+	if [ "${fields: -1}" == "$MGC_FLD" ]; then
+		local newpos=${#TFLD}
+		TFLD[$newpos]=""
 	fi
 
 	# Andar o pos

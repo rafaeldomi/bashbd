@@ -24,6 +24,9 @@ find_table_by_name() {
 		fi
 	done
 
-	eval $_RET="${REC[0]}"
+	# IV = Int Value
+	hex_to_int IV "${REC[1]}"
+
+	eval $_RET="$IV"
 	return $RETCODE
 }

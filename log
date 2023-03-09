@@ -34,12 +34,12 @@ CL_NC='\e[0m\033[0m'
 # $3 - message
 debug() {
 	if [ "$DEBUG" = "1" ]; then
-		printf "%s:%s - %s\n" "$1" "$2" "$3"
+		${PRG_PRINTF} "%s:%s - %s\n" "$1" "$2" "$3"
 	fi
 }
 
 writeln() {
-	printf "%s\n" "$1"
+	${PRG_PRINTF} "%s\n" "$1"
 }
 
 # $1 - FUNCNAME

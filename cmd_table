@@ -1,11 +1,21 @@
 #!/bin/bash
 
 table_execute() {
-	LOGGER_MSG="Table: ${TOKENS[TABLE]}"
-	eval $LOGGER DEBUG
-
+	local OUT=""
 	local value="${TOKENS[TABLE]}"
 	
-	# Search for the table definition
-	
+	LOGGER_MSG="Table: $value"
+	eval $LOGGER DEBUG
+
+	# Find the table id
+	find_table_by_name OUT "$value"
+	RES=$?
+	if [ ! $RES == 0 ]; then
+		LOGGER_MSG="Table '${TOKENS[TABLE]}' not exists"
+		eval $LOGGER ERROR
+		return 1
+	fi
+
+	# Just call the printer_dump_table
+	printer_dump_table "" $OUT
 }

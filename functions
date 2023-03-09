@@ -211,7 +211,7 @@ find_binaries() {
 	#  |  mapfile  |  let  |  shift    | eval
 	#  |  local    | read  |  command 
 	local PRGS=(cut dd seq printf echo stat basename bash wc awk sed column \
-				cat rm xxd head)
+				cat rm xxd head date)
 
 	for cmd in "${PRGS[@]}"; do
 		local cmdpath=`which ${cmd}`
@@ -288,8 +288,10 @@ hex_to_int() {
 	local value=""
 
 	value=$(${PRG_PRINTF} "%d" "0x$input")
+	RES=$?
 
 	eval $_RET="$value"
+	return $RES
 }
 
 fn_exist() {

@@ -71,7 +71,9 @@ TABFLD="| N${MGC_FLD}| Size${MGC_FLD}| Alive"
 for i_row in "${DATA[@]}"; do
 	# First we need to break by the header, just break by the Size of the Header
 	HEADER[1]="${i_row:0:${SH}}"
-	HEADER[2]="${i_row:${SH}}"
+	HEADER[2]="${i_row:7}"
+
+	echo "${HEADER[1]}"
 
 	## Break the record header
 	mapfile -t -O 1 -d ${MGC_FLD} HFLD <<<$(echo -n "${HEADER[1]}")

@@ -22,7 +22,7 @@ bootstrap_add_value() {
 	local fn=0
 
 	# Increment the number of rows
-	let ROW[ROWS]=${ROW[ROWS]}+1
+	let ROW[ROWS]++
 
 	# Number of this ROW
 	rown=${ROW[ROWS]}
@@ -146,6 +146,7 @@ bootstrap() {
 	bootstrap_add_value 7 1 sq_index 0
 	bootstrap_add_value 8 1 sq_attrs 26
 
+	# [ storage ]
 	row_append_simple ${CTABLE_SEQUENCE}
 
 	eval $LOGGER LOG "Table sequences: OK"
@@ -182,7 +183,7 @@ bootstrap() {
 	row_init int 200 200 int
 
 	bootstrap_add_value 1 int fnc_out 4
-	bootstrap_add_value 2 char "${MGC_NULL}" -1
+	bootstrap_add_value 2 char ${MGC_NULL} ${MGC_NULL}
 
 	row_append_simple ${CTABLE_TYPES}
 
@@ -207,6 +208,8 @@ bootstrap() {
 	bootstrap_add_value $CTABLE_FUNCTIONS functions 1
 	bootstrap_add_value $CTABLE_INDEX index 1
 	bootstrap_add_value $CTABLE_LANG language 1
+	bootstrap_add_value $CTABLE_SEQUENCE sequences 1
+	bootstrap_add_value 9 teste 1
 
 	row_append_simple ${CTABLE_TABLES}
 
@@ -268,18 +271,18 @@ bootstrap() {
 
 	# Relation schemas
 	bootstrap_add_value 1 ${CTABLE_SCHEMAS} id 1 -1 "sequence:4"
-	bootstrap_add_value 2 ${CTABLE_SCHEMAS} name 1 -1 ""
+	bootstrap_add_value 2 ${CTABLE_SCHEMAS} name 2 200 ${MGC_NULL}
 
 	# Relation Languages
 	bootstrap_add_value 3 ${CTABLE_LANG} id 1 -1 "sequence:2"
-	bootstrap_add_value 4 ${CTABLE_LANG} name 2 200 ""
-	bootstrap_add_value 5 ${CTABLE_LANG} handler 2 200 ""
+	bootstrap_add_value 4 ${CTABLE_LANG} name 2 200 ${MGC_NULL}
+	bootstrap_add_value 5 ${CTABLE_LANG} handler 2 200 ${MGC_NULL}
 
 	# Relation Types
 	bootstrap_add_value 6 ${CTABLE_TYPES} id 1 -1 "sequence:3"
-	bootstrap_add_value 7 ${CTABLE_TYPES} name 2 200 ""
-	bootstrap_add_value 8 ${CTABLE_TYPES} fnc_out 2 200 ""
-	bootstrap_add_value 9 ${CTABLE_TYPES} size 1 -1 ""
+	bootstrap_add_value 7 ${CTABLE_TYPES} name 2 200 ${MGC_NULL}
+	bootstrap_add_value 8 ${CTABLE_TYPES} fnc_out 2 200 ${MGC_NULL}
+	bootstrap_add_value 9 ${CTABLE_TYPES} size 1 -1 ${MGC_NULL}
 
 	# Relation Table
 	bootstrap_add_value 10 ${CTABLE_TABLES} id 1 -1 "sequence:5"
@@ -292,6 +295,7 @@ bootstrap() {
 	bootstrap_add_value 15 ${CTABLE_ATTRS} name 2 200 ""
 	bootstrap_add_value 16 ${CTABLE_ATTRS} types_id 1 -1 ""
 	bootstrap_add_value 17 ${CTABLE_ATTRS} size 1 -1 ""
+	bootstrap_add_value 30 ${CTABLE_ATTRS} default 2 200 ${MGC_NULL}
 
 	# Relation functions
 	bootstrap_add_value 18 ${CTABLE_FUNCTIONS} id 1 -1 "sequence:6"
@@ -308,6 +312,12 @@ bootstrap() {
 	bootstrap_add_value 25 ${CTABLE_SEQUENCE} name 2 200 ""
 	bootstrap_add_value 26 ${CTABLE_SEQUENCE} last_value 1 -1 ""
 
+	# Relation teste
+	bootstrap_add_value 27 9 id 1 -1
+	bootstrap_add_value 28 9 uuid 2 36
+	bootstrap_add_value 29 9 val 1 -1 
+
+	# [ storage ]
 	row_append_simple ${CTABLE_ATTRS}
 
 	eval $LOGGER LOG "Table attrs OK"
@@ -324,7 +334,7 @@ bootstrap() {
 
 	local uis=36
 
-	for i in {1..500}; do
+	for i in {1..50}; do
 		local i=$RANDOM
 		if [ ${uis} == 36 ]; then
 			uis=1
@@ -336,6 +346,8 @@ bootstrap() {
 	done
 
 	row_append_simple 9
+
+	eval $LOGGER LOG "Table teste OK"
 
 	bootstrap_stamp_dir
 }

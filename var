@@ -33,6 +33,7 @@ declare -A CACHE_TABLE
 #####################
 declare -A GC
 GC[NULL_TEXT]="(null)"
+GC[TIMING]=false		# command \t
 
 # To save the original values before the FIRST change
 declare -A GC_ORIGINAL

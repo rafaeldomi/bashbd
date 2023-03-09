@@ -49,5 +49,17 @@ execute() {
 		return 1
 	fi
 
+	# Save the init datetime
+	local TIME_INIT=$(${PRG_DATE} +%s%3N)
+
 	eval $fnc_call	
+
+	# Save the finish datetime
+	local TIME_FINAL=$(${PRG_DATE} +%s%3N)
+
+	# Check if need to show
+	if [ "${GC[TIMING]}" == "true" ]; then
+		local TIME_TOTAL=$(expr $TIME_FINAL - $TIME_INIT)
+		writeln "Elapsed Time: $TIME_TOTAL ms"
+	fi
 }

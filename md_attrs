@@ -18,6 +18,7 @@ attrs_search() {
 	# Loop in all records of the table attrs
 	while next_record DATA REC; do
 		local val=""
+		local IT=""
 
 		# REC[2] = Table_id
 		# REC[3] = name of the attr
@@ -27,10 +28,20 @@ attrs_search() {
 		if [ "${FA[id]}" == "$val" ]; then
 			let i++
 			FA[${i}_name]="${REC[3]}"
-			FA[${i}_type]="${REC[4]}"
+
+			# Type attr is int, so transform it
+			hex_to_int IT "${REC[4]}"
+
+			FA[${i}_type]="${IT}"
 		fi
 	done
 	FA[total]=$i
+
+	if [ $i -eq 0 ]; then
+		return 1
+	else
+		return 0
+	fi
 }
 
 # $1 - Array variable
