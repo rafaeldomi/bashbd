@@ -8,7 +8,7 @@ SQL='  ST display="text";'
 #SQL="set a=3, dfddf=fvfvfv, asdasdasd=1,121231=11;"
 #SQL='truncate table tab1'
 #SQL='truncate table tab1,tab2;'
-#SQL='truncate table tab1,tab2'
+SQL='truncate table tab1,tab2'
 #SQL='truncate table tab1, tab2 ;'
 #SQL="truncate tab1"
 #SQL=" select 1";

@@ -11,10 +11,10 @@ echo "Loading files.."
 . executor
 . menu
 . tuple
-. table.old
 . storage
 . signals
 . printer
+. metadata
 
 echo "Loaded"
 

@@ -16,11 +16,11 @@ get_magic_code() {
 
 	case "$2" in
 		TABLE)
-			eval $_RET="$MAGIC_CODE_TABLE" ;;
+			eval $_RET="$MGC_TABLE" ;;
 		INDEX)
-			eval $_RET="$MAGIC_CODE_INDEX" ;;
+			eval $_RET="$MGC_INDEX" ;;
 		SEQUENCE)
-			eval $_RET="$MAGIC_CODE_SEQUENCE" ;;
+			eval $_RET="$MGC_SEQUENCE" ;;
 		*)
 			$PRG_ECHO "Unknown Magic Code $2"
 			;;
@@ -32,9 +32,9 @@ get_magic_code() {
 get_magic_code_name() {
 	local _RET=$1
 	case $2 in
-		$MAGIC_CODE_TABLE)	  eval $_RET="TABLE" ;;
-		$MAGIC_CODE_INDEX)    eval $_RET="INDEX" ;;
-		$MAGIC_CODE_SEQUENCE) eval $_RET="SEQUENCE" ;;
+		$MGC_TABLE)	   eval $_RET="TABLE" ;;
+		$MGC_INDEX)    eval $_RET="INDEX" ;;
+		$MGC_SEQUENCE) eval $_RET="SEQUENCE" ;;
 	esac
 }
 
@@ -80,7 +80,7 @@ storage_create_file() {
 	#echo "Found magic code: $MGC `echo $MGC | hexdump -C`"
 
 	echo -en "$MGC" > $_FILE
-	echo -en "$MAGIC_CODE_SEP" >> $_FILE
+	echo -en "$MGC_SEP" >> $_FILE
 
 	LOGGER_MSG="File ($_FILE) successfully created"
 	eval $LOGGER DEBUG3
@@ -154,7 +154,7 @@ row_append_simple() {
 
 			#echo "|$I_VALUE| `echo -n $I_VALUE | hexdump -C`"
 
-			if [ "${I_VALUE}" == "${CODE_MAGIC_NULL}" ]; then
+			if [ "${I_VALUE}" == "${MGC_NULL}" ]; then
 				# echo "|$I_VALUE| `echo -n $I_VALUE | hexdump -C`"
 				# Se for nulo não faz nada
 				:
@@ -164,7 +164,7 @@ row_append_simple() {
 					int)
 						# Just check the size -1 and convert to null
 						if [ "${I_VALUE}" -eq -1 ]; then
-							IROW="${IROW}${MAGIC_CODE_NULL}"
+							IROW="${IROW}${MGC_NULL}"
 						else
 							int_to_hex rec_size 8 ${I_VALUE}
 							IROW="${IROW}${rec_size}"
@@ -179,19 +179,19 @@ row_append_simple() {
 
 			# Put a Field Separator
 			if [ ! "$f" == "${ROW[FIELDS]}" ]; then
-				IROW="${IROW}${MAGIC_CODE_FLD}"
+				IROW="${IROW}${MGC_FLD}"
 			fi
 		done
 
 		int_to_hex rec_size 4 ${#IROW}
 
 		# This is the end of the ROW, lets put our metadata
-		METADATA="1${MAGIC_CODE_FLD}${rec_size}${MAGIC_CODE_HEADER}"
+		METADATA="1${MGC_FLD}${rec_size}${MGC_HEADER}"
 
 		# The row data finished, put a Record Separator
-		#IROW="${METADATA}${IROW}${MAGIC_CODE_SEP}"
+		#IROW="${METADATA}${IROW}${MGC_SEP}"
 
-		CROW="${CROW}${METADATA}${IROW}${MAGIC_CODE_SEP}"
+		CROW="${CROW}${METADATA}${IROW}${MGC_SEP}"
 	done
 
 	# Just echo the value to the table
@@ -236,4 +236,91 @@ row_add_value() {
 
 		ROW[$rown,VALUE_$fn]="${VALUES[pos-1]}"
 	done
+}
+
+init_file() {
+	# Check if the variable name does not conflict with the name of our
+	#  inner variable. If the name is the same we will get circular reference error
+	# IFD = Inner File Data
+	if [ "$1" == "IFD" ]; then
+		eval $LOGGER ERROR "Variable name cannot be IFD"
+		return 1
+	fi
+	declare -n IFD=$1
+
+	# Position the cursor at the beginning
+	IFD[pos]=1
+	# Read 32Kb for now
+	IFD[data]=$(${PRG_HEAD} -c 32K ${IFD[file]})
+	IFD[record_num]=0
+	IFD[record]=""
+	IFD[type]="U"	# Unknown
+
+	local ts=$(${PRG_STAT} -c %s ${IFD[file]})
+
+	# Save the type of this relation
+	get_magic_code_name OUT ${IFD[data]:0:1}
+	IFD[type]="$OUT"
+}
+
+# Returns
+#  0 = OK - Record found
+#  1 = No more data
+#  2 = Internal error
+next_record() {
+	declare -n STG_DATA="$1"
+	declare -n TFLD="$2"
+
+	# Check if the record is alive and get the values
+	# 1 -- Record init
+	# 2 -- Live or not?
+	# 3 -- Field Separator
+	# 4..7 -- size
+	# 8 -- Data Init
+
+	# Actual pos
+	pos=${STG_DATA[pos]}
+
+	# Out actual position must be an E1 hex
+	tmp=${STG_DATA[data]:$pos:1}
+
+	if [ "$tmp" == "" ]; then
+		eval $LOGGER DEBUG "Next variable is empty. There is no more data"
+		return 1
+	fi
+
+	if [ ! "$tmp" == "$MGC_SEP" ]; then
+		eval $LOGGER ERROR "Magic code not present. Maybe corrupt data or wrong position"
+		unset TFLD
+		return 2
+	fi
+
+	live="${STG_DATA[data]:(($pos+$SH_LIVE)):1}"
+	hsz="${STG_DATA[data]:(($pos+$SH_SIZE)):4}"
+	sz=$((0x$hsz))
+
+	fields="${STG_DATA[data]:(($pos+$SH)):$sz}"
+
+	if [ "$fields" == "" ]; then
+		eval $LOGGER DEBUG "Next variable is empty. There is no more data"
+		return 1
+	fi
+
+	let STG_DATA[record_num]++
+
+	# Break fields
+	mapfile -t -O 1 -d${MGC_FLD} TFLD < <(echo -n "$fields")
+	RES=$?
+	if [ ! "$RES" == 0 ]; then
+		eval $LOGGER ERROR "Error in mapfile to get fields"
+		return 2
+	fi
+
+	# Andar o pos
+	# sz - size of the record
+	# SZ_SIZE - size of the header
+	let walk=$pos+$sz+$SH
+	STG_DATA[pos]=$walk
+
+	return 0
 }

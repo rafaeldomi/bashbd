@@ -210,7 +210,8 @@ find_binaries() {
 	# These commands are built-in to bash, dont need to search:
 	#  |  mapfile  |  let  |  shift    | eval
 	#  |  local    | read  |  command 
-	local PRGS=(cut dd seq printf echo stat basename bash wc awk sed column cat rm xxd)
+	local PRGS=(cut dd seq printf echo stat basename bash wc awk sed column \
+				cat rm xxd head)
 
 	for cmd in "${PRGS[@]}"; do
 		local cmdpath=`which ${cmd}`
@@ -229,172 +230,6 @@ find_binaries() {
 		LOGGER_MSG="Found ${cmd} in ${cmdpath}"
 		eval $LOGGER DEBUG2
 	done
-}
-
-# Init variables in preparation to print to terminal
-# $1 - Header of the list
-terminal_init_output() {
-	TER_HEADER="$1"
-	TER_TOT_ROWS=0
-	TER_TOT_COL=0
-
-	unset TER_COL
-	unset TER_ROWS
-	unset TER_COL_SIZE
-
-	declare -A TER_COL
-	declare -A TER_ROWS
-	declare -A TER_COL_SIZE
-
-	return 0
-}
-
-# Adding a row data to terminal row data vector
-# $1 - The row data
-terminal_add_row() {
-	let TER_TOT_ROWS++
-
-	# Open fields
-	mapfile -t -O 1 -d `echo -en "\x1D"` ter_fields <<<$(echo "$@")
-
-	fn=0
-	for f in "${ter_fields[@]}"; do
-		inf=$(echo $f)
-
-		# Verifica se row is alive?
-		if [ $fn -eq 0 ]; then
-			if [ ! "${inf:0:1}" -eq 1 ]; then
-				break
-			fi
-			let fn++
-			continue
-		fi
-
-		LOGGER_MSG="($TER_TOT_ROWS) $fn => Size: ${#inf}  |  SizeAtual: ${TER_COL[${fn}-SZ]}"
-		eval $LOGGER DEBUG3
-
-		TER_ROWS[${TER_TOT_ROWS}${fn}]="$inf"
-
-		if [ "${#inf}" -gt "${TER_COL[${fn}-SZ]}" ]; then
-			TER_COL[${fn}-SZ]="${#inf}"
-		fi
-		let fn++
-	done
-
-	return 0
-}
-
-# $1.. - The values to show in table header in terminal
-terminal_set_columns() {
-	TER_HEADER_NAMES=""
-
-	for value in "${@}"; do
-		let TER_TOT_COL++
-
-		# The value/name to show in table header
-		TER_COL[$TER_TOT_COL]="$value"
-
-		# To control the size of the column
-		TER_COL[${TER_TOT_COL}-SZ]=0
-
-		TER_HEADER_NAMES="$TER_HEADER_NAMES $value"
-	done
-}
-
-# Finally print data in the terminal
-# This should be the final proc called
-#  1 - terminal_init_output ..
-#  2 - terminal_set_columns ..
-#  3 - terminal_add_row n times
-#  4 - terminal_print_data
-terminal_print_data() {
-	# Print Header Name
-	writeln " ** Showing: $TER_HEADER"
-
-	descp=""
-	line=""
-	for i in `$PRG_SEQ 1 ${TER_TOT_COL}`; do
-		LOGGER_MSG="fld ($i): ${TER_COL[$i]} ==> ${TER_COL[$i-SZ]}"
-		eval $LOGGER DEBUG3
-
-		if [ $i -eq 1 ]; then
-			descp=`$PRG_PRINTF "%%%ss" ${TER_COL[$i-SZ]}`
-			repeat OUT "-" ${TER_COL[$i-SZ]}
-			line="$OUT"
-		else
-			descp=`$PRG_PRINTF "%s | %%%ss" $descp ${TER_COL[$i-SZ]}`
-			repeat OUT "-" ${TER_COL[$i-SZ]}
-			line="$line+$OUT"
-		fi
-	done
-	echo ${descp}
-
-	# Print Column Names
-	$PRG_PRINTF "${descp}\n" ${TER_HEADER_NAMES}
-	echo $line
-
-	for row in `$PRG_SEQ 1 $TER_TOT_ROWS`; do
-		$PRG_PRINTF "$descp\n" ${TER_ROWS[${row}1]} ${TER_ROWS[${row}2]}
-	done
-
-	echo "($TER_TOT_ROWS rows)"
-}
-
-table_print() {
-    local -r delimiter="${1}"
-    local -r data="$(removeEmptyLines "${2}")"
-
-    if [[ "${delimiter}" != '' && "$(isEmptyString "${data}")" = 'false' ]]
-    then
-        local -r numberOfLines="$( $PRG_WC -l <<< "${data}")"
-
-        if [[ "${numberOfLines}" -gt '0' ]]
-        then
-            local table=''
-            local i=1
-
-            for ((i = 1; i <= "${numberOfLines}"; i = i + 1))
-            do
-                local line=''
-                line="$( $PRG_SED "${i}q;d" <<< "${data}")"
-
-                local numberOfColumns='0'
-                numberOfColumns="$( $PRG_AWK -F "${delimiter}" '{print NF}' <<< "${line}")"
-
-                # Add Line Delimiter
-
-                if [[ "${i}" -eq '1' ]]
-                then
-                    table="${table}$( $PRG_PRINTF '%s#+' "$(repeatString '#+' "${numberOfColumns}")")"
-                fi
-
-                # Add Header Or Body
-
-                table="${table}\n"
-
-                local j=1
-
-                for ((j = 1; j <= "${numberOfColumns}"; j = j + 1))
-                do
-                    table="${table}$( $PRG_PRINTF '#| %s' "$( $PRG_CUT -d "${delimiter}" -f "${j}" <<< "${line}")")"
-                done
-
-                table="${table}#|\n"
-
-                # Add Line Delimiter
-
-                if [[ "${i}" -eq '1' ]] || [[ "${numberOfLines}" -gt '1' && "${i}" -eq "${numberOfLines}" ]]
-                then
-                    table="${table}$( $PRG_PRINTF '%s#+' "$(repeatString '#+' "${numberOfColumns}")")"
-                fi
-            done
-	
-            if [[ "$(isEmptyString "${table}")" = 'false' ]]
-            then
-                echo -e "${table}" | $PRG_COLUMN -s '#' -t | awk '/^\+/{gsub(" ", "-", $0)}1'
-            fi
-        fi
-    fi
 }
 
 removeEmptyLines() {
@@ -447,7 +282,22 @@ int_to_hex() {
 	eval $_RET="$value"
 }
 
+hex_to_int() {
+	local _RET=$1
+	local input=$2
+	local value=""
+
+	value=$(${PRG_PRINTF} "%d" "0x$input")
+
+	eval $_RET="$value"
+}
+
 fn_exist() {
 	declare -F "$1" > /dev/null
 	return $?
+}
+
+report_finish() {
+	# Simple for now, just echo the CMD inside the TOKENS, similar the postgres way
+	echo "${TOKENS[CMD]}"
 }

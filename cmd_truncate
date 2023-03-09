@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set_truncate() {
+	LOGGER_MSG="Total Tables: ${TOKENS[TABLE_total]}"
+	eval $LOGGER DEBUG
+
+	eval $LOGGER ERROR "Command not implemented yet"
+
+	local sz=${TOKENS[TABLE_total]}
+	local i=0
+
+	for i in `${PRG_SEQ} 1 $sz`; do
+		local table="${TOKENS[TABLE_${i}]}"
+
+		LOGGER_MSG="Truncate table: $table"
+		eval $LOGGER MSG
+	done
+}

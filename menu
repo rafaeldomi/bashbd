@@ -24,6 +24,7 @@ cmd_menu() {
 		l)  menu_list_lang;;		# [ menu ]
 		i)  menu_list_index;;		# [ menu ]
 		c)  menu_warm_cache "${TKN[1]}";;
+		b)  menu_call_function "${TKN[1]}" "${TKN[2]}" "${TKN[3]}";;
 		\?)	menu_show_help;;
 		*)  echo "Menu Comando $PAR não reconhecido"
 	esac
@@ -76,11 +77,11 @@ menu_list_schemas() {
 }
 
 menu_list_tables() {
-	table_display_dump_table "Listing Tables" $CTABLE_TABLES "id,name,schema_id"
+	printer_dump_table "Listing Tables" $CTABLE_TABLES "id,name,schema_id"
 }
 
 menu_list_functions() {
-	table_display_dump_table "Listing functions" $CTABLE_FUNCTIONS "id,name,handler,lang_id"
+	printer_dump_table "Listing Function" $CTABLE_FUNCTIONS
 }
 
 menu_warm_cache() {
@@ -97,4 +98,9 @@ menu_list_lang() {
 }
 menu_list_index() {
 	table_display_dump_table "Listing Indexes" $CTABLE_INDEX "id,table_id,fields"
+}
+
+menu_call_function() {
+	LOGGER_MSG="Call fn: $1"
+	eval $1 $2 $3
 }

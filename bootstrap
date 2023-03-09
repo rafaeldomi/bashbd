@@ -162,7 +162,7 @@ bootstrap() {
 
 	row_init int 200 200
 
-	bootstrap_add_value 1 builtin ${MAGIC_CODE_NULL}
+	bootstrap_add_value 1 builtin ${MGC_NULL}
 
 	row_append_simple ${CTABLE_LANG}
 
@@ -182,7 +182,7 @@ bootstrap() {
 	row_init int 200 200 int
 
 	bootstrap_add_value 1 int fnc_out 4
-	bootstrap_add_value 2 char "${MAGIC_CODE_NULL}" -1
+	bootstrap_add_value 2 char "${MGC_NULL}" -1
 
 	row_append_simple ${CTABLE_TYPES}
 

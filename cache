@@ -1,22 +1,12 @@
 #!/bin/bash
 
-# $1 - The kind of object to check
+: <<'FUNCTION'
+Description: Function check if the table has cache and creates if not
+Parameters:
+  $1 - Table id to check for the cache
+FUNCTION
 cache_has_cache() {
-	local VAR=""
-
-	case $1 in
-		$CTABLE_SCHEMAS)
-			if [ ! -z $CACHE_SCHEMA ]; then
-				return 0
-			fi
-			if [ ${#CACHE_SCHEMA[@]} -le 0 ]; then
-				return 1
-			fi
-			;;
-	esac	
-
-	
-
+	local tmp="CACHE_${1}"
 }
 
 # Do cache for a specify object

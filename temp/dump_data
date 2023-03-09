@@ -106,7 +106,7 @@ for i_row in "${DATA[@]}"; do
 		if [ ${#VAL} == 1 ]; then
 			RET=$(echo -en "$VAL" | xxd -p)
 			echo " == $RET"
-			if [ "$RET" == "$MAGIC_CODE_NULL" ]; then
+			if [ "$RET" == "$MGC_NULL" ]; then
 				VAL="(null)"
 			fi
 		fi

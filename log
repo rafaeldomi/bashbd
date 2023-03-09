@@ -2,19 +2,18 @@
 
 : <<'COMMENT'
  * writeln
-	-> Apenas imprimir uma informação
+	-> Just a simple echo
 
  * log
-	-> Log normal do programa
+	-> Normal log
 
  * debug
-	-> Apenas debug do programa, internals do código
+	-> Messages of debug, program internals
 
  * LOGGER
-	-> Utilizar essa versão
+	-> Use this version
 		eval $LOGGER [LEVEL] [MSG]
-	-> Para mensagens "complexas", com print de variável ou aspas " '
-	    salvar o conteúdo na variável LOGGER_MSG
+	-> To messages that have variable in it, or ", save the content to the LOGGER_MSG variable
 COMMENT
 
 LOGGER="log \${FUNCNAME[0]} \${LINENO}"

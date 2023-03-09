@@ -1,111 +1,25 @@
 #!/bin/bash
 
-function printTableold()
-{
-    local -r delimiter="${1}"
-    local -r data="$(removeEmptyLines "${2}")"
-
-    if [[ "${delimiter}" != '' && "$(isEmptyString "${data}")" = 'false' ]]
-    then
-        local -r numberOfLines="$($PRG_WC -l <<< "${data}")"
-
-		echo "Lines: $numberOfLines"
-
-        if [[ "${numberOfLines}" -gt '0' ]]
-        then
-            local table=''
-            local i=1
-
-            for ((i = 1; i <= "${numberOfLines}"; i = i + 1))
-            do
-                local line=''
-                line="$($PRG_SED "${i}q;d" <<< "${data}")"
-
-                local numberOfColumns='0'
-                numberOfColumns="$($PRG_AWK -F "${delimiter}" '{print NF}' <<< "${line}")"
-
-                # Add Line Delimiter
-
-                if [[ "${i}" -eq '1' ]]
-                then
-                    table="${table}$($PRG_PRINTF '%s#+' "$(repeatString '#+' "${numberOfColumns}")")"
-                fi
-
-                # Add Header Or Body
-
-                table="${table}\n"
-
-                local j=1
-
-                for ((j = 1; j <= "${numberOfColumns}"; j = j + 1))
-                do
-                    table="${table}$($PRG_PRINTF '#| %s' "$(cut -d "${delimiter}" -f "${j}" <<< "${line}")")"
-                done
-
-                table="${table}#|\n"
-
-                # Add Line Delimiter
-
-                if [[ "${i}" -eq '1' ]] || [[ "${numberOfLines}" -gt '1' && "${i}" -eq "${numberOfLines}" ]]
-                then
-                    table="${table}$($PRG_PRINTF '%s#+' "$(repeatString '#+' "${numberOfColumns}")")"
-                fi
-            done
-	
-            if [[ "$(isEmptyString "${table}")" = 'false' ]]
-            then
-                echo -e "${table}" | $PRG_COLUMN -s '#' -t | $PRG_AWK '/^\+/{gsub(" ", "-", $0)}1'
-            fi
-        fi
-    fi
+# $1 - Object
+# $2 - Fields
+# $3 - Header
+printer_init() {
+	declare -n LPD=$1
+	LPD[rows]=0
+	LPD[header]="$3"
+	LPD[fields]=$2
 }
 
-function removeEmptyLines()
-{
-    local -r content="${1}"
+printer_add() {
+	# Local Printer Data
+	declare -n LPD=$1
 
-    echo -e "${content}" | sed '/^\s*$/d'
+	# We inc before
+	let LPD[rows]++
+
+	LPD[${LPD[rows]}]="$2"
+
 }
-
-function repeatString()
-{
-    local -r string="${1}"
-    local -r numberToRepeat="${2}"
-
-    if [[ "${string}" != '' && "${numberToRepeat}" =~ ^[1-9][0-9]*$ ]]
-    then
-        local -r result="$(printf "%${numberToRepeat}s")"
-        echo -e "${result// /${string}}"
-    fi
-}
-
-function isEmptyString()
-{
-    local -r string="${1}"
-
-    if [[ "$(trimString "${string}")" = '' ]]
-    then
-        echo 'true' && return 0
-    fi
-
-    echo 'false' && return 1
-}
-
-function trimString()
-{
-    local -r string="${1}"
-
-    sed 's,^[[:blank:]]*,,' <<< "${string}" | sed 's,[[:blank:]]*$,,'
-}
-
-#$ cat data-3.txt
-#HEADER 1,HEADER 2,HEADER 3
-#data 1,data 2,data 3
-#data 4,data 5,data 6
-#
-#$ printTable ',' "$(cat data-3.txt)"
-#
-#printTable ',' "$(cat data-3.txt)"
 
 printer() {
 	declare -n PRINT=$1
@@ -118,12 +32,49 @@ printer() {
 	delimiter="$(${PRG_PRINTF} "%s${MGC_FLD}+" "$(repeatString "${MGC_FLD}+" $nOC)")"
 	table="${delimiter}\n${PRINT[header]}\n${delimiter}\n"
 
-	for i in `seq 1 ${PRINT[rows]}`; do
+	for i in `${PRG_SEQ} 1 ${PRINT[rows]}`; do
 		line="${PRINT[$i]}"
 
 		table="${table}${line}\n"
 	done
 
-	echo -e "${table}\n${delimiter}" | column -t -s"${MGC_FLD}" | awk '/^\+/{gsub(" ", "-", $0)}1'
-	echo " (${PRINT[rows]} rows fetched)"
+	${PRG_ECHO} -e "${table}\n${delimiter}" | ${PRG_COLUMN} -t -s"${MGC_FLD}" | ${PRG_AWK} '/^\+/{gsub(" ", "-", $0)}1'
+	${PRG_ECHO} " (${PRINT[rows]} rows fetched)"
+}
+
+# $1 - Title
+# $2 - Tablea ID
+# $3 - Header
+printer_dump_table() {
+	local _TITLE=$1
+	local _TABLE=$2
+	local _HEADER=$3
+
+	local HEADER="|${_HEADER//,/${MGC_FLD}|}${MGC_FLD}|"
+
+	# Lets find the attrs of this relation
+	declare -A TAB_ATTR
+	TAB_ATTR[id]=$2
+	find_attrs TAB_ATTR
+	declare -p TAB_ATTR
+
+	declare -A TAB_PRINT
+	printer_init TAB_PRINT 3 "$HEADER"
+
+	declare -A DATA
+	DATA[file]=$_TABLE
+	init_file DATA
+
+	while next_record DATA REC; do
+		local ROW=""
+		ROW="|${REC[1]}${MGC_FLD}|${REC[2]} ${MGC_FLD}|${REC[3]} ${MGC_FLD}|"
+
+		printer_add TAB_PRINT "$ROW"
+	done
+
+	if [ ! "$1" == "" ]; then
+		${PRG_ECHO} "$1"
+	fi
+
+	printer TAB_PRINT
 }

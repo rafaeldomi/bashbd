@@ -9,6 +9,7 @@
 . cmd_set
 . cmd_show
 . cmd_reset
+. cmd_truncate
 
 execute() {
 	# Clear this "object" (I know, variable, OK)

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+name="CACHE1"
+
+if [ ! -z ${name} ]; then
+	declare -Ag ${name}
+fi
+
+CACHE1[B]="asd"
+${!name}[A]="ASD"
+declare -p CACHE1

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-. log
-
 table_execute() {
 	LOGGER_MSG="Table: ${TOKENS[TABLE]}"
 	eval $LOGGER DEBUG
@@ -9,4 +7,5 @@ table_execute() {
 	local value="${TOKENS[TABLE]}"
 	
 	# Search for the table definition
+	
 }

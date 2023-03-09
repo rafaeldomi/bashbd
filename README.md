@@ -122,7 +122,7 @@ concat() {
 In bash, there is not difference between using "source" or "dot".
 In the bash manual:
 source filename
-A synonym for "." .
+A synonym for "." filename
 
 Ref: http://www.gnu.org/software/bash/manual/bashref.html#Bourne-Shell-Builtins
 

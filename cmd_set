@@ -6,7 +6,7 @@ set_execute() {
 
 	local sz=${TOKENS[KV_total]}
 	local i=0
-	for i in `seq 1 $sz`; do
+	for i in `${PRG_SEQ} 1 $sz`; do
 		local set_key="${TOKENS[KEY_$i]^^}"
 		local set_value="${TOKENS[VALUE_$i]}"
 
@@ -27,4 +27,6 @@ set_execute() {
 			eval $LOGGER ERROR
 		fi
 	done
+
+	report_finish
 }

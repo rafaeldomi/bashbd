@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# $1 - Variable Name Associative Array
+# $2 - ID of table
+find_attrs() {
+	# FA = FindAttrs
+	declare -n FA=$1
+
+	# FA[total]=total attrs
+	# FA[#_name]=name of the attr
+	# FA[#_type]=type of the attr
+
+	declare -A DATA
+	# We are reading the table attrs
+	DATA[file]=$CTABLE_ATTRS
+	init_file DATA
+
+	i=0
+	# Loop in all records of the table attrs
+	while next_record DATA REC; do
+		# REC[2] = Table_id
+		# REC[3] = name of the attr
+		# REC[4] = type
+		if [ "$2" == "${REC[2]}" ]; then
+			let i++
+			FA[${i}_name]="${REC[3]}"
+			FA[${i}_type]="${REC[4]}"
+		fi
+	done
+	FA[total]=$i
+}
+
+: <<'FUNCTION'
+Desciption: Find the table ID by the name
+Parameters:
+ $1 - OUT ID
+ $2 - Table name
+FUNCTION
+find_table_by_name() {
+	local _RET=$1
+	local RETCODE=1
+
+	declare -A DATA
+	DATA[file]=$CTABLE_TABLES
+	init_file DATA
+
+	while next_record DATA REC; do
+		# The name of the table is in the index 2
+		# The id of the table is in the index 1
+		if [ "${REC[2]}" == "$2" ]; then
+			eval $LOGGER DEBUG "Found table with id: ${REC[1]}"
+			RETCODE=0
+			break
+		fi
+	done
+
+	eval $_RET="${REC[0]}"
+	return $RETCODE
+}
