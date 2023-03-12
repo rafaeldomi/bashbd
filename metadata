@@ -15,6 +15,9 @@ find_table_by_name() {
 	init_file DATA
 
 	while next_record DATA REC; do
+		LOGGER_MSG="table: ${REC[2]}"
+		eval $LOGGER DEBUG2
+
 		# The name of the table is in the index 2
 		# The id of the table is in the index 1
 		if [ "${REC[2]}" == "$2" ]; then

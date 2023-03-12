@@ -18,7 +18,6 @@ printer_add() {
 	let LPD[rows]++
 
 	LPD[${LPD[rows]}]="$2"
-
 }
 
 printer() {
@@ -75,9 +74,9 @@ printer_dump_table() {
 		local value=""
 
 		# Loop the fields in the record struct
-		for k in `$PRG_SEQ 1 ${#REC[@]}`; do
+		for k in `$PRG_SEQ 1 ${REC[REC_TOT]}`; do
 			# Check if value is null
-			if [ ${REC[$k]} == $MGC_NULL ]; then
+			if [ "${REC[$k]}" == "$MGC_NULL" ]; then
 				ROW="$ROW${GC[NULL_TEXT]}${MGC_FLD}|"
 			else
 				value="${REC[$k]}"

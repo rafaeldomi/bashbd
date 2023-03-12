@@ -45,12 +45,6 @@ menu_show_help() {
 	writeln "\\y       List Types"
 	writeln "\\i       List Indexes"
 	writeln ""
-	writeln "\\c [obj] Warm cache"
-	writeln "   schemas"
-	writeln "   functions"
-	writeln "   languages"
-	writeln "   tables"
-    writeln ""
 	writeln "\\q     Quit program"
 }
 

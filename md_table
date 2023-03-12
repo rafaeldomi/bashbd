@@ -1,0 +1,88 @@
+#!/bin/bash
+
+: <<'FUNCTION'
+Description: Get a table stuct by name
+Parameters:
+  $1 - Struct AA (Associative Array) declared outside of this function
+FUNCTION
+table_get_struct_by_name() {
+	local schema_id=0
+
+	# TS = Table Struct
+	declare -n TSN=$1
+
+	# Field table must exist
+	if [ -z ${TSN[table]} ]; then
+		eval $LOGGER ERROR "No field table"
+	fi
+
+	# The name of the table must be in the table field
+	LOGGER_MSG="Searching for table ${TSN[table]}"
+	eval $LOGGER DEBUG
+
+	# Check for schema
+	# Check if there is a better way to do this, its kind ugly
+	local IFS='.'
+	local opened_table=(${TSN[table]})
+	unset IFS
+
+	if [ "${#opened_table[@]}" == 1 ]; then
+		schema_id=2	# default to public
+		TSN[tab]="${opened_table[0]}"
+	elif [ "${#opened_table[@]}" == 2 ]; then
+		# Search for the schema id
+		if ! schema_get_id schema_id ${opened_table[0]}; then
+			LOGGER_MSG="Schema '${opened_table[0]}' not found"
+			eval $LOGGER ERROR
+			return 1
+		fi
+
+		TSN[schema]="${opened_table[0]}"
+		TSN[tab]="${opened_table[1]}"
+	else
+		LOGGER_MSG="There is no implementation that works with '${TSN[table]}'"
+		eval $LOGGER ERROR
+		return 1
+	fi
+
+	LOGGER_MSG="Using schema: $schema_id"
+	eval $LOGGER DEBUG
+
+	########
+	# Search in the table tables
+	declare -A DATA
+	DATA[file]=$CTABLE_TABLES
+	init_file DATA
+
+	# IV = Int Value
+	local IV=""
+	while next_record DATA REC; do
+		# indexes:
+		#  1 - ID of the table
+		#  2 - Name of the table
+		#  3 - Schema id of the table
+		
+		# Convert the id of schema
+		hex_to_int IV "${REC[3]}"
+
+		if [ "$IV" == "$schema_id" ]; then
+			# Check if the table name match
+			if [ "${REC[2]}" == "${TSN[tab]}" ]; then
+				hex_to_int IV "${REC[1]}"
+				TS[id]=$IV
+				TS[position]="${REC[REC_POS]}"
+
+				# Just check if the table exists
+				if [ ! -f $IV ]; then
+					LOGGER_MSG="Table found in metadata, but the file does not exists"
+					eval $LOGGER ERROR
+					return 1
+				fi
+
+				return 0
+			fi
+		fi
+	done
+
+	return 1
+}

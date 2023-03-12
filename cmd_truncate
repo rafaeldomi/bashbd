@@ -1,18 +1,32 @@
 #!/bin/bash
 
-set_truncate() {
+truncate_execute() {
 	LOGGER_MSG="Total Tables: ${TOKENS[TABLE_total]}"
 	eval $LOGGER DEBUG
-
-	eval $LOGGER ERROR "Command not implemented yet"
 
 	local sz=${TOKENS[TABLE_total]}
 	local i=0
 
 	for i in `${PRG_SEQ} 1 $sz`; do
 		local table="${TOKENS[TABLE_${i}]}"
+		declare -A TS
 
 		LOGGER_MSG="Truncate table: $table"
-		eval $LOGGER MSG
+		eval $LOGGER DEBUG
+
+		# Find the table
+		TS[table]="$table"
+		if ! table_get_struct_by_name TS; then
+			LOGGER_MSG="Table '${TS[table]}' not found"
+			eval $LOGGER ERROR
+			return 1
+		fi
+
+		LOGGER_MSG="Truncating table ${TS[table]} id: ${TS[id]}"
+		eval $LOGGER DEBUG
+
+		${PRG_ECHO} "${MGC_TABLE}" > ${TS[id]}
+
+		writeln "Table \"${TS[table]}\" truncated"
 	done
 }

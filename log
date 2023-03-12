@@ -1,5 +1,8 @@
 #!/bin/bash
 
+if [ ! $LOG_INCLUDED ]; then
+LOG_INCLUDED=1
+
 : <<'COMMENT'
  * writeln
 	-> Just a simple echo
@@ -28,6 +31,17 @@ CL_CYAN='\e[1;36m'
 # NoColor
 CL_NC='\e[0m\033[0m'
 
+declare -r -A LL=(
+			[FATAL]=1
+			[ERROR]=2
+			[WARNING]=3
+			[HINT]=4
+			[LOG]=5
+			[DEBUG]=6
+			[DEBUG1]=7
+			[DEBUG2]=8
+		)
+
 # Print a debug string
 # $1 - function name
 # $2 - line number
@@ -42,6 +56,28 @@ writeln() {
 	${PRG_PRINTF} "%s\n" "$1"
 }
 
+# Description: Check if can do the log
+# $1 - Log level to check, the name
+log_can_log() {
+	local IDXLL=${LL[$1]}
+	if [ -z $IDXLL ]; then
+		writeln "$1 not recognized"
+		return 1
+	fi
+
+	# The minimum value must bt 2
+	if [ ${GC[MIN_LOG]} -lt 2 ]; then
+		GC[MIN_LOG]=2
+	fi
+
+	# Now check if we do the log
+	if [ $IDXLL -lt ${GC[MIN_LOG]} ]; then
+		return 0
+	else
+		return 1
+	fi
+}
+
 # $1 - FUNCNAME
 # $2 - LINENO
 # $3 - Level (FATAL - LOG - ERROR)
@@ -51,9 +87,18 @@ log () {
 	local _LINE=$2
 	local _LEVEL=$3
 
-	LL="$_LEVEL"
+	# Order of the importance of logs
+	# 1 - FATAL
+	# 2 - ERROR
+	# 3 - WARNING
+	# 4 - HINT
+	# 5 - LOG
+	# 6 - DEBUG
+	# 7 - DEBUG1
+	# 8 - DEBUG2
 
-	if [ "$LL" == "DEBUG3" ]; then
+	# Check if we do log
+	if ! log_can_log $_LEVEL; then
 		return 0
 	fi
 
@@ -70,11 +115,22 @@ log () {
 		done
 	fi
 
-	$PRG_PRINTF "%s [%17s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "$MSG"
+	$PRG_PRINTF "%s [%17s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$_LEVEL" "$MSG"
 
 	if [ "$_LEVEL" == "FATAL" ]; then
-		#echo -e "`date +\"%D %T\"` [$LL]: Saindo por erro FATAL"
-		$PRG_PRINTF "%s [%14s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "EXITING BECAUSE OF FATAL ERROR"
+		$PRG_PRINTF "%s [%14s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "EXITING PROGRAM BECAUSE OF FATAL ERROR"
 		finish 1
 	fi
 }
+
+# $1 - the variable
+log_variable() {
+	local _V=$1
+
+	# Always DEBUG2
+	if  log_can_log DEBUG2; then
+		declare -p $_V
+	fi
+}
+
+fi

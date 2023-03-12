@@ -40,4 +40,8 @@ readonly STAMP_FILE=bashbd.stamp
 ### Others
 # Version
 readonly VERSION=0
+
+readonly REC_POS=99999
+readonly REC_TOT=99998
+
 fi

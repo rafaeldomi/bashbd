@@ -16,6 +16,8 @@ echo "Loading files.."
 . printer
 . metadata
 . md_attrs
+. md_table
+. md_schema
 
 echo "Loaded"
 

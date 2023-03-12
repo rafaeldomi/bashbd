@@ -61,7 +61,7 @@ storage_create_file() {
 	local _FILE=$2
 
 	if [ -z $2 ]; then
-		LOGGER_MSG="Parametro 2 não informado"
+		LOGGER_MSG="Parameter #2 not passed"
 		eval $LOGGER ERROR
 		return -1
 	fi
@@ -77,13 +77,11 @@ storage_create_file() {
 	# [ storage ]
 	get_magic_code MGC $_OBJ
 
-	#echo "Found magic code: $MGC `echo $MGC | hexdump -C`"
-
-	echo -en "$MGC" > $_FILE
-	echo -en "$MGC_SEP" >> $_FILE
+	${PRG_ECHO} -en "$MGC" > $_FILE
+	${PRG_ECHO} -en "$MGC_SEP" >> $_FILE
 
 	LOGGER_MSG="File ($_FILE) successfully created"
-	eval $LOGGER DEBUG3
+	eval $LOGGER DEBUG2
 
 	return 0
 }
@@ -267,6 +265,8 @@ init_file() {
 #  0 = OK - Record found
 #  1 = No more data
 #  2 = Internal error
+# $1 - The data already initiated by init_file
+# $2 - The variable to hold the record data
 next_record() {
 	declare -n STG_DATA="$1"
 	declare -n TFLD="$2"
@@ -281,58 +281,72 @@ next_record() {
 	# 4..7 -- size
 	# 8 -- Data Init
 
-	# Actual pos
-	local pos=${STG_DATA[pos]}
+	while true; do
+		# Actual pos
+		local pos=${STG_DATA[pos]}
 
-	# Out actual position must be an E1 hex
-	local tmp=${STG_DATA[data]:$pos:1}
+		# Out actual position must be an E1 hex
+		local tmp=${STG_DATA[data]:$pos:1}
 
-	if [ "$tmp" == "" ]; then
-		eval $LOGGER DEBUG "Next variable is empty. There is no more data"
-		return 1
-	fi
+		if [ "$tmp" == "" ]; then
+			eval $LOGGER DEBUG "Next variable is empty. There is no more data"
+			return 1
+		fi
 
-	if [ ! "$tmp" == "$MGC_SEP" ]; then
-		eval $LOGGER ERROR "Magic code not present. Maybe corrupt data or wrong position"
-		unset TFLD
-		return 2
-	fi
+		if [ ! "$tmp" == "$MGC_SEP" ]; then
+			eval $LOGGER ERROR "Magic code not present. Maybe corrupt data or wrong position"
+			unset TFLD
+			return 2
+		fi
 
-	local live="${STG_DATA[data]:(($pos+$SH_LIVE)):1}"
-	local hsz="${STG_DATA[data]:(($pos+$SH_SIZE)):4}"
-	local sz=$((0x$hsz))
 
-	local fields="${STG_DATA[data]:(($pos+$SH)):$sz}"
+		local hsz="${STG_DATA[data]:(($pos+$SH_SIZE)):4}"
+		local sz=$((0x$hsz))
+		local fields="${STG_DATA[data]:(($pos+$SH)):$sz}"
 
-	if [ "$fields" == "" ]; then
-		eval $LOGGER DEBUG "Next variable is empty. There is no more data"
-		return 1
-	fi
+		if [ "$fields" == "" ]; then
+			eval $LOGGER DEBUG2 "Next variable is empty. There is no more data"
+			return 1
+		fi
 
-	let STG_DATA[record_num]++
+		# These lets must be before the alive check
+		# Walk the position
+		# sz - size of the record
+		# SZ_SIZE - size of the header
+		let walk=$pos+$sz+$SH
+		STG_DATA[pos]=$walk
+		let STG_DATA[record_num]++
 
-	# Break fields
-	mapfile -t -O 1 -d${MGC_FLD} TFLD < <(echo -n "$fields")
-	RES=$?
-	if [ ! "$RES" == 0 ]; then
-		eval $LOGGER ERROR "Error in mapfile to get fields"
-		return 2
-	fi
+		# Check if is alive
+		local live="${STG_DATA[data]:(($pos+$SH_LIVE)):1}"
+		if [ ! "$live" == "1" ]; then
+			# This row is not alive, continue to the next
+			continue
+		fi
 
-	# When the last field is empty, like a char = "" does not "open" correctly
-	# So, if the last value of the fields variable is 1D=MGC_FLD
-	#	we must create a new field in the end of the TFLD
-	# The extra space is needed, another way to do is ${VAR:0-1}
-	if [ "${fields: -1}" == "$MGC_FLD" ]; then
-		local newpos=${#TFLD}
-		TFLD[$newpos]=""
-	fi
+		# Break fields
+		mapfile -t -O 1 -d${MGC_FLD} TFLD < <(${PRG_ECHO} -n "$fields")
+		RES=$?
+		if [ ! "$RES" == 0 ]; then
+			eval $LOGGER ERROR "Error in mapfile to get fields"
+			return 2
+		fi
 
-	# Andar o pos
-	# sz - size of the record
-	# SZ_SIZE - size of the header
-	let walk=$pos+$sz+$SH
-	STG_DATA[pos]=$walk
+		# When the last field is empty, like a char = "" does not "open" correctly
+		# So, if the last value of the fields variable is 1D=MGC_FLD
+		#	we must create a new field in the end of the TFLD
+		# The extra space is needed, another way to do is ${VAR:0-1}
+		if [ "${fields: -1}" == "$MGC_FLD" ]; then
+			local newfld=${#TFLD}
+			TFLD[$newfld]=""
+		fi
+
+		# Negative field
+		TFLD[$REC_TOT]="${#TFLD[@]}"
+		TFLD[$REC_POS]="$pos"
+
+		break
+	done
 
 	return 0
 }

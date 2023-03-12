@@ -206,10 +206,10 @@ bootstrap() {
 	bootstrap_add_value $CTABLE_ATTRS attrs 1
 	bootstrap_add_value $CTABLE_TYPES types 1
 	bootstrap_add_value $CTABLE_FUNCTIONS functions 1
-	bootstrap_add_value $CTABLE_INDEX index 1
+	bootstrap_add_value $CTABLE_INDEX indexes 1
 	bootstrap_add_value $CTABLE_LANG language 1
 	bootstrap_add_value $CTABLE_SEQUENCE sequences 1
-	bootstrap_add_value 9 teste 1
+	bootstrap_add_value 9 teste 2
 
 	row_append_simple ${CTABLE_TABLES}
 
@@ -299,7 +299,9 @@ bootstrap() {
 
 	# Relation functions
 	bootstrap_add_value 18 ${CTABLE_FUNCTIONS} id 1 -1 "sequence:6"
-	bootstrap_add_value 19 ${CTABLE_FUNCTIONS} name 2 200 ""
+	bootstrap_add_value 19 ${CTABLE_FUNCTIONS} name 2 200 ${MGC_NULL}
+	bootstrap_add_value 31 ${CTABLE_FUNCTIONS} function 2 200 ${MGC_NULL}
+	bootstrap_add_value 32 ${CTABLE_FUNCTIONS} language_id 1 -1 ${MGC_NULL}
 
 	# Relation index
 	bootstrap_add_value 20 ${CTABLE_INDEX} id 1 -1 "sequence:7"

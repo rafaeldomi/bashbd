@@ -25,5 +25,5 @@ signal_trap() {
 signal_install() {
 	trap "signal_trap INT" INT
 
-	eval $LOGGER LOG "Signals installed"
+	eval $LOGGER DEBUG "Signals installed"
 }

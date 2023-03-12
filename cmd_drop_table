@@ -1,0 +1,46 @@
+#!/bin/bash
+
+drop_table_execute() {
+	LOGGER_MSG="Drop table: ${TOKENS[TABLE]}"
+	eval $LOGGER DEBUG
+
+	log_variable TOKENS
+
+	local table="${TOKENS[TABLE]}"
+
+	declare -A TS
+	TS[table]="$table"
+	# [ md_table ]
+	if ! table_get_struct_by_name TS; then
+		LOGGER_MSG="Table '$table' not found"
+		eval $LOGGER ERROR
+		return 1
+	fi
+
+	LOGGER_MSG="Dropping table $table id: ${TS[id]}"
+	eval $LOGGER DEBUG
+
+	if [ -z ${TS[position]} ]; then
+		eval $LOGGER ERROR "No field pos"
+		return 1
+	fi
+
+	# Check if the file exists
+	if [ ! -f ${TS[id]} ]; then
+		eval $LOGGER LOG "The file does not exist. Marking the table not alive"
+	else
+		${PRG_UNLINK} ${TS[id]}
+	fi
+
+	# Set the table as not alive
+	LOGGER_MSG="Will mark not alive. file: ${TS[id]} - pos: ${TS[position]}"
+	eval $LOGGER DEBUG
+
+	local cvl=0
+	let cvl=${TS[position]}+1
+
+	echo -n "0" > asd
+	dd if=asd of=$CTABLE_TABLES conv=notrunc bs=1 seek=${cvl} count=1 iflag=fullblock
+
+	writeln "Table ${TS[table]} dropped"
+}

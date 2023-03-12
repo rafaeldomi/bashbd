@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# $1 - OUT
+# $2 - Schema name
+schema_get_id() {
+	local _RET=$1
+
+	declare -A DATA
+	DATA[file]=$CTABLE_SCHEMAS
+	init_file DATA
+
+	while next_record DATA REC; do
+		# 1 - bashbd
+		# 2 - public
+
+		if [ "${REC[2]}" == "$2" ]; then
+			# Int value
+			local IV=""
+			hex_to_int IV "${REC[1]}"
+			eval $_RET="$IV"
+
+			LOGGER_MSG="Found schema: $_RET"
+			eval $LOGGER DEBUG
+
+			return 0
+		fi
+	done
+
+	return 1
+}
