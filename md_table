@@ -89,9 +89,10 @@ table_get_struct_by_name() {
 
 table_change_data() {
 	declare -n _ID=$1
+	local total="${#_ID[data]}"
 
-	${PRG_ECHO} -n "${_ID[DATA]}" > temp_data_change
-	${PRG_DD} if=temp_data_change of=${_ID[table]} conv=notrunc bs=${_ID[total]} seek=${_ID[pos]} count=${_ID[total]} iflag=fullblock 2> /dev/null
+	${PRG_ECHO} -n "${_ID[data]}" > temp_data_change
+	${PRG_DD} if=temp_data_change of=${_ID[table]} conv=notrunc bs=$total seek=${_ID[pos]} count=$total iflag=fullblock 2> /dev/null
 	RES=$?
 	${PRG_UNLINK} temp_data_change
 

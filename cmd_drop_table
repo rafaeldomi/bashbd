@@ -1,12 +1,12 @@
 #!/bin/bash
 
 drop_table_execute() {
-	LOGGER_MSG="Drop table: ${TOKENS[TABLE]}"
+	declare -n _SQLTKN=$1
+
+	LOGGER_MSG="Drop table: ${_SQLTKN[TABLE]}"
 	eval $LOGGER DEBUG
 
-	log_variable TOKENS
-
-	local table="${TOKENS[TABLE]}"
+	local table="${_SQLTKN[TABLE]}"
 
 	declare -A TS
 	TS[table]="$table"
@@ -14,7 +14,7 @@ drop_table_execute() {
 	if ! table_get_struct_by_name TS; then
 		# Check if IFEXISTS was supplied
 		# When IFEXISTS we do not give error
-		if [ "${TOKENS[IFEXISTS]}"  == "true" ]; then
+		if [ "${_SQLTKN[IFEXISTS]}"  == "true" ]; then
 			LOGGER_MSG="Skipping table '$table'"
 			eval $LOGGER LOG
 
@@ -59,8 +59,7 @@ drop_table_execute() {
 	declare -A CH_DATA
 	CH_DATA[table]=$CTABLE_TABLES
 	CH_DATA[pos]=$cvl
-	CH_DATA[total]=1
-	CH_DATA[DATA]="0"
+	CH_DATA[data]="0"
 	if ! table_change_data CH_DATA; then
 		LOGGER_MSG="Fail to change data on table"
 		eval $LOGGER ERROR

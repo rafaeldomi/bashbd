@@ -1,5 +1,39 @@
 #!/bin/bash
 
+schema_get_struct_by_name() {
+	# SS = Schema Struct
+	declare -n _SS=$1
+
+	# Field must exists
+	if [ -z ${_SS[schema]} ]; then
+		eval $LOGGER ERROR "No schema field found in SchemaStruct"
+		return 1
+	fi
+
+	LOGGER_MSG="Search for schema: ${_SS[schema]}"
+	eval $LOGGER DEBUG
+
+	declare -A DATA
+	DATA[file]=$CTABLE_SCHEMAS
+	init_file DATA
+
+	local IV=""
+	while next_record DATA REC; do
+		# indexes:
+		#  1 - id
+		#  2 - name
+		if [ "${REC[2]}" == "${_SS[schema]}" ]; then
+			hex_to_int IV "${REC[1]}"
+			SS[id]=$IV
+			SS[position]="${REC[REC_POS]}"
+
+			return 0
+		fi
+	done
+
+	return 1
+}
+
 # $1 - OUT
 # $2 - Schema name
 schema_get_id() {

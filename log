@@ -19,6 +19,7 @@ LOG_INCLUDED=1
 	-> To messages that have variable in it, or ", save the content to the LOGGER_MSG variable
 COMMENT
 
+# Trying to do like a C-macro
 LOGGER="log \${FUNCNAME[0]} \${LINENO}"
 
 # COLORS
@@ -93,19 +94,10 @@ log () {
 	# 7 - DEBUG1
 	# 8 - DEBUG2
 
-	# If is ERROR or FATAL do a writeln too
-	if [[ "$_LEVEL" == "ERROR" || "$_LEVEL" == "FATAL" ]]; then
-		writeln "$LOGGER_MSG"
-	fi
-
-	# Check if we do log
-	if ! log_can_log $_LEVEL; then
-		return 0
-	fi
-
 	MSG=""
 	if [ -z ${4} ]; then
 		MSG="${LOGGER_MSG}"
+		unset LOGGER_MSG
 	else
 		VALUES=($@)
 		SPC=""
@@ -114,6 +106,16 @@ log () {
 			MSG="$MSG${SPC}${VALUES[i]}"
 			SPC=" "
 		done
+	fi
+
+	# If is ERROR or FATAL do a writeln too
+	if [[ "$_LEVEL" == "ERROR" || "$_LEVEL" == "FATAL" ]]; then
+		writeln "${MSG}"
+	fi
+
+	# Check if we do log
+	if ! log_can_log $_LEVEL; then
+		return 0
 	fi
 
 	fnc_name="$_FUNC"

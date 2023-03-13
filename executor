@@ -11,6 +11,7 @@
 . cmd_reset
 . cmd_truncate
 . cmd_drop_table
+. cmd_drop_schema
 
 execute() {
 	# Clear this "object" (I know, variable, OK)
@@ -57,7 +58,7 @@ execute() {
 	# Save the init datetime
 	local TIME_INIT=$(${PRG_DATE} +%s%3N)
 
-	eval $fnc_call	
+	eval $fnc_call TOKENS
 
 	# Save the finish datetime
 	local TIME_FINAL=$(${PRG_DATE} +%s%3N)

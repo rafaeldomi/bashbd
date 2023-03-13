@@ -41,6 +41,13 @@ readonly STAMP_FILE=bashbd.stamp
 # Version
 readonly VERSION=0
 
+# These const are being used to control de position of the record in the datafile
+#  and the total of fields of that record
+# The record is result of the mapfile command, and is a indexed array. In bash
+#  indexed array cannot accept index with strings (that should be good in this case)
+#  or negative values. So i choose to use a high value, I dont think that we are going
+#  to have 99999 fields in the same table. BUT, there is going to be a safecheck
+#  for this in table creation
 readonly REC_POS=99999
 readonly REC_TOT=99998
 
