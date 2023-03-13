@@ -12,8 +12,25 @@ drop_table_execute() {
 	TS[table]="$table"
 	# [ md_table ]
 	if ! table_get_struct_by_name TS; then
-		LOGGER_MSG="Table '$table' not found"
-		eval $LOGGER ERROR
+		# Check if IFEXISTS was supplied
+		# When IFEXISTS we do not give error
+		if [ "${TOKENS[IFEXISTS]}"  == "true" ]; then
+			LOGGER_MSG="Skipping table '$table'"
+			eval $LOGGER LOG
+
+			writeln "Table '$table' skipped. OK"
+
+			return 0
+		else
+			LOGGER_MSG="Table '$table' not found"
+			eval $LOGGER ERROR
+			return 1
+		fi
+	fi
+
+	# Check if table is in bashbd schema and block
+	if [ "${TS[schema]}" == "bashbd" ]; then
+		eval $LOGGER ERROR "Cannot drop tables in schema bashbd"
 		return 1
 	fi
 
@@ -39,8 +56,19 @@ drop_table_execute() {
 	local cvl=0
 	let cvl=${TS[position]}+1
 
-	echo -n "0" > asd
-	dd if=asd of=$CTABLE_TABLES conv=notrunc bs=1 seek=${cvl} count=1 iflag=fullblock
+	declare -A CH_DATA
+	CH_DATA[table]=$CTABLE_TABLES
+	CH_DATA[pos]=$cvl
+	CH_DATA[total]=1
+	CH_DATA[DATA]="0"
+	if ! table_change_data CH_DATA; then
+		LOGGER_MSG="Fail to change data on table"
+		eval $LOGGER ERROR
+		declare -p CH_DATA
+		return 1
+	fi
 
 	writeln "Table ${TS[table]} dropped"
+
+	return 0
 }

@@ -65,11 +65,6 @@ log_can_log() {
 		return 1
 	fi
 
-	# The minimum value must bt 2
-	if [ ${GC[MIN_LOG]} -lt 2 ]; then
-		GC[MIN_LOG]=2
-	fi
-
 	# Now check if we do the log
 	if [ $IDXLL -lt ${GC[MIN_LOG]} ]; then
 		return 0
@@ -86,6 +81,7 @@ log () {
 	local _FUNC=$1
 	local _LINE=$2
 	local _LEVEL=$3
+	local fnc_name=""
 
 	# Order of the importance of logs
 	# 1 - FATAL
@@ -96,6 +92,11 @@ log () {
 	# 6 - DEBUG
 	# 7 - DEBUG1
 	# 8 - DEBUG2
+
+	# If is ERROR or FATAL do a writeln too
+	if [[ "$_LEVEL" == "ERROR" || "$_LEVEL" == "FATAL" ]]; then
+		writeln "$LOGGER_MSG"
+	fi
 
 	# Check if we do log
 	if ! log_can_log $_LEVEL; then
@@ -115,7 +116,12 @@ log () {
 		done
 	fi
 
-	$PRG_PRINTF "%s [%17s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$_LEVEL" "$MSG"
+	fnc_name="$_FUNC"
+	if [ "${#_FUNC}" -gt 20 ]; then
+		fnc_name="${_FUNC:0:18}.."
+	fi
+
+	$PRG_PRINTF "%s [%20s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$fnc_name" "$_LINE" "$_LEVEL" "$MSG"
 
 	if [ "$_LEVEL" == "FATAL" ]; then
 		$PRG_PRINTF "%s [%14s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "EXITING PROGRAM BECAUSE OF FATAL ERROR"
