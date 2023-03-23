@@ -54,6 +54,9 @@ table_get_struct_by_name() {
 	DATA[file]=$CTABLE_TABLES
 	init_file DATA
 
+	local schema_id_hex=""
+	int_to_hex schema_id_hex 8 "$schema_id"
+
 	# IV = Int Value
 	local IV=""
 	while next_record DATA REC; do
@@ -63,9 +66,10 @@ table_get_struct_by_name() {
 		#  3 - Schema id of the table
 		
 		# Convert the id of schema
-		hex_to_int IV "${REC[3]}"
+		#hex_to_int IV "${REC[3]}"
 
-		if [ "$IV" == "$schema_id" ]; then
+		if [ "${REC[3]}" == "$schema_id_hex" ]; then
+		#if [ "$IV" == "$schema_id" ]; then
 			# Check if the table name match
 			if [ "${REC[2]}" == "${TSN[tab]}" ]; then
 				hex_to_int IV "${REC[1]}"
@@ -97,4 +101,169 @@ table_change_data() {
 	${PRG_UNLINK} temp_data_change
 
 	return $RES
+}
+
+: <<'FUNCTION'
+Description: Initialize thw row by reading the metadata files
+See NOTES for more details
+Parameters:
+ $1 - ROW variable
+FUNCTION
+table_row_init() {
+	declare -n _R=$1
+
+	# The table name is in _R[table]
+
+	# We need to read the attrs and the defaults, maybe has a sequence or something
+	declare -A DATA_ATTRS
+	DATA_ATTRS[id]="${_R[table]}"
+	if ! attrs_search DATA_ATTRS; then
+		LOGGER_MSG="Attrs for table '${_R[table]}' not found"
+		eval $LOGGER ERRROR
+		return 1
+	fi
+
+	_R[FIELDS]=${DATA_ATTRS[total]}
+	_R[ROWS]=0
+
+	# Save the attrs of this table
+	local i=0
+	for i in `$PRG_SEQ 1 ${DATA_ATTRS[total]}`; do
+		_R[NAME_${i}]="${DATA_ATTRS[${i}_name]}"
+		_R[DEF_${i}]="${DATA_ATTRS[${i}_default]}"
+		_R[NULL_${i}]="${DATA_ATTRS[${i}_null]}"
+		_R[TYPE=${i}]="${DATA_ATTRS[${i}_type]}"
+	done
+}
+
+# $1 - Row variable
+# $2.. - Fields
+table_row_add_value() {
+	declare -n _R=$1	# Our ROW variable inside this function
+	local pos=0	# Number of the field in the loop
+	local fn=0  # FieldNumber
+	local rn=""	# RowNumber
+
+	# Lets shift one position to read all the args
+	shift
+	VALUES=("$@")
+
+	# One more row
+	let _R[ROWS]++
+	rn=${_R[ROWS]}
+
+	# Loop on all the values of this row
+	#  Values was filled inside a indexed array, its 0-indexed
+	for pos in `$PRG_SEQ 1 ${#VALUES[@]}`; do
+
+		# Value is null?
+		if [ "${VALUES[pos-1]}" == "${MGC_NULL}" ]; then
+
+			# If has a default value lets compute it
+			if [ ! "${_R[DEF_${pos}]}" == "" ]; then
+				# dv = default value
+				local dv="${_R[DEF_${pos}]}"
+				LOGGER_MSG="Found default value: ($dv)"
+				eval $LOGGER DEBUG1
+
+				if [ "${dv:0:8}" == "sequence" ]; then
+					# sv = sequence value
+					# si = sequence index
+					local si="${dv:9}"
+					local sv=""
+
+					sequence_nextval sv $si
+
+					VALUES[pos-1]="$sv"
+				else
+					VALUES[pos-1]="${_R[DEF_${pos}]}"
+				fi
+			else
+				# Otherwise, check if this fields accepts a default value
+				# NULL_x == 0 false, means that cannot accept null
+				if [ "${_R[NULL_${pos}]}" == "0" ]; then
+					LOGGER_MSG="Field (${_R[NAME_${pos}]}) cannot be null"
+					eval $LOGGER ERROR
+				fi
+			fi
+		fi
+
+		let fn++
+		_R[$rn,VALUE_$fn]="${VALUES[pos-1]}"
+	done
+}
+
+: <<'FUNCTION'
+Description: Insert the records that is in the ROW Variable
+Parameters
+ $1 - The ROW variable
+FUNCTION
+table_row_insert() {
+	declare -n _R=$1
+	local AROW=""		# used to hold all the records fom the ROW
+	local IROW=""		# used in the inner record
+	local f=""			# Used to loop the fields
+	local I_VALUE=""	# To hold the value
+	local rn	# Rownumber
+	local fn	# FieldNumber
+
+	# Loop through all the records in the ROW Variable
+	for rn in `$PRG_SEQ 1 ${_R[ROWS]}`; do
+		# In this first level of the loop we are in the Record level
+		#   so the IROW (inner row) must be blank
+		IROW=""
+
+		# Now, loop the fields in this row
+		for fn in `$PRG_SEQ 1 ${_R[FIELDS]}`; do
+			# Get the value of the field
+			I_VALUE="${_R[$rn,VALUE_$fn]}"
+
+			# If value is null just add the i_value
+			if [ "${I_VALUE}" == "${MGC_NULL}" ]; then
+				IROW="${IROW}${I_VALUE}"
+			else
+				# check if need some special treatment
+				case ${_R[TYPE_${fn}]} in
+					# 1 - int
+					1)
+						int_to_hex rec_size 8 ${I_VALUE}
+						IROW="${IROW}${rec_size}"
+						;;
+					*)
+						IROW="${IROW}${I_VALUE}"
+						;;
+				esac
+			fi
+
+			# Put a field separator
+			if [ ! "$fn" == "${_R[FIELDS]}" ]; then
+				IROW="${IROW}${MGC_FLD}"
+			fi
+		done
+
+		# This is the end of this record, lets calculate the header part
+		# The size of the record
+		int_to_hex rec_size 4 ${#IROW}
+		METADATA="1${MGC_FLD}${rec_size}${MGC_HEADER}"
+		AROW="${CROW}${METADATA}${IROW}${MGC_SEP}"
+	done
+
+	# Just echo the output to the table
+	$PRG_ECHO -n "${AROW}" >> ${_R[table]}
+
+	return 0
+}
+
+# $1 - Record
+row_update() {
+	declare -n _R=$1
+
+	row_delete _R
+	row_add _R
+}
+
+# Mark a row as not alive
+row_delete() {
+	declare -n _R=$1
+
 }

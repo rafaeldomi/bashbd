@@ -12,6 +12,7 @@
 . cmd_truncate
 . cmd_drop_table
 . cmd_drop_schema
+. cmd_create_schema
 
 execute() {
 	# Clear this "object" (I know, variable, OK)

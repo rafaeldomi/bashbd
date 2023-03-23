@@ -16,6 +16,7 @@ fi
 . printer
 . functions
 . log
+. var
 
 # Initialize this variable with a default value to not break
 #  LOGGER calls

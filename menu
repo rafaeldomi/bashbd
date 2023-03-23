@@ -23,6 +23,7 @@ cmd_menu() {
 		y)  menu_list_types;;		# [ menu ]
 		l)  menu_list_lang;;		# [ menu ]
 		i)  menu_list_index;;		# [ menu ]
+		a)  menu_list_attrs;;		# [ menu ]
 		c)  menu_warm_cache "${TKN[1]}";;
 		b)  menu_call_function "${TKN[1]}" "${TKN[2]}" "${TKN[3]}";;
 		\?)	menu_show_help;;
@@ -42,6 +43,7 @@ menu_show_help() {
 	writeln "\\f       List functions"
 	writeln "\\l       List languages"
 	writeln "\\S       List sequences"
+	writeln "\\a       List Attributes"
 	writeln "\\y       List Types"
 	writeln "\\i       List Indexes"
 	writeln ""
@@ -72,6 +74,10 @@ menu_list_schemas() {
 
 menu_list_tables() {
 	printer_dump_table "Listing Tables" $CTABLE_TABLES
+}
+
+menu_list_attrs() {
+	printer_dump_table "Listing attrs" $CTABLE_ATTRS
 }
 
 menu_list_functions() {

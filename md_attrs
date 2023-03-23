@@ -20,23 +20,31 @@ attrs_search() {
 		local val=""
 		local IT=""
 
-		# REC[2] = Table_id
-		# REC[3] = name of the attr
-		# REC[4] = type
+		# 1 - id
+		# 2 - table_id
+		# 3 - attr name
+		# 4 - types
+		# 5 - size
+		# 6 - default
+		# 7 - null
 		hex_to_int val ${REC[2]}
 
 		if [ "${FA[id]}" == "$val" ]; then
 			let i++
-			FA[${i}_name]="${REC[3]}"
 
 			# Type attr is int, so transform it
 			hex_to_int IT "${REC[4]}"
 
+			FA[${i}_name]="${REC[3]}"
 			FA[${i}_type]="${IT}"
+			FA[${i}_default]="${REC[6]}"
+			FA[${i}_null]="${REC[7]}"
 		fi
 	done
 	FA[total]=$i
 
+	# $i contains the count of attrs found, so if 0 menas that
+	#  didnt found any attr for this table
 	if [ $i -eq 0 ]; then
 		return 1
 	else

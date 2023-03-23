@@ -18,6 +18,7 @@ echo "Loading files.."
 . md_attrs
 . md_table
 . md_schema
+. md_sequences
 
 echo "Loaded"
 

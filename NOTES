@@ -50,6 +50,7 @@ bashbd.attrs
 	types_id	integer
 	size		integer
 	default		char(200)
+	null		boolean
 bashbd.functions
 	id			integer
 	name		char(200)
@@ -123,6 +124,7 @@ SHOW		RESERVED	OK		OK
 RESET		-			OK		OK
 TABLE		-			OK		OK
 
+COMMENT		-
 TRUNCATE	TABLE
 CREATE		SCHEMA
 CREATE		TABLE
@@ -134,3 +136,34 @@ INSERT
 REINDEX
 DROP		TABLE
 DROP		SCHEMA
+
+
+
+How to add a value
+
+The row variable is going to have the following fields:
+ROW[table]=The table id
+ROW[FIELDS]=Total Fields in this row
+ROW[ROWS]=Total of records/rows in this variable
+ROW[NAME_x]=Name of the field x
+ROW[DEF_x]=Default value fo the field x
+ROW[NULL_x]=Indication for the not null for the field x
+ROW[TYPE_x]=Type of the field
+
+ROW[rn,fn]=The value of the rn(Row number) and fn(Field number)
+	rn and fn is 0-base index
+
+declare -A ROW
+table_row_init ROW
+
+# Add a record to the ROW variable, will use the ROW[ROWS] as index for the record
+# $1 - The ROW Variable
+# $2 - Indicator of type of the operation (I Insert U Update D Delete)
+# $3... - Values
+table_row_add_value ROW val1 val2 ${MGC_NULL} val3
+
+# Insert the records in the ROW variable
+# This function does not do any change in the values, add as they are
+table_row_insert ROW
+
+

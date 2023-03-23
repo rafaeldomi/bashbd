@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# $1 - output
+# $2 - sequence id
+sequence_nextval() {
+	local _RET=$1
+
+	declare -A DATA
+	DATA[file]=$CTABLE_SEQUENCE
+	init_file DATA
+
+	# convert the key into hex to search perform better in loop
+	local id_hex
+	local found=0
+
+	int_to_hex id_hex 8 "$2"
+
+	while next_record DATA REC; do
+		# 1 - id
+		# 2 - schema_id
+		# 3 - name
+		# 4 - last_value
+	
+		# Check if is the sequence that we want
+		if [ "$id_hex" == "${REC[1]}" ]; then
+			found=1
+			break
+		fi
+	done
+
+	if [ "$found" == "0" ]; then
+		LOGGER_MSG="Sequence with id $2 not found"
+		eval $LOGGER ERROR
+		return 1
+	fi
+
+	LOGGER_MSG="Found sequence ${REC[3]} - lastvalue: ${REC[4]}"
+	eval $LOGGER DEBUG1
+
+	# Increment value
+	local hi
+	local hx
+
+	hex_to_int hi ${REC[4]}
+	let hi++
+	int_to_hex hx 8 $hi
+
+	LOGGER_MSG="New value $hi ($hx)"
+	eval $LOGGER DEBUG1
+
+	REC[4]="$hi"
+
+	eval $_RET="$hx"
+
+	# Update the row
+	# [ md_table ]
+	row_update REC
+}
+
+# Get current_value
+# $1 - SS Sequence Struct
+sequence_curr_val() {
+	declare -n _S=$1
+
+	declare -A DATA
+	DATA[file]=$CTABLE_SEQUENCE
+	init_file DATA
+
+	local i=0
+	while next_record DATA REC; do
+		:
+	done
+}

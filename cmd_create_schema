@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# $1 - Tokens
+create_schema_execute() {
+	declare -n _SQLTKN=$1
+	local i=0
+	local IDS=0
+
+	# Check if schema exists
+	for i in `${PRG_SEQ} 1 ${_SQLTKN[SCHEMA_total]}`; do
+		# If schema already exists we cant create a new one
+		if schema_get_id IDS ${_SQLTKN[SCHEMA_${i}]}; then
+			LOGGER_MSG="Schema ${_SQLTKN[SCHEMA_${i}]} already exists"
+			eval $LOGGER ERROR
+			return 1
+		fi
+	done
+
+	declare -A ROW
+	ROW[table]=$CTABLE_SCHEMAS
+
+	# [ md_table ]
+	table_row_init ROW
+
+	# Insert the value in the schema datafile
+	for i in `${PRG_SEQ} 1 ${_SQLTKN[SCHEMA_total]}`; do
+		# [ md_table ]
+		table_row_add_value ROW ${MGC_NULL} "${_SQLTKN[SCHEMA_${i}]}"
+	done
+
+	# [ md_table ]
+	table_row_insert ROW
+
+	writeln "CREATE SCHEMA OK"
+	return 0
+}

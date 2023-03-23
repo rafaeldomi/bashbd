@@ -33,8 +33,8 @@ declare -A CACHE_TABLE
 #####################
 declare -A GC
 GC[NULL_TEXT]="(null)"
-GC[TIMING]=false		# command \t
-GC[MIN_LOG]=7	# 5 = log
+GC[TIMING]=true			# command \t
+GC[MIN_LOG]=8			# 5 = log
 
 # To save the original values before the FIRST change
 declare -A GC_ORIGINAL
