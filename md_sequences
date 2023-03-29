@@ -48,13 +48,13 @@ sequence_nextval() {
 	LOGGER_MSG="New value $hi ($hx)"
 	eval $LOGGER DEBUG1
 
-	REC[4]="$hi"
+	REC[4]="$hx"
 
 	eval $_RET="$hx"
 
 	# Update the row
 	# [ md_table ]
-	row_update REC
+	record_update REC
 }
 
 # Get current_value

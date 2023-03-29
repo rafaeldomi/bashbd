@@ -206,6 +206,7 @@ table_row_insert() {
 	local I_VALUE=""	# To hold the value
 	local rn	# Rownumber
 	local fn	# FieldNumber
+	local METADATA=""
 
 	# Loop through all the records in the ROW Variable
 	for rn in `$PRG_SEQ 1 ${_R[ROWS]}`; do
@@ -245,7 +246,7 @@ table_row_insert() {
 		# The size of the record
 		int_to_hex rec_size 4 ${#IROW}
 		METADATA="1${MGC_FLD}${rec_size}${MGC_HEADER}"
-		AROW="${CROW}${METADATA}${IROW}${MGC_SEP}"
+		AROW="${AROW}${METADATA}${IROW}${MGC_SEP}"
 	done
 
 	# Just echo the output to the table
@@ -255,15 +256,58 @@ table_row_insert() {
 }
 
 # $1 - Record
-row_update() {
-	declare -n _R=$1
+record_update() {
+	declare -n _RU=$1
 
-	row_delete _R
-	row_add _R
+	# Mark the actual row as deleted
+	record_delete _RU
+
+	record_insert _RU
+}
+
+record_insert() {
+	declare -n _RI=$1
+	local fn	# Field Number
+	local ROW=""
+	local FROW=""
+	local METADATA=""
+	local rec_size=""
+
+	for fn in `$PRG_SEQ 1 ${_RI[REC_TOT]}`; do
+		ROW="$ROW${_RI[fn]}"
+
+		if [ ! "$fn" = "${_RI[REC_TOT]}" ]; then
+			ROW="${ROW}${MGC_FLD}"
+		fi
+	done
+
+	int_to_hex rec_size 4 ${#ROW}
+	METADATA="1${MGC_FLD}${rec_size}${MGC_HEADER}"
+	FROW="${METADATA}${ROW}${MGC_SEP}"
+
+	$PRG_ECHO -n "$FROW" >> ${_RI[REC_TAB]}
+
+	return 0
 }
 
 # Mark a row as not alive
-row_delete() {
+record_delete() {
 	declare -n _R=$1
 
+	# _R is the RECORD Definition
+
+	local p=0
+	let p=${_R[REC_POS]}+1
+
+	declare -A CH_DATA
+	CH_DATA[table]="${_R[REC_TAB]}"
+	CH_DATA[pos]=$p
+	CH_DATA[data]="0"
+	if ! table_change_data CH_DATA; then
+		eval $LOGGER ERRO "Fail to change data on table"
+		declare -p CH_DATA
+		return 1
+	fi
+
+	return 0
 }

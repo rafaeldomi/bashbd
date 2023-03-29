@@ -137,9 +137,30 @@ REINDEX
 DROP		TABLE
 DROP		SCHEMA
 
+# Loop in the records of datafile
 
+initialize the struct
+declare -A DATA
+DATA[file]={ID_OF_TABLE}
+init_file DATA
 
-How to add a value
+DATA[pos]=1     	# Actual position
+DATA[data]=".."		# The content of the data file
+DATA[record_num]=x	# number of the record sequentially
+DATA[record]=""		# The raw data of the actual record
+DATA[type]=""		# Type of the relation U = Unknown = Table/index
+
+while next_record DATA REC; do
+	[..]
+	REC[0]=x		# Fld0
+	REC[n]=x		# Fldn
+	REC[REC_TOT]=x	# Total fields in this record
+	REC[REC_POS]=x	# Position of this record in the record
+	REC[REC_TAB]=x	# Id of the table
+	REC[REC_SZ]=x   # Size of the fields (without the metadata)
+done
+
+# How to add a value
 
 The row variable is going to have the following fields:
 ROW[table]=The table id
@@ -154,12 +175,12 @@ ROW[rn,fn]=The value of the rn(Row number) and fn(Field number)
 	rn and fn is 0-base index
 
 declare -A ROW
+ROW[table]=IDofTABLE
 table_row_init ROW
 
 # Add a record to the ROW variable, will use the ROW[ROWS] as index for the record
 # $1 - The ROW Variable
-# $2 - Indicator of type of the operation (I Insert U Update D Delete)
-# $3... - Values
+# $2... - Values
 table_row_add_value ROW val1 val2 ${MGC_NULL} val3
 
 # Insert the records in the ROW variable

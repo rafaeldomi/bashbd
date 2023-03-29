@@ -50,5 +50,7 @@ readonly VERSION=0
 #  for this in table creation
 readonly REC_POS=99999
 readonly REC_TOT=99998
+readonly REC_TAB=99997
+readonly  REC_SZ=99996
 
 fi

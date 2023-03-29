@@ -281,6 +281,7 @@ next_record() {
 	# 4..7 -- size
 	# 8 -- Data Init
 
+	# We do a loop here because we may find not alive records
 	while true; do
 		# Actual pos
 		local pos=${STG_DATA[pos]}
@@ -324,6 +325,8 @@ next_record() {
 			continue
 		fi
 
+		# FOUND A LIVING RECORD
+
 		# Break fields
 		mapfile -t -O 1 -d${MGC_FLD} TFLD < <(${PRG_ECHO} -n "$fields")
 		RES=$?
@@ -344,6 +347,8 @@ next_record() {
 		# Negative field
 		TFLD[$REC_TOT]="${#TFLD[@]}"
 		TFLD[$REC_POS]="$pos"
+		TFLD[$REC_TAB]="${STG_DATA[file]}"
+		TFLD[$REC_SZ]=${#fields} 
 
 		break
 	done

@@ -28,6 +28,8 @@ create_schema_execute() {
 		table_row_add_value ROW ${MGC_NULL} "${_SQLTKN[SCHEMA_${i}]}"
 	done
 
+	declare -p ROW
+
 	# [ md_table ]
 	table_row_insert ROW
 
