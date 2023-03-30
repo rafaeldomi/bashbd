@@ -152,12 +152,14 @@ DATA[type]=""		# Type of the relation U = Unknown = Table/index
 
 while next_record DATA REC; do
 	[..]
+	# Values filled inside the next_record
 	REC[0]=x		# Fld0
 	REC[n]=x		# Fldn
 	REC[REC_TOT]=x	# Total fields in this record
-	REC[REC_POS]=x	# Position of this record in the record
+	REC[REC_POS]=x	# Position of this record in the datafile
 	REC[REC_TAB]=x	# Id of the table
 	REC[REC_SZ]=x   # Size of the fields (without the metadata)
+	REC[REC_IP]=1/0	# Set if inplace update 1 - Yes 0 - No
 done
 
 # How to add a value

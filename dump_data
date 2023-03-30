@@ -12,7 +12,6 @@ fi
 
 . const
 . storage
-. temp/table
 . printer
 . functions
 . log
@@ -66,7 +65,9 @@ ATABLE[ROWS]=${#DATA[@]}
 
 rown=0
 TABDATA=""
-TABFLD="| N${MGC_FLD}| Size${MGC_FLD}| Alive"
+TABFLD="| N${MGC_FLD}| Pos${MGC_FLD}| Size${MGC_FLD}| Alive"
+position=1
+position_f=1
 
 # Loop in the records
 for i_row in "${DATA[@]}"; do
@@ -96,8 +97,10 @@ for i_row in "${DATA[@]}"; do
 	sz_hex=${HFLD[2]:0:4}
 	hex_to_int SZ $sz_hex
 
-	# N | Size | Alive
-	TABDATA="| $rown${MGC_FLD}| $sz_hex ($SZ)${MGC_FLD}| ${HFLD[1]}"
+	let position_f=$position+$SH
+	# N | Pos | Size | Alive
+	TABDATA="| $rown${MGC_FLD}| ${position} ($position_f)${MGC_FLD}| $sz_hex ($SZ)${MGC_FLD}| ${HFLD[1]}"
+	let position=$position+${#i_row}
 
 	# Loop in the fields
 	for f in "${FLD[@]}"; do
@@ -139,7 +142,7 @@ TAB_PRINT[header]="${TABFLD} ${MGC_FLD}|"
 TAB_PRINT[rows]="${ATABLE[ROWS]}"
 TAB_PRINT[fields]="${ATABLE[TF]}"
 
-let TAB_PRINT[fields]=${TAB_PRINT[fields]}+3
+let TAB_PRINT[fields]=${TAB_PRINT[fields]}+4
 
 echo "iniciando printable"
 

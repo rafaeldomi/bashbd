@@ -48,6 +48,8 @@ printer_dump_table() {
 	local _TITLE=$1
 	local _TABLE=$2
 
+	local TIME_INIT=$(${PRG_DATE} +%s%3N)
+
 	# Lets find the attrs of this relation
 	declare -A ATTRS
 	ATTRS[id]=$2
@@ -105,4 +107,11 @@ printer_dump_table() {
 	fi
 
 	printer TAB_PRINT
+
+	local TIME_FINAL=$(${PRG_DATE} +%s%3N)
+
+	if [ "${GC[TIMING]}" == "true" ]; then
+		local TIME_TOTAL=$(expr $TIME_FINAL - $TIME_INIT)
+		writeln "Elapsed Time: $TIME_TOTAL ms"
+	fi
 }

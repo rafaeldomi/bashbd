@@ -83,6 +83,7 @@ log () {
 	local _LINE=$2
 	local _LEVEL=$3
 	local fnc_name=""
+	local VALUES=""
 
 	# Order of the importance of logs
 	# 1 - FATAL

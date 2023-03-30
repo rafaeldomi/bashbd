@@ -95,8 +95,11 @@ table_change_data() {
 	declare -n _ID=$1
 	local total="${#_ID[data]}"
 
+	LOGGER_MSG="total: $total seek: ${_ID[pos]}"
+
 	${PRG_ECHO} -n "${_ID[data]}" > temp_data_change
-	${PRG_DD} if=temp_data_change of=${_ID[table]} conv=notrunc bs=$total seek=${_ID[pos]} count=$total iflag=fullblock 2> /dev/null
+	#${PRG_DD} if=temp_data_change of=${_ID[table]} conv=notrunc bs=$total seek=${_ID[pos]} count=1 iflag=fullblock 2> /dev/null
+	${PRG_DD} if=temp_data_change of=${_ID[table]} conv=notrunc bs=1 seek=${_ID[pos]} count=$total iflag=fullblock 2> /dev/null
 	RES=$?
 	${PRG_UNLINK} temp_data_change
 
@@ -140,9 +143,10 @@ table_row_init() {
 # $2.. - Fields
 table_row_add_value() {
 	declare -n _R=$1	# Our ROW variable inside this function
-	local pos=0	# Number of the field in the loop
-	local fn=0  # FieldNumber
-	local rn=""	# RowNumber
+	local pos=0			# Number of the field in the loop
+	local fn=0  		# FieldNumber
+	local rn=""			# RowNumber
+	local VALUES=""
 
 	# Lets shift one position to read all the args
 	shift
@@ -155,7 +159,6 @@ table_row_add_value() {
 	# Loop on all the values of this row
 	#  Values was filled inside a indexed array, its 0-indexed
 	for pos in `$PRG_SEQ 1 ${#VALUES[@]}`; do
-
 		# Value is null?
 		if [ "${VALUES[pos-1]}" == "${MGC_NULL}" ]; then
 
@@ -172,11 +175,12 @@ table_row_add_value() {
 					local si="${dv:9}"
 					local sv=""
 
+					# [ md_sequence ]
 					sequence_nextval sv $si
 
-					VALUES[pos-1]="$sv"
+					VALUES[${pos}-1]="$sv"
 				else
-					VALUES[pos-1]="${_R[DEF_${pos}]}"
+					VALUES[${pos}-1]="${_R[DEF_${pos}]}"
 				fi
 			else
 				# Otherwise, check if this fields accepts a default value
@@ -255,14 +259,43 @@ table_row_insert() {
 	return 0
 }
 
+# 1 - Record struct
+# 2 - field number
+# 3 - new value
+record_change_value() {
+	declare -n _R=$1
+	local fn=$2		# fieldnumber
+	local nv="$3"	# newvalue
+
+	if [ ! "${#nv}" == "${#_R[$fn]}" ]; then
+		_R[REC_IP]=0
+	fi
+
+	_R[$fn]="$nv"
+
+	return 0
+}
+
 # $1 - Record
 record_update() {
 	declare -n _RU=$1
 
-	# Mark the actual row as deleted
-	record_delete _RU
+	# Check if can do a InPlace Update
+	#  ie, update the record in the same position
+	#      it just work if the size is the same
+	# * Also check if has the config inplace
+	if [[ "${_RU[REC_IP]}" -eq 1 && "${GC[INPLACE]}" == "1" ]]; then
+		eval $LOGGER DEBUG1 "Marked InPlace Update"
 
-	record_insert _RU
+		record_update_inplace _RU
+	else
+		eval $LOGGER DEBUG "Using normal update process"
+
+		# Mark the actual row as deleted
+		record_delete _RU
+
+		record_insert _RU
+	fi
 }
 
 record_insert() {
@@ -304,7 +337,48 @@ record_delete() {
 	CH_DATA[pos]=$p
 	CH_DATA[data]="0"
 	if ! table_change_data CH_DATA; then
-		eval $LOGGER ERRO "Fail to change data on table"
+		eval $LOGGER ERROR "Fail to change data on table"
+		declare -p CH_DATA
+		return 1
+	fi
+
+	return 0
+}
+
+: <<'FUNCTION'
+Description: Update a record inplace
+Parameters:
+ $1 - Record struct
+FUNCTION
+record_update_inplace() {
+	declare -n _RUIP=$1	# Record update inplace
+	local FROW=""	# Full Row
+	local fn=0		# FieldNumber
+	local pos=0		# Position to change
+
+	# The _RUIP[REC_POS] must point to the 1E magic code
+	#  In this InPlace we can just use dd to save to the right pos
+	#  that is pos+SH_SIZE
+	for fn in `$PRG_SEQ 1 ${_RUIP[REC_TOT]}`; do
+		FROW="$FROW${_RUIP[fn]}"
+		if [ ! "$fn" == "${_RUIP[REC_TOT]}" ]; then
+			FROW="${FROW}${MGC_FLD}"
+		fi
+	done
+
+	let pos=${_RUIP[REC_POS]}+$SH
+
+	declare -A CH_DATA
+	CH_DATA[table]="${_RUIP[REC_TAB]}"
+	CH_DATA[pos]=$pos
+	CH_DATA[data]="$FROW"
+
+	LOGGER_MSG="Will change ${CH_DATA[table]} pos: ${CH_DATA[pos]} data: ${CH_DATA[data]}"
+	eval $LOGGER DEBUG2
+
+	# [ md_table ]
+	if ! table_change_data CH_DATA; then
+		eval $LOGGER ERROR "Fail to change data on table"
 		declare -p CH_DATA
 		return 1
 	fi

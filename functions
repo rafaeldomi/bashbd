@@ -278,7 +278,7 @@ int_to_hex() {
 	local int="$3"
 	local value=""
 
-	value=$(printf "%0$2x" "$int")
+	value=$(${PRG_PRINTF:-printf} "%0$2x" "$int")
 	eval $_RET="$value"
 }
 
@@ -287,11 +287,16 @@ hex_to_int() {
 	local input=$2
 	local value=""
 
-	value=$(${PRG_PRINTF} "%d" "0x$input")
-	RES=$?
-
+	value=$((0x$input))
 	eval $_RET="$value"
-	return $RES
+
+	return 0
+
+	#value=$(${PRG_PRINTF} "%d" "0x$input")
+	#RES=$?
+
+	#eval $_RET="$value"
+	#return $RES
 }
 
 fn_exist() {

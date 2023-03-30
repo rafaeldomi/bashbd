@@ -48,7 +48,7 @@ sequence_nextval() {
 	LOGGER_MSG="New value $hi ($hx)"
 	eval $LOGGER DEBUG1
 
-	REC[4]="$hx"
+	record_change_value REC 4 "$hx"
 
 	eval $_RET="$hx"
 

@@ -35,6 +35,7 @@ declare -A GC
 GC[NULL_TEXT]="(null)"
 GC[TIMING]=true			# command \t
 GC[MIN_LOG]=8			# 5 = log
+GC[INPLACE]=1			# Use inplace Updates if applicable
 
 # To save the original values before the FIRST change
 declare -A GC_ORIGINAL

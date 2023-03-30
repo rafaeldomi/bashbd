@@ -2,9 +2,10 @@ if [ ! $CONST_INCLUDED ]; then
 CONST_INCLUDED=1
 
 ### Table metadata
+# SH - Size Header
 readonly SH_LIVE=1	# Position in header for the "live value"
 readonly SH_SIZE=3	# Position in header for the "record size value"
-readonly SH=8
+readonly SH=8		# Total Header size
 
 ### Table codes
 readonly CTABLE_SCHEMAS=1
@@ -48,9 +49,10 @@ readonly VERSION=0
 #  or negative values. So i choose to use a high value, I dont think that we are going
 #  to have 99999 fields in the same table. BUT, there is going to be a safecheck
 #  for this in table creation
-readonly REC_POS=99999
-readonly REC_TOT=99998
-readonly REC_TAB=99997
-readonly  REC_SZ=99996
+readonly REC_POS=99999	# Position in the datafile
+readonly REC_TOT=99998	# Total of fields
+readonly REC_TAB=99997	# Id of the table
+readonly  REC_SZ=99996	# Size of record
+readonly  REC_IP=99995	# Indication of InPlace changes, if applicable
 
 fi

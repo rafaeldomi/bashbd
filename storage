@@ -286,7 +286,7 @@ next_record() {
 		# Actual pos
 		local pos=${STG_DATA[pos]}
 
-		# Out actual position must be an E1 hex
+		# Out actual position must be an 1E hex
 		local tmp=${STG_DATA[data]:$pos:1}
 
 		if [ "$tmp" == "" ]; then
@@ -300,9 +300,13 @@ next_record() {
 			return 2
 		fi
 
-
+		# Size of the record pos + SH_SIZE (Size header)
 		local hsz="${STG_DATA[data]:(($pos+$SH_SIZE)):4}"
+
+		# Convert to integer
 		local sz=$((0x$hsz))
+
+		# Get the fields value pos + SH (Total Size Header)
 		local fields="${STG_DATA[data]:(($pos+$SH)):$sz}"
 
 		if [ "$fields" == "" ]; then
@@ -345,10 +349,12 @@ next_record() {
 		fi
 
 		# Negative field
+		# see [ const ] for more info
 		TFLD[$REC_TOT]="${#TFLD[@]}"
 		TFLD[$REC_POS]="$pos"
 		TFLD[$REC_TAB]="${STG_DATA[file]}"
 		TFLD[$REC_SZ]=${#fields} 
+		TFLD[$REC_IP]=1
 
 		break
 	done
