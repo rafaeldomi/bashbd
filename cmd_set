@@ -7,8 +7,8 @@ set_execute() {
 	local sz=${TOKENS[KV_total]}
 	local i=0
 	for i in `${PRG_SEQ} 1 $sz`; do
-		local set_key="${TOKENS[KEY_$i]^^}"
-		local set_value="${TOKENS[VALUE_$i]}"
+		local set_key="${TOKENS[KV_KEY_$i]^^}"
+		local set_value="${TOKENS[KV_VALUE_$i]}"
 
 		LOGGER_MSG="Key: $set_key => Value: $set_value"
 		eval $LOGGER DEBUG1

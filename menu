@@ -16,14 +16,17 @@ cmd_menu() {
 		q)  finish 0;;
 		## TODO
 		## Find a better place to put the menu_list functions
-		t)	menu_list_tables;;	 	# [ menu ]
-		s)  menu_list_schemas;;  	# [ menu ]
-		f)  menu_list_functions;;	# [ menu ]
-		S)  menu_list_sequences;;	# [ menu ]
-		y)  menu_list_types;;		# [ menu ]
-		l)  menu_list_lang;;		# [ menu ]
-		i)  menu_list_index;;		# [ menu ]
-		a)  menu_list_attrs;;		# [ menu ]
+		# menu.menu_list
+		c)  menu_list "comments"   $CTABLE_COMMENTS;;
+		t)  menu_list "tables"     $CTABLE_TABLES;;
+		s)  menu_list "schemas"    $CTABLE_SCHEMAS;;
+		f)  menu_list "functions"  $CTABLE_FUNCTIONS;;
+		S)  menu_list "sequences"  $CTABLE_SEQUENCE;;
+		y)  menu_list "types"      $CTABLE_TYPES;;
+		l)  menu_list "languages"  $CTABLE_LANG;;
+		i)  menu_list "indexes"    $CTABLE_INDEX;;
+		a)  menu_list "attributes" $CTABLE_ATTRS;;
+		
 		c)  menu_warm_cache "${TKN[1]}";;
 		b)  menu_call_function "${TKN[1]}" "${TKN[2]}" "${TKN[3]}";;
 		\?)	menu_show_help;;
@@ -38,14 +41,15 @@ menu_show_help() {
 	writeln ""
 	writeln "\\?       Show this help"
 	writeln ""
-	writeln "\\t       List tables"
-	writeln "\\s       List schemas"
+	writeln "\\a       List attributes"
+	writeln "\\c       List comments"
 	writeln "\\f       List functions"
+	writeln "\\i       List indexes"
 	writeln "\\l       List languages"
+	writeln "\\s       List schemas"
 	writeln "\\S       List sequences"
-	writeln "\\a       List Attributes"
-	writeln "\\y       List Types"
-	writeln "\\i       List Indexes"
+	writeln "\\t       List tables"
+	writeln "\\y       List types"
 	writeln ""
 	writeln "\\q     Quit program"
 }
@@ -64,40 +68,14 @@ map_fields() {
 
 ###################################################
 ###################################################
-menu_list_sequences() {
-	printer_dump_table "Listing Sequences" $CTABLE_SEQUENCE
-}
-
-menu_list_schemas() {
-	printer_dump_table "Listing Schemas" $CTABLE_SCHEMAS
-}
-
-menu_list_tables() {
-	printer_dump_table "Listing Tables" $CTABLE_TABLES
-}
-
-menu_list_attrs() {
-	printer_dump_table "Listing attrs" $CTABLE_ATTRS
-}
-
-menu_list_functions() {
-	printer_dump_table "Listing Function" $CTABLE_FUNCTIONS
+# $1 - Id of the table to list
+menu_list() {
+	printer_dump_table "Listing $1" $2
 }
 
 menu_warm_cache() {
 	# Do the cache if necessary
 	cache_do_cache $CTABLE_SCHEMAS
-}
-
-menu_list_types() {
-	printer_dump_table "Listing Types" $CTABLE_TYPES
-}
-
-menu_list_lang() {
-	printer_dump_table "Listing Languages" $CTABLE_LANG
-}
-menu_list_index() {
-	printer_dump_table "Listing Indexes" $CTABLE_INDEX
 }
 
 menu_call_function() {

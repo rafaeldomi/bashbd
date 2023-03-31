@@ -13,6 +13,7 @@
 . cmd_drop_table
 . cmd_drop_schema
 . cmd_create_schema
+. cmd_create_table
 
 execute() {
 	# Clear this "object" (I know, variable, OK)

@@ -27,8 +27,13 @@ printer() {
 	local table=""
 	local delimiter=""
 	local line=""
+	local saida=""
 
-	delimiter="$(${PRG_PRINTF} "%s${MGC_FLD}+" "$(repeatString "${MGC_FLD}+" $nOC)")"
+	repeat saida "${MGC_FLD}+" $nOC 2
+
+	#delimiter="$(${PRG_PRINTF} "%s${MGC_FLD}+" "$(repeatString "${MGC_FLD}+" $nOC)")"
+	delimiter="$(${PRG_PRINTF} "%s${MGC_FLD}+" $saida)"
+
 	table="${delimiter}\n${PRINT[header]}\n${delimiter}\n"
 
 	for i in `${PRG_SEQ} 1 ${PRINT[rows]}`; do
@@ -47,8 +52,6 @@ printer() {
 printer_dump_table() {
 	local _TITLE=$1
 	local _TABLE=$2
-
-	local TIME_INIT=$(${PRG_DATE} +%s%3N)
 
 	# Lets find the attrs of this relation
 	declare -A ATTRS
@@ -108,10 +111,4 @@ printer_dump_table() {
 
 	printer TAB_PRINT
 
-	local TIME_FINAL=$(${PRG_DATE} +%s%3N)
-
-	if [ "${GC[TIMING]}" == "true" ]; then
-		local TIME_TOTAL=$(expr $TIME_FINAL - $TIME_INIT)
-		writeln "Elapsed Time: $TIME_TOTAL ms"
-	fi
 }

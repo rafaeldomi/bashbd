@@ -32,8 +32,8 @@ repeat() {
 	local _TOTAL=$3
 
 	if [ "$_VERSION" -eq 2 ]; then
-		A=$(printf "%${_TOTAL}s")
-		_VALUE=$(echo -e "${A// /${2}}")
+		A=$(${PRG_PRINTF} "%${_TOTAL}s")
+		_VALUE=$(${PRG_ECHO} -e "${A// /${2}}")
 	else
 		while [ $((total--)) -ge 0 ]; do
 			_VALUE="${_VALUE}$2"

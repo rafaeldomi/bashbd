@@ -2,6 +2,8 @@
 
 . parserv2
 
+te=0	# total erros
+
 main() {
 	echo "** Iniciando Checagem parser"
 	echo "**   Total Avaliar ${#SQLS[@]}"
@@ -57,10 +59,14 @@ main() {
 
 		if [ $erro == 1 ]; then
 			echo "SQL ou parser inválido. Avaliar"
+			let te++
 		else
 			echo "Checagem OK"
 		fi
 	done
+
+	echo
+	echo "Errors: $te"
 }
 
 declare SQLS
@@ -80,7 +86,7 @@ SQLS=('set display="text"'
 	'create index idx01 on tab (col1)' #13
 	'create index idx02 on tab(col2, col3)'
 	'reindex index bcc'
-	'select 1'
+	'select 1'	# 16
 	'select 1 as fld'
 	'select col1, col2 as fld from table1' #18
 	'select col1 as fld from table1 tab'
@@ -94,8 +100,10 @@ SQLS=('set display="text"'
 	'drop table tab1'
 	'drop table ifexists tab2'
 	'select col as fld from table1 as tab'  #29
-	'delete from table1'
-	'update table1 set col1=col2'
+	'delete from table1'	# 30
+	'update table1 set col1=col2'	# 31
+	'create table tab(id int, des text)'	# 32
+	'CREATE TABLE tab(id int notnull, des text)'	# 33
 )
 
 for i in `seq 0 ${#SQLS[@]}`; do
@@ -105,18 +113,18 @@ done
 # set display="text"
 RESULT_0=(
 	[CMD]="SET"
-	[KEY_1]="display"
-	[VALUE_1]="text"
+	[KV_KEY_1]="display"
+	[KV_VALUE_1]="text"
 	[KV_total]=1
 )
 
 # 'set a=b, c=d'
 RESULT_1=(
 	[CMD]="SET"
-	[KEY_1]='a'
-	[VALUE_1]='b'
-	[KEY_2]='c'
-	[VALUE_2]='d'
+	[KV_KEY_1]='a'
+	[KV_VALUE_1]='b'
+	[KV_KEY_2]='c'
+	[KV_VALUE_2]='d'
 	[KV_total]=2
 )
 
@@ -231,119 +239,140 @@ RESULT_15=(
 # select 1
 RESULT_16=(
 	[CMD]="SELECT"
-	[FIELD_1]="1"
-	[FIELD_total]=1
+	# 1
+	[FLD_FIELD_1]="1"
+	[FLD_total]=1
 )
 
 # 'select 1 as fld'
 RESULT_17=(
 	[CMD]="SELECT"
-	[FIELD_1]="1"
-	[FIELD_total]=1
-	[ALIAS_1]="fld"
+	# 1 as fld
+	[FLD_FIELD_1]="1"
+	[FLD_total]=1
+	[FLD_ALIAS_1]="fld"
 )
 
 #	'select col1, col2 as fld from table1' #18
 RESULT_18=(
 	[CMD]="SELECT"
-	[FIELD_1]="col1"
-	[FIELD_2]="col2"
-	[ALIAS_2]="fld"
-	[FIELD_total]=2
-	[TABLE_1]="table1"
+	# col1
+	[FLD_FIELD_1]="col1"
+	# col2
+	[FLD_FIELD_2]="col2"
+	[FLD_ALIAS_2]="fld"
+	[FLD_total]=2
+	# table1
+	[FROM_TABLE_1]="table1"
+	[FROM_total]=1
 )
 
 # 'select col1 as fld from table1 tab'
 RESULT_19=(
 	[CMD]="SELECT"
-	[FIELD_1]="col1"
-	[ALIAS_1]="fld"
-	[FIELD_total]=1
-	[TABLE_1]="table1"
-	[TABLE_total]=1
-	[TAB_ALIAS_1]="tab"
+	# col1
+	[FLD_FIELD_1]="col1"
+	[FLD_ALIAS_1]="fld"
+	[FLD_total]=1
+	# table1 tab
+	[FROM_TABLE_1]="table1"
+	[FROM_total]=1
+	[FROM_TABLE_ALIAS_1]="tab"
 )
 
 # 'select a.col1 as fld, b.col2 as fld1 from table1 a, table2 b'
 RESULT_20=(
 	[CMD]="SELECT"
-	[FIELD_1]="a.col1"
-	[FIELD_2]="b.col2"
-	[FIELD_total]=2
-	[ALIAS_1]="fld"
-	[ALIAS_2]="fld1"
-	[TABLE_1]="table1"
-	[TABLE_2]="table2"
-	[TABLE_total]=2
-	[TAB_ALIAS_1]="a"
-	[TAB_ALIAS_2]="b"
+	# a.col1 as fld
+	[FLD_FIELD_1]="a.col1"
+	[FLD_ALIAS_1]="fld"
+	# b.col2 as fld1
+	[FLD_FIELD_2]="b.col2"
+	[FLD_ALIAS_2]="fld1"
+	[FLD_total]=2
+	# table1 a, table2 b
+	[FROM_TABLE_1]="table1"
+	[FROM_TABLE_2]="table2"
+	[FROM_total]=2
+	[FROM_TABLE_ALIAS_1]="a"
+	[FROM_TABLE_ALIAS_2]="b"
 )
 
 # 'select *, tab.col from table1 tab'
 RESULT_21=(
 	[CMD]="SELECT"
-	[FIELD_1]="*"
-	[FIELD_2]="tab.col"
-	[FIELD_total]=2
-	[TABLE_1]="table1"
-	[TAB_ALIAS_1]="tab"
-	[TABLE_total]=1
+	# *
+	[FLD_FIELD_1]="*"
+	# tab.col
+	[FLD_FIELD_2]="tab.col"
+	[FLD_total]=2
+	# table1 tab
+	[FROM_TABLE_1]="table1"
+	[FROM_TABLE_ALIAS_1]="tab"
+	[FROM_total]=1
 )
 
 # 'select 1=2'  # 22
 RESULT_22=(
 	[CMD]="SELECT"
-	[FIELD_1]="1"
-	[VALUE_1]="2"
-	[FIELD_total]=1
-	[OPER_1]="="
+	# 1=2
+	[FLD_FIELD_1]="1"
+	[FLD_VALUE_1]="2"
+	[FLD_total]=1
+	[FLD_OPER_1]="="
 )
 
 # 'select col1=col2 as fld'
 RESULT_23=(
 	[CMD]="SELECT"
-	[FIELD_1]="col1"
-	[OPER_1]="="
-	[VALUE_1]="col2"
-	[FIELD_total]=1
-	[ALIAS_1]="fld"
+	# col1=col2 as fld
+	[FLD_FIELD_1]="col1"
+	[FLD_OPER_1]="="
+	[FLD_VALUE_1]="col2"
+	[FLD_total]=1
+	[FLD_ALIAS_1]="fld"
 )
 
 #	'select col1=col2 as fld, col3=tab.col2 as fld2 from table1 tab'
 RESULT_24=(
 	[CMD]="SELECT"
-	[FIELD_1]="col1"
-	[VALUE_1]="col2"
-	[ALIAS_1]="fld"
-	[FIELD_2]="col3"
-	[VALUE_2]="tab.col2"
-	[ALIAS_2]="fld2"
-	[OPER_1]="="
-	[OPER_2]="="
-	[FIELD_total]=2
-	[TABLE_1]="table1"
-	[TAB_ALIAS_1]="tab"
-	[TABLE_total]=1
+	# col1=col2 as fld
+	[FLD_FIELD_1]="col1"
+	[FLD_VALUE_1]="col2"
+	[FLD_ALIAS_1]="fld"
+	[FLD_OPER_1]="="
+	# col3=tab.col2 as fld2
+	[FLD_FIELD_2]="col3"
+	[FLD_VALUE_2]="tab.col2"
+	[FLD_ALIAS_2]="fld2"
+	[FLD_OPER_2]="="
+	[FLD_total]=2
+	# table1 tab
+	[FROM_TABLE_1]="table1"
+	[FROM_TABLE_ALIAS_1]="tab"
+	[FROM_total]=1
 )
 
 #	'select 3-2 as value'
 RESULT_25=(
 	[CMD]="SELECT"
-	[FIELD_1]="3"
-	[OPER_1]="-"
-	[VALUE_1]="2"
-	[FIELD_total]=1
-	[ALIAS_1]="value"
+	# 3-2 as value
+	[FLD_FIELD_1]="3"
+	[FLD_OPER_1]="-"
+	[FLD_VALUE_1]="2"
+	[FLD_total]=1
+	[FLD_ALIAS_1]="value"
 )
 
 # 'select "abc bcd" as fld from table1 tab'
 RESULT_26=(
 	[CMD]="SELECT"
-	[FIELD_1]="abc bcd"
-	[FIELD_total]=1
-	[ALIAS_1]="fld"
-	[TABLE_1]="table1"
-	[TAB_ALIAS_1]="tab"
+	[FLD_FIELD_1]="abc bcd"
+	[FLD_total]=1
+	[FLD_ALIAS_1]="fld"
+	[FROM_TABLE_1]="table1"
+	[FROM_TABLE_ALIAS_1]="tab"
+	[FROM_total]=1
 )
 
 # 'drop table tab1'
@@ -365,12 +394,14 @@ RESULT_28=(
 # 	'select col as fld from table1 as tab'  #29
 RESULT_29=(
 	[CMD]="SELECT"
-	[FIELD_1]="col"
-	[FIELD_total]=1
-	[ALIAS_1]="fld"
-	[TABLE_1]="table1"
-	[TAB_ALIAS_1]="tab"
-	[TABLE_total]=1
+	# col as fld
+	[FLD_FIELD_1]="col"
+	[FLD_total]=1
+	[FLD_ALIAS_1]="fld"
+	# from table1 as tab
+	[FROM_TABLE_1]="table1"
+	[FROM_TABLE_ALIAS_1]="tab"
+	[FROM_total]=1
 )
 
 # 'delete from table1'
@@ -383,8 +414,36 @@ RESULT_30=(
 RESULT_31=(
 	[CMD]="UPDATE"
 	[KV_total]=1
-	[KEY_1]="col1"
-	[VALUE_1]="col2"
+	[KV_KEY_1]="col1"
+	[KV_VALUE_1]="col2"
+)
+
+
+# 'create table tab(id int, des text)'	# 32
+RESULT_32=(
+	[CMD]="CREATE"
+	[FLD_total]=2
+	# id int
+	[FLD_NAME_1]="id"
+	[FLD_TYPE_1]="int"
+	# des text
+	[FLD_NAME_2]="des"
+	[FLD_TYPE_2]="text"
+)
+
+# CREATE TABLE tab(id int notnull, des text)
+RESULT_33=(
+	[CMD]="CREATE"
+	[OBJECT]="TABLE"
+	[NAME]="tab"
+	# id int notnull
+	[FLD_NAME_1]="id"
+	[FLD_TYPE_1]="int"
+	[FLD_NOTNULL_1]="true"
+	# des text
+	[FLD_NAME_2]="des"
+	[FLD_TYPE_2]="text"
+	[FLD_NOTNULL_2]="false"
 )
 
 # ---

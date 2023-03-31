@@ -3,12 +3,12 @@
 . parserv2
 
 SQL='  SET display="text";'
-SQL='  ST display="text";'
+#SQL='  ST display="text";'
 #SQL='SET a=b, c=d'
 #SQL="set a=3, dfddf=fvfvfv, asdasdasd=1,121231=11;"
 #SQL='truncate table tab1'
 #SQL='truncate table tab1,tab2;'
-SQL='truncate table tab1,tab2'
+#SQL='truncate table tab1,tab2'
 #SQL='truncate table tab1, tab2 ;'
 #SQL="truncate tab1"
 #SQL=" select 1";
@@ -41,19 +41,24 @@ SQL='truncate table tab1,tab2'
 #SQL="select 1 from tab1 a where a.col1 = 1"
 #SQL="select 1 + 1"
 #SQL="select 1 * 3"
-SQL="create schema sc1, sc2"
+#SQL="create schema sc1, sc2"
+#SQL="comment on table asd is 'comment okokos asd';"
 #SQL="create schema ifnotexists sc1, sc2"
 #SQL="drop schema cascade sc1;"
 #SQL="drop schema ifexists sc1;"
-#SQL="CREATE TABLE tab( id int, des text)"
+#SQL="CREATE TABLE tab( id int notnull , des text default 'val as', def int notnull default 1, col4 text default 1 notnull)"
+SQL="CREATE TABLE tab(id int notnull, des text)"
 #SQL="DROP TABLE IFEXISTS asd;"
 #SQL="REINDEX TABLE asd"
+#SQL="select 1 as fld"
 #SQL="CREATE INDEX idx01 ON tab (col1)"
 #SQL="REINDEX INDEX abc"
 #SQL="delete from table1"
+#SQL="select 1=2"
 #SQL='update table1 set col=col2'
 #SQL='select "abc bcd" as fld'
 #SQL='select 1 from table1 where true'
 #SQL='select a from tab as tabl'
+#SQL='select 3-2 as value'
 
 parse_sql "$SQL"

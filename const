@@ -16,6 +16,7 @@ readonly CTABLE_FUNCTIONS=5
 readonly CTABLE_INDEX=6
 readonly CTABLE_LANG=7
 readonly CTABLE_SEQUENCE=8
+readonly CTABLE_COMMENTS=9
 
 ### Types Sizes
 readonly SZ_SMALLINT=2

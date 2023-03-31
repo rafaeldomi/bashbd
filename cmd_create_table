@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# $1 - Tokens
+create_table_execute() {
+	declare -n _SQLTKN=$1
+
+	LOGGER_MSG="Create table: ${_SQLTKN[NAME]}"
+
+	# Check if table exists
+	# [ md_table ]
+	if table_get_id ID ${_SQLTKN[NAME]}; then
+		LOGGER_MSG="Table ${_SQLTKN[NAME]} already exists"
+		eval $LOGGER ERROR
+		return 1
+	fi
+
+	return 0
+}

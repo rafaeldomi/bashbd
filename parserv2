@@ -73,14 +73,17 @@ declare DEF_RESET=(i::RESET:CMD s:::VALUE e:)
 declare DEF_REINDEX=(i::REINDEX:CMD o::DEF_REINDEX_VALUES:OBJECT s:::VALUE e:)
 declare DEF_REINDEX_VALUES=(INDEX TABLE)
 
+# COMMENT ON TABLE table IS '';
+declare DEF_COMMENT=(i::COMMENT:CMD i::ON i::TABLE s:::TABLE i::IS s:::VALUE e:)
+
 # Creates
 
 # CREATE SCHEMA [IFNOTEXISTS] (name,...)
 declare DEF_CREATE_SCHEMA=(i::CREATE:CMD i::SCHEMA:OBJECT m:ob:IFNOTEXISTS s:l::SCHEMA e:)
 
-# CREATE TABLE (name) ( (name) (type)  )
-declare DEF_CREATE_TABLE=(i::CREATE:CMD i::TABLE:OBJECT s:::NAME m::\(: g:l:DEF_FIELD:FIELD m::\):  e:)
-declare DEF_FIELD=(s:::NAME s:::TYPE)
+# CREATE TABLE (name) ( {DEF_ATTRS}  )
+declare DEF_CREATE_TABLE=(i::CREATE:CMD i::TABLE:OBJECT s:::NAME m::\(: g:l:DEF_ATTRS:FLD m::\):  e:)
+declare DEF_ATTRS=(s:::NAME s:::TYPE m:o:NOTNULL n:o:DEFAULT:DEFAULT)
 
 # CREATE [UNIQUE] INDEX [IFNOTEXISTS] (name) ON (table) ( (col,...))
 declare DEF_CREATE_INDEX=(i::CREATE:CMD i:o:UNIQUE:UNIQUE i::INDEX:OBJECT i:o:IFNOTEXISTS:EXISTS \
@@ -110,9 +113,12 @@ declare DEF_DELETE=(i::DELETE:CMD m::FROM s:::TABLE e:)
 declare DEF_UPDATE=(i::UPDATE:CMD s:::TABLE m::SET g::DEF_KV:KV e: )
 
 # SELECT
-declare DEF_SELECT=(i::SELECT:CMD g:l:DEF_SEL_FIELDS:FIELD m:oe:FROM: g:l:DEF_SEL_TABLES:TABLE m:ol:WHERE:DEF_WHERE e:)
+# SELECT {FIELDS:DEF_SEL_FIELDS} FROM {TABLES:DEF_SEL_TABLES} {DEF_WHERE}
+declare DEF_SELECT=(i::SELECT:CMD g:l:DEF_SEL_FIELDS:FLD m:oe:FROM: g:l:DEF_SEL_TABLES:FROM m:ol:WHERE:DEF_WHERE e:)
+
+# fieldname {( DEF_SEL_PO )} {OPERATORS:STRING} {ALIAS}
 declare DEF_SEL_FIELDS=(s:::FIELD o:o:DEF_PO:PO:DEF_SEL_PO o:o:DEF_OPERS:OPER:DEF_STRING n:o:AS:ALIAS)
-declare DEF_SEL_TABLES=(s:::TABLE m:o:AS s:o::TAB_ALIAS)
+declare DEF_SEL_TABLES=(s:::TABLE m:o:AS s:o::TABLE_ALIAS)
 declare DEF_STRING=(s:::VALUE)
 
 declare DEF_WHERE=()
@@ -142,11 +148,13 @@ readonly PARSE_DEF=(
 	[DELETE]=DEF_DELETE
 	[UPDATE]=DEF_UPDATE
 	[RESET]=DEF_RESET
+	[COMMENT]=DEF_COMMENT
 )
 
 declare RESERVED=(TRUNCATE TABLE SELECT CREATE SCHEMA AND OR DESC ASC DELETE \
 		WHERE ORDER BY GROUP AS FROM INDEX SET VALUES INSERT INTO IFNOTEXISTS \
-		UPDATE SELECT DROP IFEXISTS SHOW ALL REINDEX ON RESET CASCADE)
+		UPDATE SELECT DROP IFEXISTS SHOW ALL REINDEX ON RESET CASCADE COMMENT \
+		NOTNULL DEFAULT)
 
 parse_log() {
 	echo "$1"
@@ -209,8 +217,11 @@ do_parse() {
 	declare -p TOKENS
 }
 
+# $1 - DEFINITION
+# $2 - prefix to add to name
 do_loop() {
 	let level++
+	local prf_local="${2}"
 
 	# Local variables
 	local pos_def=0 # Aonde estou no array do definition dessa chamada
@@ -225,7 +236,7 @@ do_loop() {
 
 	parse_log "
 ========================= NEW LOOP ======================="
-	echo "Iniciou novo loop apontando para $1 ($pos_def)"
+	echo "Iniciou novo loop apontando para $1 ($pos_def) - Prefx: $prf_local"
 	echo "${DEF_CMD[@]} => ${DEF_CMD[0]}"
 
 	# The right way to exists from this while is using a break. Do not use
@@ -233,7 +244,7 @@ do_loop() {
 	while true; do
 		parse_log "
       .... LOOPING ....
-  *** level: $level | loop: $g | pos_sql: $pos_sql | pos_def: $pos_def ***
+  *** level: $level | loop: $g | pos_sql: $pos_sql | pos_def: $pos_def *** Prefix: $prf_local
 "
 
 		# Does the SQL has more tokens?
@@ -292,13 +303,20 @@ do_loop() {
 					parse_log "  | Found a Match"
 					let pos_sql++
 					let pos_def++
+					local prefix
 
 					# Get the next token
 					value_sql="${TOKENS[$pos_sql]}"
 					if [ ! -z $multi ]; then
 						add="_$multi"
 					fi
-					TOKENS[${DEF[3]}${add}]="$value_sql"
+					if [ "$prf_local" == "" ]; then
+						prefix="${DEF[3]}"
+					else
+						prefix="${prf_local}_${DEF[3]}"
+					fi
+
+					TOKENS[${prefix}${add}]="$value_sql"
 
 					parse_log "  | Next value: $value_sql"
 					let pos_sql++
@@ -318,11 +336,19 @@ do_loop() {
 				fi
 			   ;;
 
-			# Trabalhar quando for opções
+			# Options group
 			o)	
-				parse_log "  | GROUP: Multivalue Option"
+				parse_log "  | GROUP: Multivalue Option [${DEF[3]}]"
 				local found=0
 				local j=0
+				local pref=""
+
+				# Prefix
+				if [ "$prf_local" == "" ]; then
+					pref="${DEF[3]}"
+				else
+					pref="${prf_local}_${DEF[3]}"
+				fi
 
 				if [ ! -z $multi ]; then
 					add="_$multi"
@@ -344,6 +370,7 @@ do_loop() {
 					break
 				fi
 
+				# Loop the array searching for the value
 				for i in ${A[@]}; do
 					# echo "$i (${i:0:1})== $value_sql"
 					# This is a trick because '*' expands and list all files in the directory
@@ -356,13 +383,14 @@ do_loop() {
 					fi
 					if [ "$j" == "$value_sql" ]; then
 						parse_log "  | ** $j == $value_sql Found a match"
-						TOKENS[${DEF[3]}${add}]="$value_sql"
+						TOKENS[${pref}${add}]="$value_sql"
 						found=1
 						break
 					fi
 				done
 
-				# Check if must call another definition
+				# if FOUND and has a another def to call
+				#   Check if must call another definition
 				if [[ "$found" == 1 && ! -z ${DEF[4]} ]]; then
 					# This variable must be local, to live just inside this function call
 					local tgrp="${DEF[4]}"
@@ -371,7 +399,7 @@ do_loop() {
 					let pos_sql++
 
 					parse_log "  | Call the definition: $tgrp"
-					do_loop "$tgrp"
+					do_loop "$tgrp" $prf_local
 					if [ ! -z ${ERROR[code]} ]; then
 						echo "  | The call got a error. Breaking"
 						break
@@ -401,17 +429,24 @@ do_loop() {
 			# Its a group define
 			g)	local tgrp="${DEF[2]}"
 				parse_log "  | GROUP: Group"
-				pref="${DEF[3]}"
+
+				if [ "$prf_local" == "" ]; then
+					pref="${DEF[3]}"
+				else
+					pref="${prf_local}${DEF[3]}"
+				fi
 
 				# These variables must be local
 				local a=1
-				local lf=1 # LoopForever
+				local lf=1 # check LoopForever
 
 				while true; do
 					export multi="$a"
 
 					parse_log "  | Calling: $tgrp"
-					do_loop $tgrp
+
+					# Call the group definition
+					do_loop $tgrp $pref
 
 					unset multi
 
@@ -430,7 +465,7 @@ do_loop() {
 					# A check for not looping forever
 					let a++
 					let lp++
-					if [ $lp -gt 100 ]; then
+					if [ $lp -gt 200 ]; then
 						parse_log "()()() NON_TERMINATING LOOP ()()()"
 						ERROR[code]=2
 						ERROR[msg]="Infinite loop. Something Wrong"
@@ -446,11 +481,21 @@ do_loop() {
 				parse_log "  | GROUP: Match"
 				parse_log "  |  Search: $value_token"
 
+				local prefix
+				if [ "$prf_local" == "" ]; then
+					prefix="${DEF[3]-${DEF[2]}}"
+				else
+					prefix="${prf_local}_${DEF[3]-${DEF[2]}}"
+				fi
+				if [ ! -z $multi ]; then
+					prefix="${prefix}${add}"
+				fi
+
 				# We have a match
 				if [ "$value_sql" == "$value_token" ]; then
 					# Check if we have the boolean modifier
 					if [ ! -z $mod_bool ]; then
-						TOKENS[${DEF[3]-${DEF[2]}}]="true"
+						TOKENS[${prefix}]="true"
 					fi
 
 					let pos_sql++
@@ -461,7 +506,7 @@ do_loop() {
 				# If we are here means that have not found a match
 				# Set false if the boolean modifier is present
 				if [ ! -z $mod_bool ]; then
-					TOKENS[${DEF[3]-${DEF[2]}}]="false"
+					TOKENS[${prefix}]="false"
 				fi
 
 				if [[ -z ${TOKENS[$pos_sql]} && $mod_end == 1 ]]; then
@@ -506,9 +551,14 @@ do_loop() {
 				let pos_def++
 				;;
 
+			# string field f1=s
 			s)
 				parse_log "  | GROUP: Input/String"
-				pref="${DEF[3]}"
+				if [ ! -z ${prf_local} ]; then
+					pref="${prf_local}_${DEF[3]}"
+				else
+					pref="${DEF[3]}"
+				fi
 
 				parse_log "  | Prefix? $pref"
 

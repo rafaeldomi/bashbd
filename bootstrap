@@ -145,6 +145,7 @@ bootstrap() {
 	bootstrap_add_value 6 1 sq_functions 8
 	bootstrap_add_value 7 1 sq_index 0
 	bootstrap_add_value 8 1 sq_attrs 26
+	bootstrap_add_value 9 1 sq_comments 0
 
 	# [ storage ]
 	row_append_simple ${CTABLE_SEQUENCE}
@@ -210,7 +211,8 @@ bootstrap() {
 	bootstrap_add_value $CTABLE_INDEX indexes 1
 	bootstrap_add_value $CTABLE_LANG language 1
 	bootstrap_add_value $CTABLE_SEQUENCE sequences 1
-	bootstrap_add_value 9 teste 2
+	bootstrap_add_value $CTABLE_COMMENTS comments 1
+	bootstrap_add_value 10 teste 2
 
 	row_append_simple ${CTABLE_TABLES}
 
@@ -297,42 +299,57 @@ bootstrap() {
 	bootstrap_add_value 15 ${CTABLE_ATTRS} name 	2  200 	"" 				0
 	bootstrap_add_value 16 ${CTABLE_ATTRS} types_id 1  -1 	"" 				0
 	bootstrap_add_value 17 ${CTABLE_ATTRS} size 	1  -1 	"" 				1
-	bootstrap_add_value 30 ${CTABLE_ATTRS} default 	2  200 	${MGC_NULL} 	1
-	bootstrap_add_value 33 ${CTABLE_ATTRS} null 	1  -1 	${MGC_NULL} 	0
+	bootstrap_add_value 18 ${CTABLE_ATTRS} default 	2  200 	${MGC_NULL} 	1
+	bootstrap_add_value 19 ${CTABLE_ATTRS} null 	1  -1 	${MGC_NULL} 	0
 
 	# Relation functions
-	bootstrap_add_value 18 ${CTABLE_FUNCTIONS} id 			1 -1 	"sequence:6" 0
-	bootstrap_add_value 19 ${CTABLE_FUNCTIONS} name 		2 200 	${MGC_NULL}  0
-	bootstrap_add_value 31 ${CTABLE_FUNCTIONS} function 	2 200 	${MGC_NULL}  0
-	bootstrap_add_value 32 ${CTABLE_FUNCTIONS} language_id 	1 -1 	${MGC_NULL}  0
+	bootstrap_add_value 20 ${CTABLE_FUNCTIONS} id 			1 -1 	"sequence:6" 0
+	bootstrap_add_value 21 ${CTABLE_FUNCTIONS} name 		2 200 	${MGC_NULL}  0
+	bootstrap_add_value 22 ${CTABLE_FUNCTIONS} function 	2 200 	${MGC_NULL}  0
+	bootstrap_add_value 23 ${CTABLE_FUNCTIONS} language_id 	1 -1 	${MGC_NULL}  0
 
 	# Relation index
-	bootstrap_add_value 20 ${CTABLE_INDEX} id 1 -1 "sequence:7" 0
-	bootstrap_add_value 21 ${CTABLE_INDEX} name 2 200 "" 0
-	bootstrap_add_value 22 ${CTABLE_INDEX} fields 2 200 "" 0
+	bootstrap_add_value 24 ${CTABLE_INDEX} id 1 -1 "sequence:7" 0
+	bootstrap_add_value 25 ${CTABLE_INDEX} name 2 200 "" 0
+	bootstrap_add_value 26 ${CTABLE_INDEX} fields 2 200 "" 0
 
 	# Relation sequence
-	bootstrap_add_value 23 ${CTABLE_SEQUENCE} id 		 1 -1 	"sequence:1" 0
-	bootstrap_add_value 24 ${CTABLE_SEQUENCE} schema_id  1 -1 	"" 			 0
-	bootstrap_add_value 25 ${CTABLE_SEQUENCE} name 		 2 200 	"" 			 0
-	bootstrap_add_value 26 ${CTABLE_SEQUENCE} last_value 1 -1 	"" 			 0
+	bootstrap_add_value 27 ${CTABLE_SEQUENCE} id 		 1 -1 	"sequence:1" 0
+	bootstrap_add_value 28 ${CTABLE_SEQUENCE} schema_id  1 -1 	"" 			 0
+	bootstrap_add_value 29 ${CTABLE_SEQUENCE} name 		 2 200 	"" 			 0
+	bootstrap_add_value 30 ${CTABLE_SEQUENCE} last_value 1 -1 	"" 			 0
+
+	# Relation comments
+	bootstrap_add_value 31 ${CTABLE_COMMENTS} id		1 -1 "sequence:9" 0
+	bootstrap_add_value 32 ${CTABLE_COMMENTS} table_id	1 -1 ""			  0
+	bootstrap_add_value 33 ${CTABLE_COMMENTS} comment	2 200 ""		  0
 
 	# Relation teste
-	bootstrap_add_value 27 9 id 	1 -1 "" 0
-	bootstrap_add_value 28 9 uuid 	2 36 "" 0
-	bootstrap_add_value 29 9 val 	1 -1 "" 0
+	bootstrap_add_value 34 10 id 	1 -1 "" 0
+	bootstrap_add_value 35 10 uuid 	2 36 "" 0
+	bootstrap_add_value 36 10 val 	1 -1 "" 0
 
 	# [ storage ]
 	row_append_simple ${CTABLE_ATTRS}
 
 	eval $LOGGER LOG "Table attrs OK"
 
+	#############
+	## Table comments
+	## id		int
+	## table_id	int
+	## comment	200
+	#############
+	storage_create_file "TABLE" ${CTABLE_COMMENTS}
+
+	eval $LOGGER LOG "Table comments OK"
+
 	######
 	## Table testes
 	## id 		int
 	## uuid		36
 	## number	int
-	storage_create_file "TABLE" 9
+	storage_create_file "TABLE" 10
 	unset ROW
 	declare -A ROW
 	row_init int 36 int
@@ -350,7 +367,7 @@ bootstrap() {
 		bootstrap_add_value $i ${uuid:0:$uis} $i
 	done
 
-	row_append_simple 9
+	row_append_simple 10
 
 	eval $LOGGER LOG "Table teste OK"
 

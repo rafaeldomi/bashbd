@@ -1,0 +1,821 @@
+#!/bin/bash
+
+#declare -A SQLOBJ
+#declare -A TOKENS
+declare DEF		# Definition atual
+
+: <<'COMMENT'
+6 fields
+
+field 1
+i = identifier / fix value
+s = string / input do usuario
+m = apenas dar match sem nenhuma interação
+g = aponta para outra definição
+e = final da definição
+o = uma lista de opções, alguma tem que dar match
+n = pega o proximo token se der match
+
+field 2 = modificadores / opcionais
+o = campo opcional
+l = campo do tipo lista
+e = caso f1 = m (match) indica que:
+   - se der match continua
+   - se não der match não pode mais strings
+b = Boolean modifier
+
+field 3 = Token to search
+if:
+  1. Group "m" (f1=m) indicate a value to match
+  2. Group "g" (f1=g) point to another definition
+  3. Group "o" (f1=o) point to a definition with a list of the values/options
+
+Field 4 = Indicates a name for the variable to save the value in TOKENS
+if:
+  1. Group "g" (f1=g) indicates a prefix to use in TOKENS
+  2. Group "m" (f1=m) and modifier boolean, indicates a value to save the boolean
+		if this field have no value will use the name of the token, at field 3
+
+field 5 = aponta para algum DEF se der match
+se for f2 = opcional, se der match chama essa definição de forma obrigatoria
+
+field 6 = points to a defintion that contains values that should be
+		   checked to end this definition
+
+ERROR
+codes
+1 - General Error
+2 - Infinite Loop
+3 - Syntax error. Expected operator not found
+4 - SQL Command not found
+
+COMMENT
+
+# Axuiliares
+declare DEF_KV=(s:::KEY m::=: s:::VALUE)
+
+# Commands
+# TRUNCATE [TABLE] (name,...)
+declare DEF_TRUNCATE=(i::TRUNCATE:CMD i:o:TABLE: s:l::TABLE e:)
+
+# TABLE (name)
+declare DEF_TABLE=(i::TABLE:CMD s:::TABLE e:)
+
+# SET (key=value,...)
+declare DEF_SET=(i::SET:CMD g::DEF_KV:KV: e:)
+
+# SHOW (ALL|value)
+declare DEF_SHOW=(i::SHOW:CMD s:::VALUE e:)
+
+# REINDEX {INDEX|TABLE} name
+declare DEF_REINDEX=(i::REINDEX:CMD o::DEF_REINDEX_VALUES:OBJECT s:::VALUE e:)
+declare DEF_REINDEX_VALUES=(INDEX TABLE)
+
+# COMMENT ON TABLE table IS '';
+declare DEF_COMMENT=(i::COMMENT:CMD i::ON: i::TABLE: s:::TABLE i::IS: s:::VALUE e:)
+
+# Creates
+
+# CREATE SCHEMA [IFNOTEXISTS] (name,...)
+declare DEF_CREATE_SCHEMA=(i::CREATE:CMD i::SCHEMA:OBJECT m:ob:IFNOTEXISTS s:l::SCHEMA e:)
+
+# CREATE TABLE (name) ( [def_field...] )
+declare DEF_CREATE_TABLE=(i::CREATE:CMD i::TABLE:OBJECT s:::NAME m::\(: g:l:DEF_FIELD:FIELD m::\):  e:)
+
+# {name} {type}
+declare DEF_FIELD=(s:::NAME s:::TYPE)
+
+# CREATE [UNIQUE] INDEX [IFNOTEXISTS] (name) ON (table) ( (col,...))
+declare DEF_CREATE_INDEX=(i::CREATE:CMD i:o:UNIQUE:UNIQUE i::INDEX:OBJECT i:o:IFNOTEXISTS:EXISTS \
+						  s:::NAME m::ON: s:::TABLE m::\(: s:l::COL m::\): e:)
+
+# Drops
+# DROP SCHEMA [IFEXISTS] (schema)
+declare DEF_DROP_SCHEMA=(i::DROP:CMD i::SCHEMA:OBJECT m:ob:IFEXISTS m:ob:CASCADE s:::SCHEMA e:)
+
+# DROP TABLE [IFEXISTS] (table)
+declare DEF_DROP_TABLE=(i::DROP:CMD i::TABLE:OBJECT m:ob:IFEXISTS s:::TABLE e:)
+
+# INSERT
+# insert into (table) ( (col1,...)) VALUES ( (value1,...)),((value1,...))
+# insert into (table) ( (col1,...)) select ...
+# insert into (table) 
+declare DEF_INSERT=(i::INSERT:CMD m::INTO s:::TABLE e:)
+
+# DELETE
+# delete from table1
+# delete from table1 where a=b
+declare DEF_DELETE=(i::DELETE:CMD m::FROM s:::TABLE e:)
+
+# UPDATE
+# update table1 set (col1=col2,...) [WHERE (col1=col2,...)]
+declare DEF_UPDATE=(i::UPDATE:CMD s:::TABLE m::SET g::DEF_KV:KV e: )
+
+# SELECT
+declare DEF_SELECT=(i::SELECT:CMD g:l:DEF_SEL_FIELDS:FIELD m:oe:FROM: g:l:DEF_SEL_TABLES:TABLE m:ol:WHERE:DEF_WHERE  e:)
+declare DEF_SEL_FIELDS=(s:::FIELD o:o:DEF_PO:PO:DEF_SEL_PO o:o:DEF_OPERS:OPER:DEF_STRING n:o:AS:ALIAS)
+declare DEF_SEL_TABLES=(s:::TABLE m:o:AS s:o::TAB_ALIAS)
+declare DEF_STRING=(s:::VALUE)
+
+declare DEF_WHERE=()
+declare DEF_SEL_PO=(g::DEF_SEL_FIELDS:FP m::\):)
+
+declare DEF_OPERS=(- \+ '\*' / \=)
+
+# PO - Parenthesis Open
+declare DEF_PO=(\()
+# PC - Parenthesis Close
+declare DEF_PC=(\))
+
+declare -A PARSE_DEF
+readonly PARSE_DEF=(
+	[TRUNCATE]=DEF_TRUNCATE
+	[TABLE]=DEF_TABLE
+	[CREATE_SCHEMA]=DEF_CREATE_SCHEMA
+	[CREATE_TABLE]=DEF_CREATE_TABLE
+	[CREATE_INDEX]=DEF_CREATE_INDEX
+	[DROP_SCHEMA]=DEF_DROP_SCHEMA
+	[DROP_TABLE]=DEF_DROP_TABLE
+	[SET]=DEF_SET
+	[SHOW]=DEF_SHOW
+	[REINDEX]=DEF_REINDEX
+	[SELECT]=DEF_SELECT
+	[INSERT]=DEF_INSERT
+	[DELETE]=DEF_DELETE
+	[UPDATE]=DEF_UPDATE
+	[COMMENT]=DEF_COMMENT
+)
+
+
+declare RESERVED=(TRUNCATE TABLE SELECT CREATE SCHEMA AND OR DESC ASC DELETE \
+		WHERE ORDER BY GROUP AS FROM INDEX SET VALUES INSERT INTO IFNOTEXISTS \
+		UPDATE SELECT DROP IFEXISTS SHOW ALL REINDEX ON CASCADE COMMENT)
+
+parse_log() {
+	echo "$1"
+}
+
+parse() {
+	local CMD=${TOKENS[1]}
+	local OBJ=${TOKENS[2]}
+	local TKN=""
+
+	if [[ "$CMD" == "CREATE" ||
+	      "$CMD" == "DROP" ]]; then
+		TKN="${CMD}_${OBJ}"
+	else
+		TKN="${CMD}"
+	fi
+	parse_log "Will search for: $TKN"
+
+	# Search for a definition
+	local U="${PARSE_DEF[$TKN]}"
+
+	if [ ! -z $U ]; then
+		declare -n CMD_DEF="$U"
+	else
+		ERROR[CODE]=4
+		ERROR[MSG]="Command $TKN Not found"
+		return ${ERROR[CODE]}
+	fi
+
+	do_parse
+}
+
+make_prop() {
+	local IFS=":"
+	parse_log "  $1"
+	DEF=($1)
+
+	#echo "  | `declare -p DEF`"
+}
+
+do_parse() {
+	echo ""
+	echo "** DO PARSE"
+	echo "** DEF PRINCIPAL: ${CMD_DEF[@]}"
+
+	pos_sql=1 # Aonde estamos no SQL
+	level=0
+
+	do_loop CMD_DEF
+
+	if [ ! -z ${ERROR[code]} ]; then
+		echo "ERRO: ${ERROR[msg]}"
+	else
+		echo "FINALIZOU"
+	fi
+
+	for key in $(echo "${!TOKENS[@]}" | tr ' ' '\n' | sort); do
+	   echo "$key=${TOKENS[$key]}"
+	done
+	declare -p TOKENS
+}
+
+do_loop() {
+	let level++
+
+	# Local variables
+	local pos_def=0 # Aonde estou no array do definition dessa chamada
+	local pref=""
+	local g=0
+	local mod_opc=0
+	local mod_list=0
+	local mod_end=0
+	local mod_bool=0
+
+	declare -n DEF_CMD="$1"
+
+	parse_log "
+========================= NEW LOOP ======================="
+	echo "Iniciou novo loop apontando para $1 ($pos_def)"
+	echo "${DEF_CMD[@]} => ${DEF_CMD[0]}"
+
+	# The right way to exists from this while is using a break. Do not use
+	#	return
+	while true; do
+		parse_log "
+      .... LOOPING ....
+  *** level: $level | loop: $g | pos_sql: $pos_sql | pos_def: $pos_def ***
+"
+
+		# Does the SQL has more tokens?
+		if [ -z ${DEF_CMD[$pos_def]} ]; then
+			parse_log "LOOP ($level): does not have more values to analyze"
+			break
+		fi
+
+		# Open the fields definition
+		make_prop "${DEF_CMD[$pos_def]}"
+
+		# Check for the modifiers
+		mod_opc=0
+		mod_list=0
+		mod_end=0
+		mod_bool=0
+		if [ ! -z "${DEF[1]}" ]; then
+			echo "  | Modifiers: ${DEF[1]}"
+
+			let sz=${#DEF[1]}-1
+			for i in `seq 0 $sz`; do
+				sv="${DEF[1]:$i:1}"
+				case $sv in
+					o) mod_opc=1
+						;;
+					l) mod_list=1
+						;;
+					e) mod_end=1
+						;;
+					b) mod_bool=1
+						;;
+				esac
+			done
+		fi
+		parse_log "  |  - Opcional: $mod_opc | List: $mod_list | End: $mod_end | Boolean: $mod_bool"
+
+		value_token="${DEF[2]}"
+		value_sql="${TOKENS[$pos_sql]}"
+
+		echo "  | VALUE_SQL: $value_sql | VALUE_TOKEN: $value_token"
+
+		# Se for ; e tipo e no TOKENS e nao for DEF[0] = e podemos dar erro
+		if [[ "$value_sql" == ";" &&
+			  "${TOKENS[${pos_sql}_t]}" == "e" &&
+			  ! "${DEF[0]}" == "e" ]]; then
+			echo "Termino de SQL antes do esperado"
+			break
+		fi
+
+		# DEF
+		#  0 = identificador -- i s e g
+		case ${DEF[0]} in
+			# Next token
+			n)  parse_log "  | GROUP: Next Token"
+				if [ "$value_sql" == "${DEF[2]}" ]; then
+					parse_log "  | Found a Match"
+					let pos_sql++
+					let pos_def++
+
+					# Get the next token
+					value_sql="${TOKENS[$pos_sql]}"
+					if [ ! -z $multi ]; then
+						add="_$multi"
+					fi
+					TOKENS[${DEF[3]}${add}]="$value_sql"
+
+					parse_log "  | Next value: $value_sql"
+					let pos_sql++
+				else
+					# Check if is optional
+
+					if [ "${DEF[1]}" == "o" ]; then
+						let pos_def++
+						continue
+					else
+						# Not optional, so syntax sql error
+						ERROR[code]=3
+						ERROR[msg]="Expected operator not found. Check your SQL"
+						parse_log "${ERROR[msg]}"
+						break
+					fi
+				fi
+			   ;;
+
+			# Trabalhar quando for opções
+			o)	
+				parse_log "  | GROUP: Multivalue Option"
+				local found=0
+				local j=0
+
+				if [ ! -z $multi ]; then
+					add="_$multi"
+				else
+					add=""
+				fi
+
+				# Do not need to unset the variable here because without the -G flag
+				#	the array lives just inside this function call
+				declare -n A="${DEF[2]}"
+				parse_log  "  | Search ${DEF[2]} => Array to analyze: ${A[@]}"
+
+				# If the array has size 0 means that something in the previous
+				#   'declare -n' get wrong. May the definition does not exists?
+				if [ ${#A[@]} == 0 ]; then
+					parse_log "Without values in the array. ERROR"
+					ERROR[code]="1"
+					ERROR[msg]="Without value in the array"
+					break
+				fi
+
+				for i in ${A[@]}; do
+					# echo "$i (${i:0:1})== $value_sql"
+					# This is a trick because '*' expands and list all files in the directory
+					#  Maybe there is a way to do this without this 'trick'
+					if [ "${i:0:1}" == "\\" ]; then
+						j=${i:1:1}
+						#echo "j: $j"
+					else
+						j="$i"
+					fi
+					if [ "$j" == "$value_sql" ]; then
+						parse_log "  | ** $j == $value_sql Found a match"
+						TOKENS[${DEF[3]}${add}]="$value_sql"
+						found=1
+						break
+					fi
+				done
+
+				# Check if must call another definition
+				if [[ "$found" == 1 && ! -z ${DEF[4]} ]]; then
+					# This variable must be local, to live just inside this function call
+					local tgrp="${DEF[4]}"
+
+					# As we found a match, we can "walk" the sql defition
+					let pos_sql++
+
+					parse_log "  | Call the definition: $tgrp"
+					do_loop "$tgrp"
+					if [ ! -z ${ERROR[code]} ]; then
+						echo "  | The call got a error. Breaking"
+						break
+					fi
+
+					continue
+				fi
+
+				if [ $found == 0 ]; then
+					if [ ! "${DEF[1]}" == "o" ]; then
+						echo "SQL nao formado corretamente"
+						echo "Opcional? ${DEF[1]}"
+						break
+					else
+						echo "não achou mas é opcional. Anda def"
+
+						let pos_def++
+						continue
+					fi
+				else
+					let pos_sql++
+					let pos_def++
+				fi
+
+				;;
+
+			# Its a group define
+			g)	local tgrp="${DEF[2]}"
+				parse_log "  | GROUP: Group"
+				pref="${DEF[3]}"
+
+				# These variables must be local
+				local a=1
+				local lf=1 # LoopForever
+
+				while true; do
+					export multi="$a"
+
+					parse_log "  | Calling: $tgrp"
+					do_loop $tgrp
+
+					unset multi
+
+					# Check the next token to evaluates if we must continue or break
+					#  la = look-ahead
+					value_la="${TOKENS[$pos_sql]}"
+
+					TOKENS[${pref}_total]=$a
+
+					if [ "$value_la" == "," ]; then
+						let pos_sql++
+					else
+						break
+					fi
+
+					# A check for not looping forever
+					let a++
+					let lp++
+					if [ $lp -gt 100 ]; then
+						parse_log "()()() NON_TERMINATING LOOP ()()()"
+						ERROR[code]=2
+						ERROR[msg]="Infinite loop. Something Wrong"
+						break
+					fi
+				done
+
+				let pos_def++
+				;;
+
+			# Só precisa dar match nao faz nada
+			m)
+				parse_log "  | GROUP: Match"
+				parse_log "  |  Search: $value_token"
+
+				# We have a match
+				if [ "$value_sql" == "$value_token" ]; then
+					# Check if we have the boolean modifier
+					if [ ! -z $mod_bool ]; then
+						TOKENS[${DEF[3]-${DEF[2]}}]="true"
+					fi
+
+					let pos_sql++
+					let pos_def++
+					continue
+				fi
+
+				# If we are here means that have not found a match
+				# Set false if the boolean modifier is present
+				if [ ! -z $mod_bool ]; then
+					TOKENS[${DEF[3]-${DEF[2]}}]="false"
+				fi
+
+				if [[ -z ${TOKENS[$pos_sql]} && $mod_end == 1 ]]; then
+					echo "Tudo certo, não precisa mais continuar"
+					break
+				fi
+
+				if [ $mod_opc == 1 ]; then
+					let pos_def++
+				else
+					echo "Erro de sintaxe SQL. Conferir SQL"
+					break
+				fi
+	
+				;;
+			# Identificador / literal
+			i) 
+				parse_log "  | GROUP: Identifier"
+				parse_log "  | Search for: $value_token"
+
+				if [ "$value_sql" == "$value_token" ]; then
+					parse_log "  | FOUND"
+					if [ ! -z ${DEF[3]} ]; then
+						# Salvar o nosso valor de m no def[3]
+						TOKENS[${DEF[3]}]="$value_sql"
+					fi
+				else
+					# Check if has a optional modifier, if so just continue
+					if [ $mod_opc -eq 1 ]; then
+						let pos_def++
+						continue
+					else
+						# if not optional, we have a syntax error
+						ERROR[code]=3
+						ERROR[msg]="Expected operator not found. Check your SQL"
+						parse_log "${ERROR[msg]}"
+						break
+					fi
+				fi
+
+				let pos_sql++
+				let pos_def++
+				;;
+
+			s)
+				parse_log "  | GROUP: Input/String"
+				pref="${DEF[3]}"
+
+				parse_log "  | Prefix? $pref"
+
+				# To control a list definition
+				local tot=1
+
+				# se tiver modificador podemos ter lista simples de valores
+				while true; do
+					parse_log "  | Found value: $value_sql"
+
+					# If we do not have value, we reach the end of string
+					if [ "${#value_sql}" == 0 ]; then
+						break
+					fi
+
+					# We can advance a position in the SQL command
+					let pos_sql++
+
+					if [ ! -z "$multi" ]; then
+						echo " Considerar multi: ${multi}"
+						add="_$multi"
+					else
+						add=""
+					fi
+
+					# Check if has a list modifier
+					if [ $mod_list -eq 1 ]; then
+						TOKENS[${pref}_total]=$tot
+						TOKENS[${pref}_$tot]="$value_sql"
+
+						let tot++
+					else
+						TOKENS[${pref}${add}]="$value_sql"
+
+						break
+					fi
+
+					# Look ahead e checa se é separador
+					value_la="${TOKENS[$pos_sql]}"
+					echo "LookAhead value $value_la"
+					if [ "$value_la" == "," ]; then
+						# temos um separador, vamos avançar mais um e continuar
+						echo "deu , , andar pos_sql e continuar no loop ($pos_sql)"
+						let pos_sql++
+						echo "  Agora: $pos_sql"
+						value_sql="${TOKENS[$pos_sql]}"
+						continue
+					fi
+
+					if [ -z $value_la ]; then
+						echo "Nao tem mais valores"
+						break
+					fi
+
+					if [[ "$value_la" == ";" ||
+					      "$value_la" == ")" ]]; then
+						break
+					fi
+
+					if [ $tot -gt 10 ]; then
+						return
+					fi
+				done
+
+				# Aqui podemos andar na definition
+				let pos_def++
+				;;
+
+			e)
+				echo "Não é pra ter mais nenhuma informação no array de tokens"
+
+				if [ "$value_sql" == ";" ]; then
+					echo "OK. finalizou com ;"
+					break
+				fi
+
+				if [ ! -z ${TOKENS[$pos_sql]} ]; then
+					echo "Valores a mais encontrados no SQL. Favor verificar a sintaxe"
+					return 1
+				else
+					echo "OK. Finalizado com sucesso"
+					return 0
+				fi
+				;;
+			*)
+				echo "ID ${DEF[0]} não tratado"
+				;;
+		esac
+
+		#declare -p TOKENS
+
+		let g++
+		if [ $g -gt 20 ]; then
+			echo ""
+			echo "mmais de 100loops. saindo"
+			break
+		fi
+	done
+
+	if [ ! -z "${ERROR[code]}" ]; then
+		echo "Algo errado"
+		echo "${ERROR[msg]}"
+	fi
+
+	let level--
+}
+
+create_tkn() {
+	echo "create_tkn -> $1 - $2 ($tn)"
+
+	local tmp="${1^^}"
+	local val="${1}"
+	local typ="$2"
+
+	# Check if is reserved (SQL especify)
+	if [[ $in_str == 0 && $in_lit == 0 ]]; then
+		for t in ${RESERVED[@]}; do
+			if [ "$t" == "${tmp}" ]; then
+				typ="reserved"
+				val="${1^^}"
+			fi
+		done
+	fi
+
+	TOKENS[$tn]="$val"
+	TOKENS[${tn}_t]="$typ"
+	TOKENS[${tn}_pos]="$pos"
+	TOKENS[total]=$tn
+	TOKENS[${tn}_l]="$level"
+
+	value=""
+	in_tkn=0
+	unset type
+	unset pos
+
+	let tn=$tn+1
+}
+
+# The main function to call to parse the SQL
+# This functions will do:
+#  1. Tokenize the SQL string
+#  2. Parse. Analyze the tokens and build a "struct" to be used later by the executor
+parse_sql() {
+	local ts=${#1}
+	local par="$1"
+	
+	# These variables must be initialized here. Do not change the location
+	value=""
+	pos=""
+	tn=1
+	in_str=0
+	in_tkn=0
+	in_lit=0
+
+	# This variable is global (-g)
+	unset ERROR
+	declare -gA ERROR
+
+	unset TOKENS
+	declare -gA TOKENS
+	TOKENS[SQL]="$1"
+
+	parse_log "Total size in char: $ts"
+
+	# Check for a empty string
+	if [ $ts == 0 ]; then
+		ERROR[code]=1
+		ERROR[msg]="Input SQL is empty"
+		parse_log "${ERROR[msg]}"
+		return 1
+	fi
+
+	# Instead of using a process that tokenize all string based on a separator
+	#  like (read -a TOKENS <<< $1), I realize that doing a tokenizer give me more
+	#  control in this step and gave best results
+	for i in `seq 0 $ts`; do
+		# Some variable inside the loop must be declared with the local identifier
+		local c="${par:i:1}"
+
+		parse_log "** Evaluating |$c| Size: ${#c}"
+
+		# We reached the end of the string
+		if [ "${#c}" == 0 ]; then
+			parse_log "End of the String"
+			break
+		fi
+
+		# In a space we can have 2 scenarios:
+		#  1. Separator of tokens in the string
+		#  2. A normal character inside a string
+		if [ "$c" == " " ]; then
+			if [ $in_tkn == 0 ]; then
+				# Found space
+				continue
+			else
+				# If we are inside a string we must follow the workflow
+				# . This if is "OR"
+				if [[ $in_str -eq 1 || $in_lit -eq 1 ]]; then
+					parse_log "Found space, but inside string. Continue workflow"
+				else
+					parse_log "Found space in_tkn: $in_tkn. Creating token"
+					create_tkn "$value" "generic"
+					continue
+				fi
+			fi
+		fi
+
+		# Check for separator of operator
+		# 	But only if we are not inside a string
+		#   . This if is "AND"
+		if [[ $in_str == 0 && $in_lit == 0 ]]; then
+			case "$c" in
+				\;)
+					# e = end of sql command
+					if [ ${#value} -gt 0 ]; then
+						create_tkn "$value" "generic"
+					fi
+					create_tkn "$c" e
+					continue
+					;;
+			
+				# = ( ) , + - / *		
+				=|\(|\)|,|+|-|/|\*)
+					if [ ! ${#value} == 0 ]; then
+						pos="left"
+						create_tkn "$value" "generic"
+					fi
+
+					# o = operator
+					# s = separator
+					# gi = group init
+					# ge = group end
+					# u = unkown
+					case "$c" in
+						=|-|+|/|\*) oper="o";;
+						,) oper="s";;
+						\() oper="gi"; let level++;;
+						\)) oper="ge"; let level--;;
+						*) oper="u";;				
+					esac
+
+					create_tkn "$c" $oper
+					pos="right"
+					continue
+					;;
+			esac
+		fi
+
+		# " means a string, that may contains space and others characters that must
+		#		be treated like string (!)
+		if [ "$c" == "\"" ]; then
+			if [ $in_str == 0 ]; then
+				# Its the begginig
+				in_str=1
+				in_tkn=1
+				continue
+			else
+				# Its the end of the string
+				in_str=0
+				create_tkn "$value" "string"
+				continue
+			fi
+		fi
+
+		# ' means a LITERAL string
+		if [ "$c" == "'" ]; then
+			if [ "$in_lit" == 0 ]; then
+				# Its the beginning
+				in_tkn=1
+				in_lit=1
+				continue
+			else
+				# Its the end of the string
+				in_lit=0
+				create_tkn "$value" "literal"
+				continue
+			fi
+		fi
+
+		in_tkn=1
+
+		# Concatenate the value
+		value="$value$c"
+		echo "|$value|"
+	done
+
+	# If we reach this point and the variable in_tkn = 1 means that we have a value
+	#	to create token
+	if [ $in_tkn == 1 ]; then
+		create_tkn "$value" "generic"
+	fi
+
+	# Print some values
+	declare -p TOKENS
+
+	let sz=${TOKENS[total]}
+	for tot in `seq 1 $sz`; do
+		#echo "$tot"
+		echo "KEY: ${TOKENS[$tot]}"
+		echo "  type: ${TOKENS[${tot}_t]}  | pos: ${TOKENS[${tot}_pos]}  | level: ${TOKENS[${tot}_l]}"
+	done
+
+	# Do the real work now
+	parse
+
+	return ${ERROR[code]}
+}

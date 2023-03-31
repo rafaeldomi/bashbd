@@ -385,3 +385,9 @@ record_update_inplace() {
 
 	return 0
 }
+
+table_get_id() {
+	:
+}
+
+
