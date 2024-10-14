@@ -8,20 +8,20 @@ declare DEF		# Definition atual
 6 fields
 
 field 1
-i = identifier / fixo
-s = string / input do usuario
-m = apenas dar match sem nenhuma interação
-g = aponta para outra definição
-e = final da definição
-o = uma lista de opções, alguma tem que dar match
-n = pega o proximo token se der match
+i = identifier / fixed
+s = string / user input
+m = match value without interaction
+g = points to another definition
+e = end of definition
+o = options list, one must match
+n = next token if match
 
-field 2 = modificadores / opcionais
-o = campo opcional
-l = campo do tipo lista
-e = caso f1 = m (match) indica que:
-   - se der match continua
-   - se não der match não pode mais strings
+field 2 = modifers / optionals
+o = optional field
+l = field of list type
+e = case f1 = m (match):
+   - if match, continues
+   - if not match, cannot more tokens/strings
 b = Boolean modifier
 
 field 3 = Token to search
@@ -36,11 +36,11 @@ if:
   2. Group "m" (f1=m) and modifier boolean, indicates a value to save the boolean
 		if this field have no value will use the name of the token, at field 3
 
-field 5 = aponta para algum DEF se der match
+field 5 = points to some DEF if matches
 se for f2 = opcional, se der match chama essa definição de forma obrigatoria
 
-field 6 = points to a defintion that contains values that should be
-		   checked to end this definition
+field 6 = points to a definition that contains values that should be
+		   checked to finish this definition
 
 ERROR
 codes
@@ -63,11 +63,11 @@ declare DEF_TABLE=(i::TABLE:CMD s:::TABLE e:)
 # SET (key=value,...)
 declare DEF_SET=(i::SET:CMD g::DEF_KV:KV: e:)
 
-# SHOW (ALL|value)
-declare DEF_SHOW=(i::SHOW:CMD s:::VALUE e:)
+# SHOW (ALL|value,value)
+declare DEF_SHOW=(i::SHOW:CMD s:l::OPTION e:)
 
-# RESET (ALL|value)
-declare DEF_RESET=(i::RESET:CMD s:::VALUE e:)
+# RESET (ALL|value,value)
+declare DEF_RESET=(i::RESET:CMD s:l::SETTING e:)
 
 # REINDEX {INDEX|TABLE} name
 declare DEF_REINDEX=(i::REINDEX:CMD o::DEF_REINDEX_VALUES:OBJECT s:::VALUE e:)
@@ -151,10 +151,10 @@ readonly PARSE_DEF=(
 	[COMMENT]=DEF_COMMENT
 )
 
-declare RESERVED=(TRUNCATE TABLE SELECT CREATE SCHEMA AND OR DESC ASC DELETE \
-		WHERE ORDER BY GROUP AS FROM INDEX SET VALUES INSERT INTO IFNOTEXISTS \
-		UPDATE SELECT DROP IFEXISTS SHOW ALL REINDEX ON RESET CASCADE COMMENT \
-		NOTNULL DEFAULT)
+declare readonly RESERVED=(TRUNCATE TABLE SELECT UPDATE INSERT DELETE CREATE SCHEMA \
+    AND OR DESC ASC WHERE ORDER BY GROUP AS FROM INDEX SET VALUES INTO IFNOTEXISTS \
+		DROP IFEXISTS SHOW ALL REINDEX ON RESET CASCADE COMMENT \
+		NOTNULL DEFAULT TRIGGER)
 
 parse_log() {
 	echo "$1"
@@ -578,7 +578,7 @@ do_loop() {
 					let pos_sql++
 
 					if [ ! -z "$multi" ]; then
-						echo " Considerar multi: ${multi}"
+						echo " Considering multi: ${multi}"
 						add="_$multi"
 					else
 						add=""
@@ -588,6 +588,11 @@ do_loop() {
 					if [ $mod_list -eq 1 ]; then
 						TOKENS[${pref}_total]=$tot
 						TOKENS[${pref}_$tot]="$value_sql"
+						if [ $tot -eq 1 ]; then
+							TOKENS[${pref}_full]="$value_sql"
+						else
+						  TOKENS[${pref}_full]="${TOKENS[${pref}_full]},$value_sql"
+						fi
 
 						let tot++
 					else
@@ -596,7 +601,7 @@ do_loop() {
 						break
 					fi
 
-					# Look ahead e checa se é separador
+					# Look ahead and check if its a separator
 					value_la="${TOKENS[$pos_sql]}"
 					echo "LookAhead value $value_la"
 					if [ "$value_la" == "," ]; then
@@ -609,7 +614,7 @@ do_loop() {
 					fi
 
 					if [ -z $value_la ]; then
-						echo "Nao tem mais valores"
+						echo "No more values"
 						break
 					fi
 

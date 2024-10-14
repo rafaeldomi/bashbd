@@ -19,7 +19,7 @@ LOG_INCLUDED=1
 	-> To messages that have variable in it, or ", save the content to the LOGGER_MSG variable
 COMMENT
 
-# Trying to do like a C-macro
+# Simulate a C-macro
 LOGGER="log \${FUNCNAME[0]} \${LINENO}"
 
 # COLORS
@@ -43,10 +43,13 @@ declare -r -A LL=(
 			[DEBUG2]=8
 		)
 
-# Print a debug string
-# $1 - function name
-# $2 - line number
-# $3 - message
+: <<'FUNCTION'
+Description: Print a debug string
+Parameters:
+  $1 - function name
+  $2 - line number
+  $3 - message
+FUNCTION
 debug() {
 	if [ "$DEBUG" = "1" ]; then
 		${PRG_PRINTF} "%s:%s - %s\n" "$1" "$2" "$3"
@@ -57,8 +60,11 @@ writeln() {
 	${PRG_PRINTF} "%s\n" "$1"
 }
 
-# Description: Check if can do the log
-# $1 - Log level to check, the name
+: <<'FUNCTION'
+Description: Check if can do the log
+Parameters:
+ $1 - Log level to check, the name
+FUNCTION
 log_can_log() {
 	local IDXLL=${LL[$1]}
 	if [ -z $IDXLL ]; then
@@ -132,7 +138,11 @@ log () {
 	fi
 }
 
-# $1 - the variable
+: <<'FUNCTION'
+Description: print the variable value
+Parameters:
+ $1 - Name of the variable
+FUNCTION
 log_variable() {
 	local _V=$1
 

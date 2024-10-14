@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. parser_fnc
+. src/parser_fnc
 
 PARSE_DEBUG=1
 

@@ -10,15 +10,14 @@ if [ ! -f $FILE ]; then
 	exit 1
 fi
 
-. const
-. storage
-. printer
-. functions
-. log
-. var
+. src/const
+. src/storage
+. src/printer
+. src/functions
+. src/log
+. src/var
 
-# Initialize this variable with a default value to not break
-#  LOGGER calls
+# Initialize this variable with a default value to not break LOGGER calls
 PRG_PRINTF="printf"
 
 # [ functions ]
@@ -144,7 +143,7 @@ TAB_PRINT[fields]="${ATABLE[TF]}"
 
 let TAB_PRINT[fields]=${TAB_PRINT[fields]}+4
 
-echo "iniciando printable"
+#echo "Initiate printable"
 
 # Print Table
 #time printTablev2 TAB_PRINT

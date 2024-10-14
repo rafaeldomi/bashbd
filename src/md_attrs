@@ -43,8 +43,8 @@ attrs_search() {
 	done
 	FA[total]=$i
 
-	# $i contains the count of attrs found, so if 0 menas that
-	#  didnt found any attr for this table
+	# $i contains the count of attrs found
+	#   0 means that didnt find any attr for this table
 	if [ $i -eq 0 ]; then
 		return 1
 	else

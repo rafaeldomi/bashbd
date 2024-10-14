@@ -3,7 +3,11 @@
 TOTAL_TESTS=0
 
 . fnc_tests
-. ../functions
+. ../src/functions
+. ../src/log
+. ../src/var
+
+find_binaries
 
 repeat_test() {
 	declare -a repeat_i

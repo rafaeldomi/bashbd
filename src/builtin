@@ -94,9 +94,16 @@ bashbd.count() {
 	return 0
 }
 
-# Avg
+: <<'FUNCTION'
+Description: Average function for avg SQL function
+Parameters:
+  $1 - Array with values
+FUNCTION
 bashbd.avg() {
 	local _RET=$1
+	local TOTN=0
+	local TOTV=0
+
 	shift
 	TOTN=${#}
 

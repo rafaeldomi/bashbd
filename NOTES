@@ -119,22 +119,26 @@ http://mywiki.wooledge.org/BashFAQ/006#Indirection
 
 https://stackoverflow.com/questions/12768907/how-can-i-align-the-columns-of-tables-in-bash
 
-COMMAND		GROUP		PARSER	STATUS
-SET			-			OK		OK
-SHOW		ALL			OK		OK
-SHOW		RESERVED	OK		OK
-RESET		-			OK		OK
-TABLE		-			OK		OK
-CREATE		SCHEMA		OK		OK
-TRUNCATE	TABLE		OK		OK
-DROP		SCHEMA		OK		OK
-DROP		TABLE		OK		OK
-COMMENT		-			OK
-CREATE		TABLE		
-				NOTNULL	OK
-				DEFAULT	OK
-CREATE		INDEX		OK
-REINDEX					OK
+COMMAND		GROUP			PARSER	STATUS	OVERALL
+SET				-					OK			OK			DONE
+SET				[..,..]		-				-
+SHOW			ALL				OK			OK			DONE
+SHOW      [..]      OK			OK			DONE
+SHOW      [..,..]		OK			OK			DONE
+SHOW			RESERVED	OK			OK			DONE
+RESET			ALL				OK			OK			DONE
+RESET			[..,..]		OK			-
+TABLE			-					OK			OK
+CREATE		SCHEMA		OK			OK
+TRUNCATE	TABLE			OK			OK
+DROP			SCHEMA		OK			OK
+DROP			TABLE			OK			OK
+COMMENT		-					OK
+CREATE		TABLE			
+					NOTNULL		OK
+					DEFAULT		OK
+CREATE		INDEX			OK
+REINDEX							OK
 SELECT
 DELETE
 UPDATE

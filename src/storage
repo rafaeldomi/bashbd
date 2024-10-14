@@ -8,9 +8,12 @@ Description of ROW Vector:
     n,VALUE_y => The number of the row, and the values of its attibutes
 COMMENT
 
-# Return a string of the magic code
-# $1 - OBJECT
-# $2 - RETURN
+: <<'FUNCTION'
+Description: Return Magic Code by name
+Parameters:
+  $1 - Return variable
+	$2 - Input
+FUNCTION
 get_magic_code() {
 	local _RET=$1
 
@@ -27,8 +30,12 @@ get_magic_code() {
 	esac
 }
 
-# $1 - Retorno
-# $2 - MGC
+: <<'FUNCTION'
+Description: Return Name based on Magic Code value
+Parameters:
+  $1 - Return variable
+	$2 - Magic Code
+FUNCTION
 get_magic_code_name() {
 	local _RET=$1
 	case $2 in
@@ -38,10 +45,14 @@ get_magic_code_name() {
 	esac
 }
 
-# Check if file exists
-#  Return 0: File exists
-#  Return 1: File NOT exists
-# $1 - Filename
+: <<'FUNCTION'
+Description: Check if file exists
+Parameters:
+  $1 - File Name
+Returns:
+  0 - File exists
+	1 - File not exists
+FUNCTION
 storage_file_exists() {
 	if [ -f $1 ]; then
 		return 0
@@ -86,14 +97,18 @@ storage_create_file() {
 	return 0
 }
 
-# $1 - Hex Magic Code
-# $2 - File
+: <<'FUNCTION'
+Description: Append Magic Code value into file
+Parameters:
+  $1 - Hex Magic Code
+  $2 - File
+FUNCTION
 storage_append_magic() {
 	$PRG_ECHO -en "\x$1" >> $2
 }
 
 : <<'FUNCTION'
-Description: Convert a ASCII value to his hex representation
+Description: Convert a ASCII value to its hex representation
 Parameters:
  $1 - ASCII value with 2 bytes
 FUNCTION
@@ -117,6 +132,7 @@ storage_check_mgc() {
 	TMP=`$PRG_DD if=$2 ibs=1 count=1 conv=notrunc status=none | ${PRG_XXD} -p`
 	VALUE=${TMP^^}
 
+  # [ storage ]
 	get_magic_code MGC $1
 
 	if [ ! "$VALUE" == "$MGC" ]; then
@@ -189,11 +205,11 @@ row_append_simple() {
 	$PRG_ECHO -n "${CROW}" >> $_TABLE
 
 	# Change to use here-doc that is not affected by the ARG_MAX "limitation"
-	# This not work correctly, just left here to remember the attempt and not
-	#	waste time trying again
+	# The below code does not work correctly, just left here to remember the attempt and not
+	#	  waste time trying again
 	#$PRG_CAT -n <<<"${CROW}" >> $_TABLE
 
-	# Data is inserted by now
+	# Data is inserted
 }
 
 : <<'FUNCTION'
@@ -261,12 +277,16 @@ init_file() {
 	IFD[type]="$OUT"
 }
 
-# Returns
-#  0 = OK - Record found
-#  1 = No more data
-#  2 = Internal error
-# $1 - The data already initiated by init_file
-# $2 - The variable to hold the record data
+: <<'FUNCTION'
+Description: Get the next record in the recordset
+Parameters:
+  $1 - The recordset initialized by init_file function
+	$2 - The output variable to hold the record data
+Returns:
+  0 - OK Record Found
+	1 - No more data
+	2 - Internal error
+FUNCTION
 next_record() {
 	declare -n STG_DATA="$1"
 	declare -n TFLD="$2"

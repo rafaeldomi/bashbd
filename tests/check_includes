@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Check includes are okay
+cd ..
+
+# $1 - filepath
+checkFile() {
+  local originalPwd=$(pwd)
+  local dir=$(dirname $1)
+  local inputFile=$(basename $1)
+
+  echo "Analyzing: $1"
+
+  IFS=$'\n'
+  for line in $(grep -E '^\.' $1); do
+    local file=$(echo $line|cut -d" " -f 2)
+    if [ ! -f $file ]; then
+      echo "[$1] Source not reachable: $file"
+    else
+      checkFile $file
+    fi
+  done
+}
+
+echo "Checking includes"
+
+checkFile db
+checkFile dump_data

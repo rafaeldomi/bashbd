@@ -1,0 +1,50 @@
+#!/bin/bash
+
+reset_execute() {
+	LOGGER_MSG="Reset option: ${TOKENS[SETTING_full]}"
+	eval $LOGGER DEBUG
+
+	if [ -z $GC_ORIGINAL ]; then
+		LOGGER_MSG="No changes done"
+		eval $LOGGER LOG $LOGGER_MSG
+		return 0
+	fi
+
+	local setting="${TOKENS[SETTING_1]}"
+	local settingTotal=${TOKENS[SETTING_total]}
+
+  if [ ${settingTotal:-0} -eq 0 ]; then
+		LOGGER_MSG="Need to specify what to reset"
+		eval $LOGGER ERROR $LOGGER_MSG
+		return 1
+	fi
+
+  if [ "$setting" == "ALL" ]; then
+		for setting in ${!GC[@]}; do
+			local value="${GC_ORIGINAL[$setting]:-${GC[$setting]}}"
+			if [ "${GC[$setting]}" != "$value" ]; then
+				GC[$setting]="$value"
+				LOGGER_MSG="Setting $setting restoring to $value"
+				eval $LOGGER LOG $LOGGER_MSG
+			fi
+		done
+	else
+		for i in `seq 1 $settingTotal`; do
+			setting="${TOKENS[SETTING_$i]}"
+			local value="${GC_ORIGINAL[$setting]:-${GC[$setting]}}"
+			if [ "${GC[$setting]}" != "$value" ]; then
+				GC[$setting]="$value"
+				LOGGER_MSG="Setting $setting restoring to $value"
+				eval $LOGGER LOG $LOGGER_MSG
+			fi
+		done
+	fi
+
+	declare -A TAB_PRINTER
+	TAB_PRINTER[header]="| Result${MGC_FLD}|"
+	TAB_PRINTER[fields]=1
+	TAB_PRINTER[rows]=1
+	TAB_PRINTER[1]="| OK${MGC_FLD}|"
+
+	printer TAB_PRINTER
+}

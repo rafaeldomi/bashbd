@@ -100,7 +100,7 @@ Note: There are some cases that is not compliant with this convention . These ar
 
 Note 2: Prefer this method of returning values than returning with echo, because this way is more faster. Further read: xxxx
 
-## 2.3 Comment on the header of the function
+## 2.3 Function Header
 The function must have all the parameters declared, like this:
 
 #!/bin/bash
@@ -164,8 +164,13 @@ some_function() {
 You can use these log Level:
 * FATAL
 	This level finish the program with functions.finish 1
-* LOG
 * ERROR
+* WARNING
+* HINT
+* LOG
+* DEBUG
+* DEBUG1
+* DEBUG2
 
 ## 2.10 dump_data script
 Something there is need to debug the table, you can use the dump_data script:

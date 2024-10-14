@@ -23,16 +23,17 @@ printer_add() {
 printer() {
 	declare -n PRINT=$1
 
-	local nOC=${PRINT[fields]}
+  # NoC Number of Columns
+	local NoC=${PRINT[fields]}
 	local table=""
 	local delimiter=""
 	local line=""
-	local saida=""
+	local output=""
 
-	repeat saida "${MGC_FLD}+" $nOC 2
+  # [ functions ]
+	repeat output "+${MGC_FLD}" $NoC
 
-	#delimiter="$(${PRG_PRINTF} "%s${MGC_FLD}+" "$(repeatString "${MGC_FLD}+" $nOC)")"
-	delimiter="$(${PRG_PRINTF} "%s${MGC_FLD}+" $saida)"
+	delimiter=$(${PRG_PRINTF} "%s+" $output)
 
 	table="${delimiter}\n${PRINT[header]}\n${delimiter}\n"
 
@@ -46,9 +47,13 @@ printer() {
 	${PRG_ECHO} " (${PRINT[rows]} rows fetched)"
 }
 
-# $1 - Title
-# $2 - Tablea ID
-# $3 - Header
+: <<'FUNCTION'
+Description: Print whole table (command TABLE)
+Parameters:
+  $1 - Title
+  $2 - Table ID
+  $3 - Header
+FUNCTION
 printer_dump_table() {
 	local _TITLE=$1
 	local _TABLE=$2
@@ -56,6 +61,7 @@ printer_dump_table() {
 	# Lets find the attrs of this relation
 	declare -A ATTRS
 	ATTRS[id]=$2
+	# [ md_attrs ]
 	attrs_search ATTRS
 	RES=$?
 	if [ ! $RES = 0 ]; then
@@ -70,6 +76,7 @@ printer_dump_table() {
 
 	declare -A DATA
 	DATA[file]=$_TABLE
+	# [ storage ]
 	init_file DATA
 
 	unset REC
@@ -110,5 +117,4 @@ printer_dump_table() {
 	fi
 
 	printer TAB_PRINT
-
 }

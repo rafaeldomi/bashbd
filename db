@@ -3,39 +3,42 @@
 echo "Loading files.."
 
 # Source some files
-. var
-. const
-. log
-. internals
-. functions
-. executor
-. menu
-. tuple
-. storage
-. signals
-. printer
-. metadata
-. md_attrs
-. md_table
-. md_schema
-. md_sequences
+. src/var
+. src/const
+. src/log
+. src/internals
+. src/functions
+. src/executor
+. src/menu
+. src/tuple
+. src/storage
+. src/signals
+. src/printer
+. src/metadata
+. src/md_attrs
+. src/md_table
+. src/md_schema
+. src/md_sequences
 
 echo "Loaded"
 
-# Do some checks before initializang the program
-# $1- This MUST be the args received in the program
+: <<'FUNCTION'
+Description: Do some checks before initializing the program
+Parameters:
+  $1 - this MUST be the args received in the program
+FUNCTION
 do_pre_init() {
 	# This must be the first procedure to be called
 	# [ functions ]
 	find_binaries
 
-	eval $LOGGER LOG "Iniciando"
+	eval $LOGGER LOG "Initializing"
 
-	# Simple Check if there is no problem if the code
+	# Just call me again so bash can do a very simple code validation
 	$PRG_BASH -n $0
 	RES=$?
 	if [ ! $RES == 0 ]; then
-		# Lets use echo, 'cause we dont know what is broke
+		# Lets use echo, 'cause we dont know what is broken (Could be logger)
 		echo "There is a problem with the code. Exiting"
 		exit 1
 	fi

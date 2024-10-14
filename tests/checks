@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Every variable in src/const must the readonly
+grep -E "=" ../src/const | grep -v readonly 
+RES=$?
+if [ $RES == 1 ]; then
+  echo "Ok"
+else
+  echo "NOK"
+fi
+echo "Constants are readonly"

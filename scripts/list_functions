@@ -6,7 +6,7 @@ for file in $(ls); do
 
 	B_FUNCTION=0
 	while read -r line; do
-		# Verifica se linha é inicio de function
 		
+
 	done < $file
 done
