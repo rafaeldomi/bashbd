@@ -11,7 +11,8 @@ if [ ! -f $FILE ]; then
 fi
 
 . src/const
-. src/storage
+. src/macros
+. src/storage/storage
 . src/printer
 . src/functions
 . src/log

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Why those files has the md prefix? Cant remember what means
+
 : <<'FUNCTION'
 Description: Get a table stuct by name
 Parameters:

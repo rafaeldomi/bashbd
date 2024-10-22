@@ -54,11 +54,12 @@ Description: Print whole table (command TABLE)
 Parameters:
   $1 - Title
   $2 - Table ID
-  $3 - Header
+	$3 - Sample
 FUNCTION
 printer_dump_table() {
 	local _TITLE=$1
 	local _TABLE=$2
+	local _SAMPLE=$3
 
 	# Lets find the attrs of this relation
 	declare -A ATTRS
@@ -81,6 +82,7 @@ printer_dump_table() {
 	# [ storage ]
 	init_file DATA
 
+	# [ storage.next_record ]
 	unset REC
 	while next_record DATA REC; do
 		local ROW="|"

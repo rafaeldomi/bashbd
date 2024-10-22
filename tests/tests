@@ -6,3 +6,4 @@
 . tests_functions
 . checks
 . check_includes
+. sql_tests.sh

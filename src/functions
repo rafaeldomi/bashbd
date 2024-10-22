@@ -4,9 +4,6 @@
 This file contains functions that doesn't fit in others files
 COMMENT
 
-# Some definitions (Like c macros)
-ASSERT="_assert \${FUNCNAME[0]} \${LINENO}"
-
 : <<'FUNCTION'
 Description: Finish program
 Parameters:

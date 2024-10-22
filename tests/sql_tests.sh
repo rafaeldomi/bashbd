@@ -73,6 +73,7 @@ json_to_assoc_array() {
 main() {
   echo "** Starting parser checks"
   local total_errors=0
+  local total_tests=0
 
   read_tests_from_json "sql_tests.json"
 
@@ -87,11 +88,10 @@ main() {
     if ! check_result "$sql" assoc_array; then
       ((total_errors++))
     fi
-
-    # exit 0
+    ((total_tests++))
   done
 
-  echo "Total Errors: $total_errors"
+  echo "Total Tests: $total_tests - Errors: $total_errors"
 }
 
 main

@@ -19,9 +19,6 @@ LOG_INCLUDED=1
 	-> To messages that have variable in it, or ", save the content to the LOGGER_MSG variable
 COMMENT
 
-# Simulate a C-macro
-LOGGER="log \${FUNCNAME[0]} \${LINENO}"
-
 # COLORS
 CL_RED='\e[1;31m'
 CL_GREEN='\e[1;32m'

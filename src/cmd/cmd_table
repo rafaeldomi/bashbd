@@ -17,5 +17,10 @@ table_execute() {
 	fi
 
 	# Just call the printer_dump_table
-	printer_dump_table "" ${TS[id]}
+	SAMPLE=-1
+	if [ "${TOKENS[SAMPLE]}" == "true" ]; then
+		SAMPLE=${GC[SAMPLE_COUNT]}
+	fi
+
+	printer_dump_table "" ${TS[id]} $SAMPLE
 }

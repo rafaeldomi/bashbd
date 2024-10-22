@@ -1,5 +1,46 @@
 [
   {
+    "sql": "comment on table table1 is 'comment string'",
+    "expected": {
+      "CMD": "COMMENT",
+      "TYPE": "TABLE",
+      "OBJECT": "table1",
+      "VALUE": "comment string"
+    }
+  },
+  {
+    "sql": "comment on index index1 is 'comment string'",
+    "expected": {
+      "CMD": "COMMENT",
+      "TYPE": "INDEX",
+      "APPEND": "false",
+      "OBJECT": "index1",
+      "VALUE": "comment string"
+    }
+  },
+  {
+    "sql": "comment on function function_val is 'comment string' APPEND",
+    "expected": {
+      "CMD": "COMMENT",
+      "TYPE": "FUNCTION",
+      "APPEND": "true",
+      "OBJECT": "function_val",
+      "VALUE": "comment string"
+    }
+  },
+  {
+    "sql": "drop schema sc1 cascade",
+    "expected": {
+      "CMD": "DROP",
+      "OBJECT": "SCHEMA",
+      "IFEXISTS": "false",
+      "CASCADE": "true",
+      "SCHEMA_full": "sc1",
+      "SCHEMA_total": "1",
+      "SCHEMA_1": "sc1"
+    }
+  },
+  {
     "sql": "reset all",
     "expected": {
       "CMD": "RESET",
@@ -58,6 +99,15 @@
     "sql": "table tab",
     "expected": {
       "CMD": "TABLE",
+      "SAMPLE": "false",
+      "TABLE": "tab"
+    }
+  },
+  {
+    "sql": "table tab sample",
+    "expected": {
+      "CMD": "TABLE",
+      "SAMPLE": "true",
       "TABLE": "tab"
     }
   },
@@ -95,7 +145,7 @@
       "CMD": "DROP",
       "OBJECT": "SCHEMA",
       "IFEXISTS": "false",
-      "SCHEMA": "sc1"
+      "SCHEMA_1": "sc1"
     }
   },
   {
@@ -104,7 +154,20 @@
       "CMD": "DROP",
       "OBJECT": "SCHEMA",
       "IFEXISTS": "true",
-      "SCHEMA": "sc2"
+      "SCHEMA_full": "sc2",
+      "SCHEMA_1": "sc2"
+    }
+  },
+  {
+    "sql": "drop schema ifexists sc2,schema2",
+    "expected": {
+      "CMD": "DROP",
+      "OBJECT": "SCHEMA",
+      "IFEXISTS": "true",
+      "SCHEMA_full": "sc2,schema2",
+      "SCHEMA_total": "2",
+      "SCHEMA_1": "sc2",
+      "SCHEMA_2": "schema2"
     }
   },
   {
@@ -113,7 +176,7 @@
       "CMD": "RESET",
       "SETTING_full": "timing,in_place",
       "SETTING_total": "2",
-      "SETTING_1": "all",
+      "SETTING_1": "timing",
       "SETTING_2": "in_place"
     }
   },
@@ -121,8 +184,9 @@
     "sql": "reindex table asd",
     "expected": {
       "CMD": "REINDEX",
-      "OBJECT": "TABLE",
-      "VALUE": "asd"
+      "TYPE": "TABLE",
+      "OBJECT_total": "1",
+      "OBJECT_1": "asd"
     }
   },
   {
@@ -130,6 +194,7 @@
     "expected": {
       "CMD": "CREATE",
       "OBJECT": "SCHEMA",
+      "IFNOTEXISTS": "false",
       "SCHEMA_1": "sc1",
       "SCHEMA_total": 1
     }
@@ -139,9 +204,20 @@
     "expected": {
       "CMD": "CREATE",
       "OBJECT": "SCHEMA",
+      "IFNOTEXISTS": "false",
       "SCHEMA_1": "sc1",
       "SCHEMA_2": "sc2",
       "SCHEMA_total": 2
+    }
+  },
+  {
+    "sql": "create schema IFNOTEXISTS name1",
+    "expected": {
+      "CMD": "CREATE",
+      "OBJECT": "SCHEMA",
+      "IFNOTEXISTS": "true",
+      "SCHEMA_1": "name1",
+      "SCHEMA_total": 1
     }
   },
   {
@@ -179,8 +255,21 @@
     "sql": "reindex index bcc",
     "expected": {
       "CMD": "REINDEX",
-      "OBJECT": "INDEX",
-      "VALUE": "bcc"
+      "TYPE": "INDEX",
+      "OBJECT_full": "bcc",
+      "OBJECT_total": "1",
+      "OBJECT_1": "bcc"
+    }
+  },
+  {
+    "sql": "reindex index bcc,index2",
+    "expected": {
+      "CMD": "REINDEX",
+      "TYPE": "INDEX",
+      "OBJECT_full": "bcc,index2",
+      "OBJECT_total": "2",
+      "OBJECT_1": "bcc",
+      "OBJECT_2": "index2"
     }
   },
   {
@@ -310,7 +399,20 @@
       "CMD": "DROP",
       "OBJECT": "TABLE",
       "IFEXISTS": "false",
-      "TABLE": "tab1"
+      "TABLE_total": "1",
+      "TABLE_1": "tab1"
+    }
+  },
+  {
+    "sql": "drop table tab1, Tab2",
+    "expected": {
+      "CMD": "DROP",
+      "OBJECT": "TABLE",
+      "IFEXISTS": "false",
+      "TABLE_total": "2",
+      "TABLE_full": "tab1,Tab2",
+      "TABLE_1": "tab1",
+      "TABLE_2": "Tab2"
     }
   },
   {
@@ -319,7 +421,8 @@
       "CMD": "DROP",
       "OBJECT": "TABLE",
       "IFEXISTS": "true",
-      "TABLE": "tab2"
+      "TABLE_full": "tab2",
+      "TABLE_1": "tab2"
     }
   },
   {

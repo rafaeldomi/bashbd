@@ -1,0 +1,33 @@
+#!/bin/bash
+
+: <<'FUNCTION'
+Description: Entry function to scan a recordset
+Parameters:
+  $1 - Recordset
+  $2 - Output variable
+  $3 - Stop if found
+  $4 - Field to search
+  $5 - Value to search
+Return Code:
+  0 - Found Record
+  1 - No record found
+FUNCTION
+simple_scan() {
+  declare -n OUTPUT="$2"
+  local _STOP=$3
+  local _FIELDID=$4
+  local _VALUE=$5
+
+  unset OUTPUT
+
+  while next_record $1 REC; do
+    if [ "${REC[$_FIELDID]}" == "$_VALUE" ]; then
+      OUTPUT=("${REC[@]}")
+      if [ "$_STOP" == true ]; then
+        return 0
+      fi
+    fi
+  done
+
+  return 1
+}

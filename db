@@ -3,6 +3,7 @@
 echo "Loading files.."
 
 # Source some files
+. src/macros
 . src/var
 . src/const
 . src/log
@@ -10,15 +11,16 @@ echo "Loading files.."
 . src/functions
 . src/executor
 . src/menu
-. src/tuple
-. src/storage
+. src/storage/scan
+. src/storage/storage
+. src/storage/tuple
 . src/signals
 . src/printer
 . src/metadata
-. src/md_attrs
-. src/md_table
-. src/md_schema
-. src/md_sequences
+. src/md/md_attrs
+. src/md/md_table
+. src/md/md_schema
+. src/md/md_sequences
 
 echo "Loaded"
 

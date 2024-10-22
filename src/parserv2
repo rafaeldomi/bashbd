@@ -16,7 +16,7 @@ n = next token if match
 
 field 2 = modifers / optionals
 o = optional field
-l = field of list type
+l = field of list type, separated by comma (,)
 e = case f1 = m (match):
    - if match, continues
    - if not match, cannot more tokens/strings
@@ -52,88 +52,87 @@ COMMENT
 # Auxs
 # -------------------
 # Key=Value
-declare DEF_KV=(s:::KEY m::=: s:::VALUE)
+declare -r DEF_KV=(s:::KEY m::=: s:::VALUE)
 
 # -------------------
 # Commands
 # -------------------
 # TRUNCATE [TABLE] (name,...)
-declare DEF_TRUNCATE=(i::TRUNCATE:CMD i:o:TABLE: s:l::TABLE e:)
+declare -r DEF_TRUNCATE=(i::TRUNCATE:CMD i:o:TABLE: s:l::TABLE e:)
 
 # TABLE (NAME) [SAMPLE]
-declare DEF_TABLE=(i::TABLE:CMD s:::TABLE m:ob:SAMPLE e:)
+declare -r DEF_TABLE=(i::TABLE:CMD s:::TABLE m:ob:SAMPLE e:)
 
 # SET (setting=value,...)
-declare DEF_SET=(i::SET:CMD g:l:DEF_KV:KV: e:)
+declare -r DEF_SET=(i::SET:CMD g:l:DEF_KV:KV: e:)
 
 # SHOW (ALL|setting,setting)
-declare DEF_SHOW=(i::SHOW:CMD s:l::OPTION e:)
+declare -r DEF_SHOW=(i::SHOW:CMD s:l::OPTION e:)
 
 # RESET (ALL|setting,setting)
-declare DEF_RESET=(i::RESET:CMD s:l::SETTING e:)
+declare -r DEF_RESET=(i::RESET:CMD s:l::SETTING e:)
 
 # REINDEX (INDEX|TABLE) name
-declare DEF_REINDEX=(i::REINDEX:CMD o::DEF_REINDEX_VALUES:TYPE s:l::OBJECT e:)
-declare DEF_REINDEX_VALUES=(INDEX TABLE)
+declare -r DEF_REINDEX=(i::REINDEX:CMD o::DEF_REINDEX_VALUES:TYPE s:l::OBJECT e:)
+declare -r DEF_REINDEX_VALUES=(INDEX TABLE)
 
-# COMMENT ON (TABLE|INDEX|COLUMN|FUNCTION|TRIGGER) (OBJECT) IS '';
-declare DEF_COMMENT=(i::COMMENT:CMD i::ON g:l:DEF_COMMENT_VALUE:TYPE s:::OBJECT i::IS s:::VALUE e:)
-declare DEF_COMMENT_VALUES=(TABLE INDEX COLUMN FUNCTION TRIGGER)
+# COMMENT ON (TABLE|INDEX|COLUMN|FUNCTION|TRIGGER) (OBJECT) IS '' [APPEND];
+declare -r DEF_COMMENT=(i::COMMENT:CMD i::ON o::DEF_COMMENT_TYPES:TYPE s:::OBJECT i::IS s:::VALUE m:ob:APPEND e:)
+declare -r DEF_COMMENT_TYPES=(TABLE INDEX COLUMN FUNCTION TRIGGER VIEW)
 
 # Creates
 
 # CREATE SCHEMA [IFNOTEXISTS] (name,...)
-declare DEF_CREATE_SCHEMA=(i::CREATE:CMD i::SCHEMA:OBJECT m:ob:IFNOTEXISTS s:l::SCHEMA e:)
+declare -r DEF_CREATE_SCHEMA=(i::CREATE:CMD i::SCHEMA:OBJECT m:ob:IFNOTEXISTS s:l::SCHEMA e:)
 
 # CREATE TABLE (name) ( {DEF_ATTRS}  )
-declare DEF_CREATE_TABLE=(i::CREATE:CMD i::TABLE:OBJECT s:::NAME m::\(: g:l:DEF_ATTRS:FLD m::\):  e:)
-declare DEF_ATTRS=(s:::NAME s:::TYPE m:o:NOTNULL n:o:DEFAULT:DEFAULT)
+declare -r DEF_CREATE_TABLE=(i::CREATE:CMD i::TABLE:OBJECT s:::NAME m::\(: g:l:DEF_ATTRS:FLD m::\):  e:)
+declare -r DEF_ATTRS=(s:::NAME s:::TYPE m:o:NOTNULL n:o:DEFAULT:DEFAULT)
 
 # CREATE [UNIQUE] INDEX [IFNOTEXISTS] (name) ON (table) ( (col,...))
-declare DEF_CREATE_INDEX=(i::CREATE:CMD i:o:UNIQUE:UNIQUE i::INDEX:OBJECT i:o:IFNOTEXISTS:EXISTS \
+declare -r DEF_CREATE_INDEX=(i::CREATE:CMD i:o:UNIQUE:UNIQUE i::INDEX:OBJECT i:o:IFNOTEXISTS:EXISTS \
 						  s:::NAME m::ON: s:::TABLE m::\(: s:l::COL m::\): e:)
 
 # Drops
-# DROP SCHEMA [IFEXISTS] (schema)
-declare DEF_DROP_SCHEMA=(i::DROP:CMD i::SCHEMA:OBJECT m:ob:IFEXISTS m:ob:CASCADE s:l::SCHEMA e:)
+# DROP SCHEMA [IFEXISTS] (schema,...) [CASCADE]
+declare -r DEF_DROP_SCHEMA=(i::DROP:CMD i::SCHEMA:OBJECT m:ob:IFEXISTS s:l::SCHEMA m:ob:CASCADE e:)
 
-# DROP TABLE [IFEXISTS] (table)
-declare DEF_DROP_TABLE=(i::DROP:CMD i::TABLE:OBJECT m:ob:IFEXISTS s:l::TABLE e:)
+# DROP TABLE [IFEXISTS] (table, ...)
+declare -r DEF_DROP_TABLE=(i::DROP:CMD i::TABLE:OBJECT m:ob:IFEXISTS s:l::TABLE e:)
 
 # INSERT
 # insert into (table) ( (col1,...)) VALUES ( (value1,...)),((value1,...))
 # insert into (table) ( (col1,...)) select ...
 # insert into (table) 
-declare DEF_INSERT=(i::INSERT:CMD m::INTO s:::TABLE e:)
-
+declare -r DEF_INSERT=(i::INSERT:CMD m::INTO s:::TABLE e:)
 
 # DELETE
 # delete from table1
 # delete from table1 where a=b
-declare DEF_DELETE=(i::DELETE:CMD m::FROM s:::TABLE e:)
+declare -r DEF_DELETE=(i::DELETE:CMD m::FROM s:::TABLE e:)
 
 # UPDATE
 # update table1 set (col1=col2,...) [WHERE (col1=col2,...)]
-declare DEF_UPDATE=(i::UPDATE:CMD s:::TABLE m::SET g::DEF_KV:KV e: )
+declare -r DEF_UPDATE=(i::UPDATE:CMD s:::TABLE m::SET g::DEF_KV:KV e: )
 
 # SELECT
 # SELECT {FIELDS:DEF_SEL_FIELDS} FROM {TABLES:DEF_SEL_TABLES} {DEF_WHERE}
-declare DEF_SELECT=(i::SELECT:CMD g:l:DEF_SEL_FIELDS:FLD m:oe:FROM: g:l:DEF_SEL_TABLES:FROM m:ol:WHERE:DEF_WHERE e:)
+declare -r DEF_SELECT=(i::SELECT:CMD g:l:DEF_SEL_FIELDS:FLD m:oe:FROM: g:l:DEF_SEL_TABLES:FROM m:ol:WHERE:DEF_WHERE e:)
 
 # fieldname {( DEF_SEL_PO )} {OPERATORS:STRING} {ALIAS}
-declare DEF_SEL_FIELDS=(s:::FIELD o:o:DEF_PO:PO:DEF_SEL_PO o:o:DEF_OPERS:OPER:DEF_STRING n:o:AS:ALIAS)
-declare DEF_SEL_TABLES=(s:::TABLE m:o:AS s:o::TABLE_ALIAS)
-declare DEF_STRING=(s:::VALUE)
+declare -r DEF_SEL_FIELDS=(s:::FIELD o:o:DEF_PO:PO:DEF_SEL_PO o:o:DEF_OPERS:OPER:DEF_STRING n:o:AS:ALIAS)
+declare -r DEF_SEL_TABLES=(s:::TABLE m:o:AS s:o::TABLE_ALIAS)
+declare -r DEF_STRING=(s:::VALUE)
 
-declare DEF_WHERE=()
-declare DEF_SEL_PO=(g::DEF_SEL_FIELDS:FP m::\):)
+declare -r DEF_WHERE=()
+declare -r DEF_SEL_PO=(g::DEF_SEL_FIELDS:FP m::\):)
 
-declare DEF_OPERS=(- \+ '\*' / \=)
+declare -r DEF_OPERS=(- \+ '\*' / \=)
 
 # PO - Parenthesis Open
-declare DEF_PO=(\()
+declare -r DEF_PO=(\()
 # PC - Parenthesis Close
-declare DEF_PC=(\))
+declare -r DEF_PC=(\))
 
 declare -A PARSE_DEF
 readonly PARSE_DEF=(
@@ -157,8 +156,8 @@ readonly PARSE_DEF=(
 
 declare readonly RESERVED=(TRUNCATE TABLE SELECT UPDATE INSERT DELETE CREATE SCHEMA \
     AND OR DESC ASC WHERE ORDER BY GROUP AS FROM INDEX SET VALUES INTO IFNOTEXISTS \
-		DROP IFEXISTS SHOW ALL REINDEX ON RESET CASCADE COMMENT \
-		NOTNULL DEFAULT TRIGGER)
+		DROP IFEXISTS SHOW ALL IS REINDEX ON RESET CASCADE COMMENT \
+		NOTNULL DEFAULT TRIGGER FUNCTION)
 
 parse_log() {
 	echo "$1"
@@ -241,7 +240,7 @@ do_loop() {
 
 	parse_log "
 ========================= NEW LOOP ======================="
-	echo "New loop pointing to $1 ($pos_def) - Prefx: $prf_local"
+	echo "New loop pointing to $1 ($pos_def) - Prefix: $prf_local"
 	echo "${DEF_CMD[@]} => ${DEF_CMD[0]}"
 
 	# The correct way to exits from this while is using a break. Do not use return
@@ -570,7 +569,7 @@ do_loop() {
 				# To control a list definition
 				local tot=1
 
-				# se tiver modificador podemos ter lista simples de valores
+				# if modifier we can have a value list separated by comma(,)
 				while true; do
 					parse_log "  | Found value: $value_sql"
 
@@ -606,55 +605,57 @@ do_loop() {
 						break
 					fi
 
-					# Look ahead and check if its a separator
+					# Look ahead (la) and check if its a separator
 					value_la="${TOKENS[$pos_sql]}"
 					echo "LookAhead value $value_la"
 					if [ "$value_la" == "," ]; then
-						# temos um separador, vamos avançar mais um e continuar
-						echo "deu , , andar pos_sql e continuar no loop ($pos_sql)"
+						# found a list separator, lets move on and check one more
+						echo "found comma, move on pos_sql and continue loop ($pos_sql)"
 						let pos_sql++
-						echo "  Agora: $pos_sql"
+						echo "  now: $pos_sql"
 						value_sql="${TOKENS[$pos_sql]}"
 						continue
-					fi
-
-					if [ -z $value_la ]; then
-						echo "No more values"
-						break
-					fi
-
-					if [[ "$value_la" == ";" ||
-					      "$value_la" == ")" ]]; then
-						break
 					fi
 
 					if [ $tot -gt 10 ]; then
 						return
 					fi
+
+					break
+
+					# if [ -z $value_la ]; then
+					# 	echo "No more values"
+					# 	break
+					# fi
+
+					# if [[ "$value_la" == ";" ||
+					#       "$value_la" == ")" ]]; then
+					# 	break
+					# fi
 				done
 
-				# Aqui podemos andar na definition
+				# Now we can move on the definition
 				let pos_def++
 				;;
 
 			e)
-				echo "Não é pra ter mais nenhuma informação no array de tokens"
+				echo "This is an indicator that should not have any more tokens in array"
 
 				if [ "$value_sql" == ";" ]; then
-					echo "OK. finalizou com ;"
+					echo "OK. finished with ;"
 					break
 				fi
 
 				if [ ! -z ${TOKENS[$pos_sql]} ]; then
-					echo "Valores a mais encontrados no SQL. Favor verificar a sintaxe"
+					echo "Unexpected value on SQL command. Check your syntax"
 					return 1
 				else
-					echo "OK. Finalizado com sucesso"
+					echo "OK. Finished with success"
 					return 0
 				fi
 				;;
 			*)
-				echo "ID ${DEF[0]} não tratado"
+				echo "ID ${DEF[0]} not treated"
 				;;
 		esac
 
@@ -663,13 +664,13 @@ do_loop() {
 		let g++
 		if [ $g -gt 20 ]; then
 			echo ""
-			echo "mmais de 100loops. saindo"
+			echo "more than  100loops. Leaving"
 			break
 		fi
 	done
 
 	if [ ! -z "${ERROR[code]}" ]; then
-		echo "Algo errado"
+		echo "Unexpected error"
 		echo "${ERROR[msg]}"
 	fi
 

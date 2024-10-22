@@ -1,85 +1,91 @@
 #!/bin/bash
 
 drop_schema_execute() {
-	LOGGER_MSG="Drop schema: ${TOKENS[SCHEMA]} (cascade: ${TOKENS[CASCADE]})"
+	LOGGER_MSG="Drop schema(${TOKENS[SCHEMA_total]}): ${TOKENS[SCHEMA_full]} (cascade: ${TOKENS[CASCADE]})"
 	eval $LOGGER DEBUG
 
-	local schema="${TOKENS[SCHEMA]}"
+	for ((i=1; i<=${TOKENS[SCHEMA_total]}; i++)); do
+		local schema="${TOKENS[SCHEMA_${i}]}"
 
-	declare -A TKNDROPTABLE
+		declare -A TKNDROPTABLE
 
-	# SS = Schema Struct
-	declare -A SS
-	SS[schema]="$schema"
+		# SS = Schema Struct
+		unset SS
+		declare -A SS
+		SS[schema]="$schema"
 
-	# Cannot drop schema bashbd
-	if [ "$schema" == "bashbd" ]; then
-		eval $LOGGER ERROR "Cannot drop schema bashbd"
-		return 1
-	fi
-
-	# [ md_schema ]
-	if ! schema_get_struct_by_name SS; then
-		LOGGER_MSG="Schema '$schema' not found"
-		eval $LOGGER ERROR
-		return 1
-	fi
-
-	# Check if there is tables associated with this schema
-	declare -A DATA
-	DATA[file]=$CTABLE_TABLES
-	init_file DATA
-
-	# Get the schema id in hex of this schema
-	local schema_id=""
-	int_to_hex schema_id 8 ${SS[id]}
-
-	LOGGER_MSG="Will search for ${SS[id]} => $schema_id"
-	eval $LOGGER DEBUG
-
-	while next_record DATA REC; do
-		# Check if is the same schema
-		# $1 - ID
-		# $2 - Tablename
-		# $3 - schemaid
-		if [ "$schema_id" == "${REC[3]}" ]; then
-			LOGGER_MSG="Found ${REC[3]} => ${REC[2]}"
-			eval $LOGGER DEBUG2
-
-			# We found a match, a table that still exists in this schema
-			# Must check if CASCADE was supplied
-			if [ "${TOKENS[CASCADE]}" == "true" ]; then
-				# Call the drop_table
-				TKNDROPTABLE[TABLE]="${REC[2]}"
-				drop_table_execute TKNDROPTABLE
-			else
-				LOGGER_MSG="Still exists objects in this schema. Found table '$schema.${REC[2]}'"
-				eval $LOGGER ERROR
-				return 1
-			fi
+		# Cannot drop schema bashbd
+		if [ "$schema" == "bashbd" ]; then
+			eval $LOGGER ERROR "Cannot drop schema bashbd"
+			return 1
 		fi
+
+		# [ md_schema ]
+		if ! schema_get_struct_by_name SS; then
+			LOGGER_MSG="Schema '$schema' not found"
+			eval $LOGGER ERROR
+			return 1
+		fi
+
+		# Check if there is tables associated with this schema
+		# RS = RecordSet
+		declare -A RS_DATA_TABLE
+		RS_DATA_TABLE[file]=$CTABLE_TABLES
+		init_file RS_DATA_TABLE
+
+		# Get the schema id in hex of this schema
+		local schema_id=""
+		# [ functions ]
+		#  format with 8 bytes
+		int_to_hex schema_id 8 ${SS[id]}
+
+		LOGGER_MSG="Will search for ${SS[id]} => $schema_id"
+		eval $LOGGER DEBUG
+
+		while next_record RS_DATA_TABLE TABLE_RECORD; do
+			# Check if is the same schema
+			# $1 - ID
+			# $2 - Tablename
+			# $3 - schemaid
+			if [ "$schema_id" == "${TABLE_RECORD[3]}" ]; then
+				LOGGER_MSG="Found ${TABLE_RECORD[3]} => ${TABLE_RECORD[2]}"
+				eval $LOGGER DEBUG2
+
+				# We found a match, a table that still exists in this schema
+				# Must check if CASCADE was supplied
+				if [ "${TOKENS[CASCADE]}" == "true" ]; then
+					# Call the drop_table
+					TKNDROPTABLE[TABLE]="${TABLE_RECORD[2]}"
+					drop_table_execute TKNDROPTABLE
+				else
+					LOGGER_MSG="Still exists objects in this schema. Found table '$schema.${TABLE_RECORD[2]}'"
+					eval $LOGGER ERROR
+					return 1
+				fi
+			fi
+		done
+
+		if [ -z ${SS[position]} ]; then
+			eval $LOGGER ERROR "Field position not found"
+			return 1
+		fi
+
+		# Set the schema as not alive
+		LOGGER_MSG="Will mark not alive. file: $CTABLE_SCHEMAS - pos ${SS[position]}"
+		eval $LOGGER DEBUG
+
+		local cvl=0
+		let cvl=${SS[position]}+1
+		declare -A CH_DATA
+		CH_DATA[table]=$CTABLE_SCHEMAS
+		CH_DATA[pos]=$cvl
+		CH_DATA[data]="0"
+		if ! table_change_data CH_DATA; then
+			eval $LOGGER ERROR "Fail to change data on table"
+			declare -p CH_DATA
+			return 1
+		fi
+
+		writeln "Schema ${SS[schema]} dropped"
 	done
-
-	if [ -z ${SS[position]} ]; then
-		eval $LOGGER ERROR "No field pos"
-		return 1
-	fi
-
-	# Set the schema as not alive
-	LOGGER_MSG="Will mark not alive. file: $CTABLE_SCHEMAS - pos ${SS[position]}"
-	eval $LOGGER DEBUG
-
-	local cvl=0
-	let cvl=${SS[position]}+1
-	declare -A CH_DATA
-	CH_DATA[table]=$CTABLE_SCHEMAS
-	CH_DATA[pos]=$cvl
-	CH_DATA[data]="0"
-	if ! table_change_data CH_DATA; then
-		eval $LOGGER ERROR "Fail to change data on table"
-		declare -p CH_DATA
-		return 1
-	fi
-
-	writeln "Schema ${SS[schema]} dropped"
 }

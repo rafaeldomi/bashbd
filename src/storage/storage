@@ -247,6 +247,11 @@ row_add_value() {
 	done
 }
 
+: <<'FUNCTION'
+Description: Initialize a control structure for our dataset
+Parameters:
+  $1 - Variable for the cursor
+FUNCTION
 init_file() {
 	# Check if the variable name does not conflict with the name of our
 	#  inner variable. If the name is the same we will get circular reference error
@@ -268,9 +273,9 @@ init_file() {
 	IFD[data]=$(${PRG_HEAD} -c 32K ${IFD[file]})
 	IFD[record_num]=0
 	IFD[record]=""
-	IFD[type]="U"	# Unknown
+	# IFD[type]="U"	# Unknown
 
-	local ts=$(${PRG_STAT} -c %s ${IFD[file]})
+	#local ts=$(${PRG_STAT} -c %s ${IFD[file]})
 
 	# Save the type of this relation
 	get_magic_code_name OUT ${IFD[data]:0:1}
@@ -301,12 +306,14 @@ next_record() {
 	# 4..7 -- size
 	# 8 -- Data Init
 
-	# We do a loop here because we may find not alive records
+	# We do a loop here because we may find notAlive records
 	while true; do
-		# Actual pos
+		# Current position in the data
 		local pos=${STG_DATA[pos]}
 
-		# Out actual position must be an 1E hex
+		# TODO: init_file is reading 32kb, we need to read more here while reading the data
+
+		# Our actual position must be an 1E hex
 		local tmp=${STG_DATA[data]:$pos:1}
 
 		if [ "$tmp" == "" ]; then
@@ -334,7 +341,7 @@ next_record() {
 			return 1
 		fi
 
-		# These lets must be before the alive check
+		# These "let"s must be before the alive check
 		# Walk the position
 		# sz - size of the record
 		# SZ_SIZE - size of the header
@@ -369,12 +376,14 @@ next_record() {
 		fi
 
 		# Negative field
-		# see [ const ] for more info
+		# see [ const ] for REC_* consts
 		TFLD[$REC_TOT]="${#TFLD[@]}"
 		TFLD[$REC_POS]="$pos"
 		TFLD[$REC_TAB]="${STG_DATA[file]}"
 		TFLD[$REC_SZ]=${#fields} 
 		TFLD[$REC_IP]=1
+
+		# echo ${TFLD[@]}
 
 		break
 	done

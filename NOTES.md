@@ -1,39 +1,47 @@
 # SQL Commands
 
-COMMAND		GROUP			MODIFIERS 		PARSER	IMPLEM	TESTED(PARSER)	TESTED(BASHBD)
-SET				-					-							OK			OK			OK
-										[..,..]				OK			OK			OK
-SHOW			-					ALL						OK			OK			OK
-										[..]      		OK			OK			OK
-										[..,..]				OK			OK			OK
-										RESERVED			OK			OK			OK
-RESET			-					ALL						OK			OK			OK
-										[..,..]				OK			OK			OK
-TABLE			-					[..]					OK			OK			OK
-										SAMPLE				OK
-CREATE		SCHEMA		[..]					OK
-										[..,..]				OK
-										IFNOTEXISTS		OK
-					INDEX			[..]					OK
+COMMAND		GROUP			MODIFIERS 		PARSER	IMPLEMENTED	TESTED(PARSER)	TESTED(BASHBD)
+SET				-					-							OK			OK					OK
+										[..,..]				OK			OK					OK
+SHOW			-					ALL						OK			OK					OK
+										[..]      		OK			OK					OK
+										[..,..]				OK			OK					OK
+										RESERVED			OK			OK					OK
+RESET			-					ALL						OK			OK					OK
+										[..,..]				OK			OK					OK
+TABLE			-					[..]					OK			OK					OK
+										SAMPLE				OK									OK
+CREATE		SCHEMA		[..]					OK			OK					OK
+										[..,..]				OK			OK					OK
+										IFNOTEXISTS		OK									OK
+					INDEX			[col]					OK									OK
+										(col,...)			OK									OK
 					TABLE			NOTNULL				OK
 										DEFAULT				OK
-DROP			SCHEMA		[..]					OK
-										[..,..]				OK
-										IFEXISTS			OK
-										CASCADE				OK
-					TABLE			[..]					OK
-										[..,..]				OK
-TRUNCATE	TABLE			[..]					OK
-										[..,..]				OK
-COMMENT		TABLE			-							OK
-					INDEX			-							OK
+					VIEW			[..]
+DROP			SCHEMA		[..]					OK			OK					OK
+										[..,..]				OK			OK					OK
+										IFEXISTS			OK									OK
+										CASCADE				OK									OK
+					TABLE			[..]					OK									OK
+										[..,..]				OK									OK
+TRUNCATE	TABLE			[..]					OK									OK
+										[..,..]				OK									OK
+COMMENT		TABLE			-							OK									OK
+					INDEX			-							OK									OK
 					COLUMN		-							OK
 					FUNCTION	-							OK
 					TRIGGER		-							OK
-REINDEX		TABLE			[..]					OK
-										[..,..]				OK
-					INDEX			[..]					OK
-										[..,..]				OK
+					VIEW			-							OK
+					*					[APPEND]			OK							OK
+REINDEX		TABLE			[..]					OK							OK
+										[..,..]				OK							OK
+					INDEX			[..]					OK							OK
+										[..,..]				OK							OK
+SELECT
+INSERT
+UPDATE
+DELETE
 
 # Data File Anatomy
 

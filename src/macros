@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Its not really macros
+
+: <<'COMMENT'
+This file contains c-macro-like
+COMMENT
+
+# Some definitions (Like c macros)
+#  prefix those "like c-macros" with M for Macro
+M_ASSERT="_assert \${FUNCNAME[0]} \${LINENO}"
+M_CHECK_RES='RES=$?; if [ $RES -ne 0 ]; then return $RES; fi'
+
+LOGGER="log \${FUNCNAME[0]} \${LINENO}"
