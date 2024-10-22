@@ -4,7 +4,9 @@ reset_execute() {
 	LOGGER_MSG="Reset option: ${TOKENS[SETTING_full]}"
 	eval $LOGGER DEBUG
 
-	if [ -z $GC_ORIGINAL ]; then
+  declare -p GC_ORIGINAL
+
+	if [ ${#GC_ORIGINAL[@]} -le 0 ]; then
 		LOGGER_MSG="No changes done"
 		eval $LOGGER LOG $LOGGER_MSG
 		return 0

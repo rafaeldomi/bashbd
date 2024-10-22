@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. parserv2
+. ../src/parserv2
 
 te=0	# total erros
 

@@ -1,9 +1,0 @@
-#!/bin/bash
-
-fnc_out() {
-	echo $1
-}
-
-FNC="fnc_out"
-
-eval $FNC ad

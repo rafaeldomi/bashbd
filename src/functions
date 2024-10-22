@@ -61,13 +61,13 @@ Description: Main program help menu
 FUNCTION
 show_help() {
 	writeln "Program help"
-	writeln " -h         Show this help"
+	writeln " -b [dir]   Initialize a new data structure directory"
 	writeln " -c [conf]  Set a configuration file"
 	writeln "            Default = bd.conf"
 	writeln " -d [dir]   Set the database directory"
-	writeln " -b [dir]   Initialize a new data structure directory"
+	writeln " -h         Show this help"
 	writeln " -s         Start with strace"
-
+	writeln " -t         Show only records"
 	finish 0
 }
 

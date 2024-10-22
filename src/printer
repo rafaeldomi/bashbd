@@ -44,7 +44,9 @@ printer() {
 	done
 
 	${PRG_ECHO} -e "${table}\n${delimiter}" | ${PRG_COLUMN} -t -s"${MGC_FLD}" | ${PRG_AWK} '/^\+/{gsub(" ", "-", $0)}1'
-	${PRG_ECHO} " (${PRINT[rows]} rows fetched)"
+	if [ "${GC[SHOW_ROWS_FETCHED]}" == "true" ]; then
+		${PRG_ECHO} " (${PRINT[rows]} rows fetched)"
+	fi
 }
 
 : <<'FUNCTION'

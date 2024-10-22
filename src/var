@@ -33,9 +33,11 @@ declare -A CACHE_TABLE
 #####################
 declare -A GC
 GC[NULL_TEXT]="(null)"
-GC[TIMING]=true		# command \t
-GC[MIN_LOG]=8			# 5 = log
-GC[INPLACE]=1			# Use inplace updates if possible (Similar to Postgres HotUpdate)
+GC[TIMING]=true	            # command \t
+GC[MIN_LOG]=8		            # 5 = log
+GC[INPLACE]=true            # Use inplace updates if possible (Similar to Postgres HotUpdate)
+GC[SHOW_PARSER]=false       # if show parser structure
+GC[SHOW_ROWS_FETCHED]=true  # if show how many rows fetched in the command
 
 # To save the original values before the FIRST change
 declare -A GC_ORIGINAL

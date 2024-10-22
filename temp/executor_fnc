@@ -1,9 +1,0 @@
-#!/bin/bash
-
-get_codes() {
-	# Get Table codes
-	debug "${FUNCNAME[0]}" "${LINENO}" "Total de tabelas: ${SQLOBJ[TABLE_TOTAL]}"
-	for pos in `seq 1 ${SQLOBJ[TABLE_TOTAL]}`; do
-
-	done
-}

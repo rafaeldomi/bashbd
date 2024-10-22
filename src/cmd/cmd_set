@@ -23,7 +23,7 @@ set_execute() {
 
 			GC[$set_key]="$set_value"
 		else
-			LOGGER_MSG="Command ${set_key} not found"
+			LOGGER_MSG="Setting ${set_key} not found"
 			eval $LOGGER ERROR
 		fi
 	done

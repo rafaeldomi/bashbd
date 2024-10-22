@@ -1,0 +1,378 @@
+[
+  {
+    "sql": "reset all",
+    "expected": {
+      "CMD": "RESET",
+      "SETTING_full": "ALL",
+      "SETTING_1": "ALL"
+    }
+  },
+  {
+    "sql": "select 1=2",
+    "expected": {
+      "CMD": "SELECT",
+      "FLD_FIELD_1": "1",
+      "FLD_VALUE_1": "2",
+      "FLD_total": 1,
+      "FLD_OPER_1": "="
+    }
+  },
+  {
+    "sql": "set display=\"text\"",
+    "expected": {
+      "CMD": "SET",
+      "KV_KEY_1": "display",
+      "KV_VALUE_1": "text",
+      "KV_total": 1
+    }
+  },
+  {
+    "sql": "set a=b, c=d",
+    "expected": {
+      "CMD": "SET",
+      "KV_KEY_1": "a",
+      "KV_VALUE_1": "b",
+      "KV_KEY_2": "c",
+      "KV_VALUE_2": "d",
+      "KV_total": 2
+    }
+  },
+  {
+    "sql": "truncate table tab",
+    "expected": {
+      "CMD": "TRUNCATE",
+      "TABLE_1": "tab",
+      "TABLE_total": 1
+    }
+  },
+  {
+    "sql": "truncate table tab1, tab2",
+    "expected": {
+      "CMD": "TRUNCATE",
+      "TABLE_1": "tab1",
+      "TABLE_2": "tab2",
+      "TABLE_total": 2
+    }
+  },
+  {
+    "sql": "table tab",
+    "expected": {
+      "CMD": "TABLE",
+      "TABLE": "tab"
+    }
+  },
+  {
+    "sql": "show all",
+    "expected": {
+      "CMD": "SHOW",
+      "OPTION_full": "ALL",
+      "OPTION_total": "1",
+      "OPTION_1": "ALL"
+    }
+  },
+  {
+    "sql": "show display, timing",
+    "expected": {
+      "CMD": "SHOW",
+      "OPTION_full": "display,timing",
+      "OPTION_total": "2",
+      "OPTION_1": "display",
+      "OPTION_2": "timing"
+    }
+  },
+  {
+    "sql": "show display",
+    "expected": {
+      "CMD": "SHOW",
+      "OPTION_full": "display",
+      "OPTION_total": "1",
+      "OPTION_1": "display"
+    }
+  },
+  {
+    "sql": "drop schema sc1",
+    "expected": {
+      "CMD": "DROP",
+      "OBJECT": "SCHEMA",
+      "IFEXISTS": "false",
+      "SCHEMA": "sc1"
+    }
+  },
+  {
+    "sql": "drop schema ifexists sc2",
+    "expected": {
+      "CMD": "DROP",
+      "OBJECT": "SCHEMA",
+      "IFEXISTS": "true",
+      "SCHEMA": "sc2"
+    }
+  },
+  {
+    "sql": "reset timing, in_place",
+    "expected": {
+      "CMD": "RESET",
+      "SETTING_full": "timing,in_place",
+      "SETTING_total": "2",
+      "SETTING_1": "all",
+      "SETTING_2": "in_place"
+    }
+  },
+  {
+    "sql": "reindex table asd",
+    "expected": {
+      "CMD": "REINDEX",
+      "OBJECT": "TABLE",
+      "VALUE": "asd"
+    }
+  },
+  {
+    "sql": "create schema sc1",
+    "expected": {
+      "CMD": "CREATE",
+      "OBJECT": "SCHEMA",
+      "SCHEMA_1": "sc1",
+      "SCHEMA_total": 1
+    }
+  },
+  {
+    "sql": "create schema sc1,sc2",
+    "expected": {
+      "CMD": "CREATE",
+      "OBJECT": "SCHEMA",
+      "SCHEMA_1": "sc1",
+      "SCHEMA_2": "sc2",
+      "SCHEMA_total": 2
+    }
+  },
+  {
+    "sql": "truncate tab",
+    "expected": {
+      "CMD": "TRUNCATE",
+      "TABLE_1": "tab",
+      "TABLE_total": 1
+    }
+  },
+  {
+    "sql": "create index idx01 on tab (col1)",
+    "expected": {
+      "CMD": "CREATE",
+      "OBJECT": "INDEX",
+      "NAME": "idx01",
+      "COL_1": "col1",
+      "COL_total": 1,
+      "TABLE": "tab"
+    }
+  },
+  {
+    "sql": "create index idx02 on tab(col2, col3)",
+    "expected": {
+      "CMD": "CREATE",
+      "OBJECT": "INDEX",
+      "NAME": "idx02",
+      "COL_1": "col2",
+      "COL_2": "col3",
+      "COL_total": 2,
+      "TABLE": "tab"
+    }
+  },
+  {
+    "sql": "reindex index bcc",
+    "expected": {
+      "CMD": "REINDEX",
+      "OBJECT": "INDEX",
+      "VALUE": "bcc"
+    }
+  },
+  {
+    "sql": "select 1",
+    "expected": {
+      "CMD": "SELECT",
+      "FLD_FIELD_1": "1",
+      "FLD_total": 1
+    }
+  },
+  {
+    "sql": "select 1 as fld",
+    "expected": {
+      "CMD": "SELECT",
+      "FLD_FIELD_1": "1",
+      "FLD_total": 1,
+      "FLD_ALIAS_1": "fld"
+    }
+  },
+  {
+    "sql": "select col1, col2 as fld from table1",
+    "expected": {
+      "CMD": "SELECT",
+      "FLD_FIELD_1": "col1",
+      "FLD_FIELD_2": "col2",
+      "FLD_ALIAS_2": "fld",
+      "FLD_total": 2,
+      "FROM_TABLE_1": "table1",
+      "FROM_total": 1
+    }
+  },
+  {
+    "sql": "select col1 as fld from table1 tab",
+    "expected": {
+      "CMD": "SELECT",
+      "FLD_FIELD_1": "col1",
+      "FLD_ALIAS_1": "fld",
+      "FLD_total": 1,
+      "FROM_TABLE_1": "table1",
+      "FROM_total": 1,
+      "FROM_TABLE_ALIAS_1": "tab"
+    }
+  },
+  {
+    "sql": "select a.col1 as fld, b.col2 as fld1 from table1 a, table2 b",
+    "expected": {
+      "CMD": "SELECT",
+      "FLD_FIELD_1": "a.col1",
+      "FLD_ALIAS_1": "fld",
+      "FLD_FIELD_2": "b.col2",
+      "FLD_ALIAS_2": "fld1",
+      "FLD_total": 2,
+      "FROM_TABLE_1": "table1",
+      "FROM_TABLE_2": "table2",
+      "FROM_total": 2,
+      "FROM_TABLE_ALIAS_1": "a",
+      "FROM_TABLE_ALIAS_2": "b"
+    }
+  },
+  {
+    "sql": "select *, tab.col from table1 tab",
+    "expected": {
+      "CMD": "SELECT",
+      "FLD_FIELD_1": "*",
+      "FLD_FIELD_2": "tab.col",
+      "FLD_total": 2,
+      "FROM_TABLE_1": "table1",
+      "FROM_TABLE_ALIAS_1": "tab",
+      "FROM_total": 1
+    }
+  },
+  {
+    "sql": "select col1=col2 as fld",
+    "expected": {
+      "CMD": "SELECT",
+      "FLD_FIELD_1": "col1",
+      "FLD_OPER_1": "=",
+      "FLD_VALUE_1": "col2",
+      "FLD_total": 1,
+      "FLD_ALIAS_1": "fld"
+    }
+  },
+  {
+    "sql": "select col1=col2 as fld, col3=tab.col2 as fld2 from table1 tab",
+    "expected": {
+      "CMD": "SELECT",
+      "FLD_FIELD_1": "col1",
+      "FLD_VALUE_1": "col2",
+      "FLD_ALIAS_1": "fld",
+      "FLD_OPER_1": "=",
+      "FLD_FIELD_2": "col3",
+      "FLD_VALUE_2": "tab.col2",
+      "FLD_ALIAS_2": "fld2",
+      "FLD_OPER_2": "=",
+      "FLD_total": 2,
+      "FROM_TABLE_1": "table1",
+      "FROM_TABLE_ALIAS_1": "tab",
+      "FROM_total": 1
+    }
+  },
+  {
+    "sql": "select 3-2 as value",
+    "expected": {
+      "CMD": "SELECT",
+      "FLD_FIELD_1": "3",
+      "FLD_OPER_1": "-",
+      "FLD_VALUE_1": "2",
+      "FLD_total": 1,
+      "FLD_ALIAS_1": "value"
+    }
+  },
+  {
+    "sql": "select \"abc bcd\" as fld from table1 tab",
+    "expected": {
+      "CMD": "SELECT",
+      "FLD_FIELD_1": "abc bcd",
+      "FLD_total": 1,
+      "FLD_ALIAS_1": "fld",
+      "FROM_TABLE_1": "table1",
+      "FROM_TABLE_ALIAS_1": "tab",
+      "FROM_total": 1
+    }
+  },
+  {
+    "sql": "drop table tab1",
+    "expected": {
+      "CMD": "DROP",
+      "OBJECT": "TABLE",
+      "IFEXISTS": "false",
+      "TABLE": "tab1"
+    }
+  },
+  {
+    "sql": "drop table ifexists tab2",
+    "expected": {
+      "CMD": "DROP",
+      "OBJECT": "TABLE",
+      "IFEXISTS": "true",
+      "TABLE": "tab2"
+    }
+  },
+  {
+    "sql": "select col as fld from table1 as tab",
+    "expected": {
+      "CMD": "SELECT",
+      "FLD_FIELD_1": "col",
+      "FLD_total": 1,
+      "FLD_ALIAS_1": "fld",
+      "FROM_TABLE_1": "table1",
+      "FROM_TABLE_ALIAS_1": "tab",
+      "FROM_total": 1
+    }
+  },
+  {
+    "sql": "delete from table1",
+    "expected": {
+      "CMD": "DELETE",
+      "TABLE": "table1"
+    }
+  },
+  {
+    "sql": "update table1 set col1=col2",
+    "expected": {
+      "CMD": "UPDATE",
+      "KV_total": 1,
+      "KV_KEY_1": "col1",
+      "KV_VALUE_1": "col2"
+    }
+  },
+  {
+    "sql": "create table tab(id int, des text)",
+    "expected": {
+      "CMD": "CREATE",
+      "FLD_total": 2,
+      "FLD_NAME_1": "id",
+      "FLD_TYPE_1": "int",
+      "FLD_NAME_2": "des",
+      "FLD_TYPE_2": "text"
+    }
+  },
+  {
+    "sql": "CREATE TABLE tab(id int notnull, des text)",
+    "expected": {
+      "CMD": "CREATE",
+      "OBJECT": "TABLE",
+      "NAME": "tab",
+      "FLD_NAME_1": "id",
+      "FLD_TYPE_1": "int",
+      "FLD_NOTNULL_1": "true",
+      "FLD_NAME_2": "des",
+      "FLD_TYPE_2": "text",
+      "FLD_NOTNULL_2": "false"
+    }
+  }
+]

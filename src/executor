@@ -2,7 +2,6 @@
 
 . src/log
 . src/functions
-. src/parser
 . src/parserv2
 . src/cmd/cmd_table
 . src/cmd/cmd_create
@@ -20,10 +19,6 @@ execute() {
 	unset SQLOBJ
 	declare -A SQLOBJ
 
-	
-	# Lets build the SQLOBJ object
-	#parser "${INPUT_CMD}"
-
 	# [ parserv2 ]
 	parse_sql "${INPUT_CMD}" > /dev/null
 	RET="$?"
@@ -35,7 +30,11 @@ execute() {
 		return $RET
 	fi
 
-	# Buscar código dos objetos
+  if [ ${GC[SHOW_PARSER]} == true ]; then
+		declare -p TOKENS
+	fi
+
+	# Find out the object codes
 	#post_parser
 
 	CMD="${TOKENS[CMD]}"

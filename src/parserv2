@@ -1,8 +1,6 @@
 #!/bin/bash
 
-#declare -A SQLOBJ
-#declare -A TOKENS
-declare DEF		# Definition atual
+declare DEF		# Current definition
 
 : <<'COMMENT'
 6 fields
@@ -50,31 +48,37 @@ codes
 4 - SQL Command not found
 COMMENT
 
+# -------------------
 # Auxs
+# -------------------
+# Key=Value
 declare DEF_KV=(s:::KEY m::=: s:::VALUE)
 
+# -------------------
 # Commands
+# -------------------
 # TRUNCATE [TABLE] (name,...)
 declare DEF_TRUNCATE=(i::TRUNCATE:CMD i:o:TABLE: s:l::TABLE e:)
 
-# TABLE (name)
-declare DEF_TABLE=(i::TABLE:CMD s:::TABLE e:)
+# TABLE (NAME) [SAMPLE]
+declare DEF_TABLE=(i::TABLE:CMD s:::TABLE m:ob:SAMPLE e:)
 
-# SET (key=value,...)
-declare DEF_SET=(i::SET:CMD g::DEF_KV:KV: e:)
+# SET (setting=value,...)
+declare DEF_SET=(i::SET:CMD g:l:DEF_KV:KV: e:)
 
-# SHOW (ALL|value,value)
+# SHOW (ALL|setting,setting)
 declare DEF_SHOW=(i::SHOW:CMD s:l::OPTION e:)
 
-# RESET (ALL|value,value)
+# RESET (ALL|setting,setting)
 declare DEF_RESET=(i::RESET:CMD s:l::SETTING e:)
 
-# REINDEX {INDEX|TABLE} name
-declare DEF_REINDEX=(i::REINDEX:CMD o::DEF_REINDEX_VALUES:OBJECT s:::VALUE e:)
+# REINDEX (INDEX|TABLE) name
+declare DEF_REINDEX=(i::REINDEX:CMD o::DEF_REINDEX_VALUES:TYPE s:l::OBJECT e:)
 declare DEF_REINDEX_VALUES=(INDEX TABLE)
 
-# COMMENT ON TABLE table IS '';
-declare DEF_COMMENT=(i::COMMENT:CMD i::ON i::TABLE s:::TABLE i::IS s:::VALUE e:)
+# COMMENT ON (TABLE|INDEX|COLUMN|FUNCTION|TRIGGER) (OBJECT) IS '';
+declare DEF_COMMENT=(i::COMMENT:CMD i::ON g:l:DEF_COMMENT_VALUE:TYPE s:::OBJECT i::IS s:::VALUE e:)
+declare DEF_COMMENT_VALUES=(TABLE INDEX COLUMN FUNCTION TRIGGER)
 
 # Creates
 
@@ -91,10 +95,10 @@ declare DEF_CREATE_INDEX=(i::CREATE:CMD i:o:UNIQUE:UNIQUE i::INDEX:OBJECT i:o:IF
 
 # Drops
 # DROP SCHEMA [IFEXISTS] (schema)
-declare DEF_DROP_SCHEMA=(i::DROP:CMD i::SCHEMA:OBJECT m:ob:IFEXISTS m:ob:CASCADE s:::SCHEMA e:)
+declare DEF_DROP_SCHEMA=(i::DROP:CMD i::SCHEMA:OBJECT m:ob:IFEXISTS m:ob:CASCADE s:l::SCHEMA e:)
 
 # DROP TABLE [IFEXISTS] (table)
-declare DEF_DROP_TABLE=(i::DROP:CMD i::TABLE:OBJECT m:ob:IFEXISTS s:::TABLE e:)
+declare DEF_DROP_TABLE=(i::DROP:CMD i::TABLE:OBJECT m:ob:IFEXISTS s:l::TABLE e:)
 
 # INSERT
 # insert into (table) ( (col1,...)) VALUES ( (value1,...)),((value1,...))
@@ -206,9 +210,9 @@ do_parse() {
 	do_loop CMD_DEF
 
 	if [ ! -z ${ERROR[code]} ]; then
-		echo "ERRO: ${ERROR[msg]}"
+		echo "ERROR: ${ERROR[msg]}"
 	else
-		echo "FINALIZOU"
+		echo "FINISHED"
 	fi
 
 	for key in $(echo "${!TOKENS[@]}" | tr ' ' '\n' | sort); do
@@ -220,11 +224,12 @@ do_parse() {
 # $1 - DEFINITION
 # $2 - prefix to add to name
 do_loop() {
+	# This let is NOT 'local'
 	let level++
 	local prf_local="${2}"
 
 	# Local variables
-	local pos_def=0 # Aonde estou no array do definition dessa chamada
+	local pos_def=0 # My position in definition array on this call
 	local pref=""
 	local g=0
 	local mod_opc=0
@@ -236,11 +241,10 @@ do_loop() {
 
 	parse_log "
 ========================= NEW LOOP ======================="
-	echo "Iniciou novo loop apontando para $1 ($pos_def) - Prefx: $prf_local"
+	echo "New loop pointing to $1 ($pos_def) - Prefx: $prf_local"
 	echo "${DEF_CMD[@]} => ${DEF_CMD[0]}"
 
-	# The right way to exists from this while is using a break. Do not use
-	#	return
+	# The correct way to exits from this while is using a break. Do not use return
 	while true; do
 		parse_log "
       .... LOOPING ....
@@ -476,7 +480,7 @@ do_loop() {
 				let pos_def++
 				;;
 
-			# Só precisa dar match nao faz nada
+			# match without interaction
 			m)
 				parse_log "  | GROUP: Match"
 				parse_log "  |  Search: $value_token"
@@ -492,7 +496,7 @@ do_loop() {
 				fi
 
 				# We have a match
-				if [ "$value_sql" == "$value_token" ]; then
+				if [ "${value_sql^^}" == "${value_token^^}" ]; then
 					# Check if we have the boolean modifier
 					if [ ! -z $mod_bool ]; then
 						TOKENS[${prefix}]="true"
@@ -514,13 +518,14 @@ do_loop() {
 					break
 				fi
 
+				# mod_opc = optional modifier
 				if [ $mod_opc == 1 ]; then
 					let pos_def++
 				else
-					echo "Erro de sintaxe SQL. Conferir SQL"
+					echo "SQL syntax error. Check SQL"
 					break
 				fi
-	
+
 				;;
 			# Identificador / literal
 			i) 

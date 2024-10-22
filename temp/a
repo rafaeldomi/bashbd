@@ -1,9 +1,0 @@
-#!/bin/bash
-
-a=0
-
-let a++
-
-let a++
-
-echo $((++a))

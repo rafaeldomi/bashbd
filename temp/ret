@@ -1,9 +1,0 @@
-#!/bin/bash
-
-fnc() {
-	return 1
-}
-
-if fnc; then
-	echo ok
-fi

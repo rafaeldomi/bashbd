@@ -32,8 +32,6 @@ do_pre_init() {
 	# [ functions ]
 	find_binaries
 
-	eval $LOGGER LOG "Initializing"
-
 	# Just call me again so bash can do a very simple code validation
 	$PRG_BASH -n $0
 	RES=$?
@@ -46,8 +44,11 @@ do_pre_init() {
 	# Set the program name
 	PROGRAM=$($PRG_BASENAME $0)
 
-	while getopts "?svhb:d:m:c:" arg; do
+	while getopts "?svhtb:d:m:c:" arg; do
 		case $arg in
+			t)
+				TUPLES_ONLY=1
+				;;
 			v)
 				LOGGER_MSG="Version: $VERSION"
 				eval $LOGGER LOG
@@ -79,12 +80,21 @@ do_pre_init() {
 		esac
 	done
 
+	if [ "$TUPLES_ONLY" == "1" ]; then
+		GC[MIN_LOG]=1
+		GC[SHOW_PARSER]=false
+		GC[TIMING]=false
+		GC[SHOW_ROWS_FETCHED]=false
+	fi
+
 	if [ "$STRACE" == "1" ]; then
 		eval $LOGGER LOG "Starting strace"
 
 		PID=$$
 		sudo strace -s 100 -f -tt -p $PID -o temp/strace.tmp 2>/dev/null &
 	fi
+
+	eval $LOGGER LOG "Initializing"
 
 	# Install signals trap
 	# [ signals ]

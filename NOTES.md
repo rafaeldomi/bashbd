@@ -1,4 +1,41 @@
-Data File Anatomy
+# SQL Commands
+
+COMMAND		GROUP			MODIFIERS 		PARSER	IMPLEM	TESTED(PARSER)	TESTED(BASHBD)
+SET				-					-							OK			OK			OK
+										[..,..]				OK			OK			OK
+SHOW			-					ALL						OK			OK			OK
+										[..]      		OK			OK			OK
+										[..,..]				OK			OK			OK
+										RESERVED			OK			OK			OK
+RESET			-					ALL						OK			OK			OK
+										[..,..]				OK			OK			OK
+TABLE			-					[..]					OK			OK			OK
+										SAMPLE				OK
+CREATE		SCHEMA		[..]					OK
+										[..,..]				OK
+										IFNOTEXISTS		OK
+					INDEX			[..]					OK
+					TABLE			NOTNULL				OK
+										DEFAULT				OK
+DROP			SCHEMA		[..]					OK
+										[..,..]				OK
+										IFEXISTS			OK
+										CASCADE				OK
+					TABLE			[..]					OK
+										[..,..]				OK
+TRUNCATE	TABLE			[..]					OK
+										[..,..]				OK
+COMMENT		TABLE			-							OK
+					INDEX			-							OK
+					COLUMN		-							OK
+					FUNCTION	-							OK
+					TRIGGER		-							OK
+REINDEX		TABLE			[..]					OK
+										[..,..]				OK
+					INDEX			[..]					OK
+										[..,..]				OK
+
+# Data File Anatomy
 
 Position 1 - Byte indicating type of relation (const)
 Position 2... -- records
@@ -119,30 +156,6 @@ http://mywiki.wooledge.org/BashFAQ/006#Indirection
 
 https://stackoverflow.com/questions/12768907/how-can-i-align-the-columns-of-tables-in-bash
 
-COMMAND		GROUP			PARSER	STATUS	OVERALL
-SET				-					OK			OK			DONE
-SET				[..,..]		-				-
-SHOW			ALL				OK			OK			DONE
-SHOW      [..]      OK			OK			DONE
-SHOW      [..,..]		OK			OK			DONE
-SHOW			RESERVED	OK			OK			DONE
-RESET			ALL				OK			OK			DONE
-RESET			[..,..]		OK			-
-TABLE			-					OK			OK
-CREATE		SCHEMA		OK			OK
-TRUNCATE	TABLE			OK			OK
-DROP			SCHEMA		OK			OK
-DROP			TABLE			OK			OK
-COMMENT		-					OK
-CREATE		TABLE			
-					NOTNULL		OK
-					DEFAULT		OK
-CREATE		INDEX			OK
-REINDEX							OK
-SELECT
-DELETE
-UPDATE
-INSERT
 
 ############
 # Loop in the records of datafile
