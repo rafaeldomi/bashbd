@@ -82,6 +82,10 @@ ask_for_input() {
 	local TMP=""
 	INPUT_CMD=""
 
+  # Configure history
+	# [ functions ]
+	prepare_history
+
 	while [ true ]; do
 		read -r -e -p "bashbd> " TMP
 
@@ -106,6 +110,27 @@ ask_for_input() {
 
 		INPUT_CMD="$INPUT_CMD "
 	done
+
+	echo "$INPUT_CMD" >> $HISTORY_FILE
+}
+
+: <<'FUNCTION'
+Description: Prepare bash for using history file in read command
+FUNCTION
+prepare_history() {
+	# [ const.HISTORY_FILE ]
+	export HISTFILE=$HISTORY_FILE
+	export HISTSIZE=1000  # How many commands will be recorded in history file
+	export HISTFILESIZE=2000  # Maximum file size
+
+	# Disable global history
+	# Check signals.signal_trap for history restore (set -o history)
+	set +o history
+
+	# Load the historyFile
+	if [ -f "$HISTFILE" ]; then
+		history -r "$HISTFILE"
+	fi
 }
 
 # $1 - variable

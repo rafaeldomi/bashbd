@@ -16,6 +16,10 @@ signal_trap() {
 
 	if [ "$1" == "INT" ]; then
 		eval $LOGGER LOG "CTRL+C or INT signal received. Exiting"
+
+		# Restore history
+		set -o history
+
 		finish 0
 	fi
 

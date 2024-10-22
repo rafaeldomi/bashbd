@@ -129,6 +129,7 @@ main_loop() {
 	# This is the program main loop, ethernal
 	while [ true ]; do
 		# [ functions ]
+		# ask_for_input exposes INPUT_CMD
 		if [ -z $INPUT_COMMAND ]; then
 			ask_for_input
 		else

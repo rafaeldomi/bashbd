@@ -42,6 +42,7 @@ readonly STAMP_FILE=bashbd.stamp
 ### Others
 # Version
 readonly VERSION=0
+readonly HISTORY_FILE=~/.bashbd.history
 
 # These const are being used to control the position of the record in the datafile
 #  and the total of fields of that record
