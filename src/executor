@@ -13,6 +13,7 @@
 . src/cmd/cmd_drop_schema
 . src/cmd/cmd_create_schema
 . src/cmd/cmd_create_table
+. src/cmd/cmd_comment
 
 execute() {
 	# Clear this "object" (I know, variable, OK)
@@ -39,7 +40,7 @@ execute() {
 
 	CMD="${TOKENS[CMD]}"
 	if [[ "$CMD" == "DROP" ||
-		  "$CMD" == "CREATE" ]]; then
+		    "$CMD" == "CREATE" ]]; then
 		CMD="${CMD}_${TOKENS[OBJECT]}"
 	fi
 

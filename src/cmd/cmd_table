@@ -1,8 +1,9 @@
 #!/bin/bash
 
 table_execute() {
+	declare -n _SQLTKN=$1
 	local OUT=""
-	local value="${TOKENS[TABLE]}"
+	local value="${_SQLTKN[TABLE]}"
 	
 	LOGGER_MSG="Table: $value"
 	eval $LOGGER DEBUG

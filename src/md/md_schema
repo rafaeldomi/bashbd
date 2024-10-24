@@ -1,14 +1,22 @@
 #!/bin/bash
 
+: <<'COMMENT'
+schema_get_struct_by_name : Get schema structure by table name
+COMMENT
+
 : <<'FUNCTION'
 Description: Return the schema record, searching by name
 Parameters:
   $1 - Input variable that has the name
+		$1[schema] = Schema name to search
+	$2 - Output variable to hold the record
 FUNCTION
 schema_get_struct_by_name() {
 	# SS = Schema Struct
 	declare -n _SS=$1
-	local _IV # IntegerValue
+  declare -n _OUTPUT="$2"
+
+	unset _OUTPUT
 	local SCHEMA
 
 	# Field must exists
@@ -24,45 +32,24 @@ schema_get_struct_by_name() {
 	DATA[file]=$CTABLE_SCHEMAS
 	init_file DATA
 
-	# declare -p DATA
-
   # [ scan ]
-	# field to search = 2 = schema_name
-	simple_scan DATA SCHEMA true 2 "${_SS[schema]}"
+	declare -A FILTER
+	FILTER[total]="1"
+	FILTER[stop]="true"
+	FILTER[0,0]="2"
+	FILTER[0,1]="${_SS[schema]}"
+
+	simple_scan DATA OUTPUT_RECORD FILTER
 	eval $M_CHECK_RES
 
-  hex_to_int _IV ${SCHEMA[0]}
-	SS[id]=$_IV
-	SS[position]="${REC[REC_POS]}"
+	if [ -z OUTPUT_RECORD ]; then
+		LOGGER_MSG="Scan failed"
+		eval $LOGGER ERROR
+		return 1
+	fi
 
-	return 0
-}
-
-: <<'FUNCTION'
-Description: Get schema id by name
-Parameters:
-  $1 - Return variable
-	$2 - Schema name
-FUNCTION
-schema_get_id() {
-	local _RET=$1
-	local _SCHEMANAME="$2"
-	local _IV	# IntegerValue
-
-	declare -A DATA
-	DATA[file]=$CTABLE_SCHEMAS
-	init_file DATA
-
-	# [ scan ]
-	# field to search = 2 = schema_name
-	simple_scan DATA SCHEMA true 2 "$_SCHEMANAME"
-	eval $M_CHECK_RES
-
-	hex_to_int _IV "${SCHEMA[0,2]}"
-	eval $_RET="$_IV"
-
-	LOGGER_MSG="Found schema: $_RET"
-	eval $LOGGER DEBUG
+	# [ functions ]
+	copy_array OUTPUT_RECORD _OUTPUT
 
 	return 0
 }

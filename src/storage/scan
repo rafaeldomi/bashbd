@@ -5,25 +5,43 @@ Description: Entry function to scan a recordset
 Parameters:
   $1 - Recordset
   $2 - Output variable
-  $3 - Stop if found
-  $4 - Field to search
-  $5 - Value to search
+  $3 - FILTER variable
+      $3[STOP] = Stop if found
+      $3[total] = Total of filter entries to check
+      $3[0,0] = filter 0 fieldNumber
+      $3[0,1] = filter 0 value
 Return Code:
   0 - Found Record
   1 - No record found
 FUNCTION
 simple_scan() {
-  declare -n OUTPUT="$2"
-  local _STOP=$3
-  local _FIELDID=$4
-  local _VALUE=$5
+  declare -n _OUTPUT="$2"
+  declare -n _FILTER=$3
+  local _STOP=${_FILTER[stop]}
 
-  unset OUTPUT
+  unset _OUTPUT
 
   while next_record $1 REC; do
-    if [ "${REC[$_FIELDID]}" == "$_VALUE" ]; then
-      OUTPUT=("${REC[@]}")
-      if [ "$_STOP" == true ]; then
+    local i=0
+    local found=0
+    # Evaluate filter checks
+    for ((i=0; i<${_FILTER[total]};i++)); do
+      field="${_FILTER[$i,0]}"
+      value="${_FILTER[$i,1]}"
+      if [ "${REC[$field]}" == "$value" ]; then
+        found=1
+        continue
+      else
+        found=0
+        break
+      fi
+    done
+
+    if [ $found == 1 ]; then
+      # [ functions ]
+      copy_array REC _OUTPUT
+
+      if [ "$_STOP" == "true" ]; then
         return 0
       fi
     fi

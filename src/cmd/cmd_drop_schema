@@ -1,18 +1,13 @@
 #!/bin/bash
 
 drop_schema_execute() {
+  local P_SCHEMA=""
+
 	LOGGER_MSG="Drop schema(${TOKENS[SCHEMA_total]}): ${TOKENS[SCHEMA_full]} (cascade: ${TOKENS[CASCADE]})"
 	eval $LOGGER DEBUG
 
 	for ((i=1; i<=${TOKENS[SCHEMA_total]}; i++)); do
 		local schema="${TOKENS[SCHEMA_${i}]}"
-
-		declare -A TKNDROPTABLE
-
-		# SS = Schema Struct
-		unset SS
-		declare -A SS
-		SS[schema]="$schema"
 
 		# Cannot drop schema bashbd
 		if [ "$schema" == "bashbd" ]; then
@@ -20,26 +15,25 @@ drop_schema_execute() {
 			return 1
 		fi
 
-		# [ md_schema ]
-		if ! schema_get_struct_by_name SS; then
-			LOGGER_MSG="Schema '$schema' not found"
+		declare -A TKNDROPTABLE
+
+		# load SCHEMA_RECORD
+		P_SCHEMA="$schema"
+		eval $M_GET_SCHEMA
+
+		if [ -z ${SCHEMA_RECORD[REC_POS]} ]; then
+		  LOGGER_MSG="Field position not found"
 			eval $LOGGER ERROR
 			return 1
 		fi
 
-		# Check if there is tables associated with this schema
-		# RS = RecordSet
+		# Check if there are tables within schema
+		#  RS = RecordSet
 		declare -A RS_DATA_TABLE
 		RS_DATA_TABLE[file]=$CTABLE_TABLES
 		init_file RS_DATA_TABLE
 
-		# Get the schema id in hex of this schema
-		local schema_id=""
-		# [ functions ]
-		#  format with 8 bytes
-		int_to_hex schema_id 8 ${SS[id]}
-
-		LOGGER_MSG="Will search for ${SS[id]} => $schema_id"
+		LOGGER_MSG="Will search for ${SCHEMA_RECORD[id]}"
 		eval $LOGGER DEBUG
 
 		while next_record RS_DATA_TABLE TABLE_RECORD; do
@@ -65,17 +59,12 @@ drop_schema_execute() {
 			fi
 		done
 
-		if [ -z ${SS[position]} ]; then
-			eval $LOGGER ERROR "Field position not found"
-			return 1
-		fi
-
 		# Set the schema as not alive
-		LOGGER_MSG="Will mark not alive. file: $CTABLE_SCHEMAS - pos ${SS[position]}"
+		LOGGER_MSG="Will mark not alive. file: $CTABLE_SCHEMAS - pos ${SCHEMA_RECORD[REC_POS]}"
 		eval $LOGGER DEBUG
 
 		local cvl=0
-		let cvl=${SS[position]}+1
+		let cvl=${SCHEMA_RECORD[REC_POS]}+1
 		declare -A CH_DATA
 		CH_DATA[table]=$CTABLE_SCHEMAS
 		CH_DATA[pos]=$cvl
@@ -86,6 +75,6 @@ drop_schema_execute() {
 			return 1
 		fi
 
-		writeln "Schema ${SS[schema]} dropped"
+		writeln "Schema ${schema} dropped"
 	done
 }

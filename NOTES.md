@@ -7,13 +7,20 @@ SHOW			-					ALL						OK			OK					OK
 										[..]      		OK			OK					OK
 										[..,..]				OK			OK					OK
 										RESERVED			OK			OK					OK
+					COMMENT   TABLE
+										INDEX
+										COLUMN
+										FUNCTION
+										TRIGGER
+										VIEW
+										SCHEMA
 RESET			-					ALL						OK			OK					OK
 										[..,..]				OK			OK					OK
 TABLE			-					[..]					OK			OK					OK
 										SAMPLE				OK									OK
 CREATE		SCHEMA		[..]					OK			OK					OK
 										[..,..]				OK			OK					OK
-										IFNOTEXISTS		OK									OK
+										IFNOTEXISTS		OK			OK					OK
 					INDEX			[col]					OK									OK
 										(col,...)			OK									OK
 					TABLE			NOTNULL				OK
@@ -33,6 +40,7 @@ COMMENT		TABLE			-							OK									OK
 					FUNCTION	-							OK
 					TRIGGER		-							OK
 					VIEW			-							OK
+					SCHEMA		-							OK
 					*					[APPEND]			OK							OK
 REINDEX		TABLE			[..]					OK							OK
 										[..,..]				OK							OK
@@ -66,50 +74,51 @@ bashbd.tables    [2]
 bashbd.attrs     [3]
 bashbd.types     [4]
 bashbd.functions [5]
-bashbd.index	 [6]
+bashbd.index	 	 [6]
 bashbd.language  [7]
 bashbd.sequences [8]
 bashbd.comments  [9]
 
 bashbd.schemas
-	id   		integer
-	name 		char(200)
+	id   			integer
+	name 			varchar(200)
 bashbd.language
-	id			integer
-	name		char(200)
+	id				integer
+	name			char(200)
 	handler		char(200)
 bashbd.types
-	id			integer
-	name		char(200)
+	id				integer
+	name			char(200)
 	fnc_out		char(200)
-	size		integer
+	size			integer
 bashbd.tables
-	id			integer
-	name 		char(200)
+	id				integer
+	name 			char(200)
 	schema_id	integer
 bashbd.attrs
-	id			integer
+	id				integer
 	table_id	integer
-	name		char(200)
+	name			char(200)
 	types_id	integer
-	size		integer
+	size			integer
 	default		char(200)
-	null		boolean
+	null			boolean
 bashbd.functions
-	id			integer
-	name		char(200)
+	id				integer
+	name			char(200)
 bashbd.index
-	id			integer
+	id				integer
 	table_id	integer
 	fields		char(200)
 bashbd.sequences
-	id			integer
-	schema_id	integer
-	name		char(200)
+	id					integer
+	schema_id		integer
+	name				char(200)
 	last_value	integer
 bashbd.comments
-	id			integer
-	table_id	integer
+	id				integer
+	type_id		integer
+	object_id	integer
 	comment		char(200)
 
 integer = 4 bytes

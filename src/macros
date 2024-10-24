@@ -12,3 +12,16 @@ M_ASSERT="_assert \${FUNCNAME[0]} \${LINENO}"
 M_CHECK_RES='RES=$?; if [ $RES -ne 0 ]; then return $RES; fi'
 
 LOGGER="log \${FUNCNAME[0]} \${LINENO}"
+
+# Getting objects
+# set P_SCHEMA to use this
+#  [ md_schema.schema_get_struct_by_name ]
+M_GET_SCHEMA='
+  declare -A SS;
+  declare -A SCHEMA_RECORD;
+  SS[schema]="$P_SCHEMA";
+  if ! schema_get_struct_by_name SS SCHEMA_RECORD; then
+    LOGGER_MSG="Schema "$P_SCHEMA" not found";
+    eval $LOGGER ERROR;
+    return 1;
+  fi'

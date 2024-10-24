@@ -1,0 +1,56 @@
+#!/bin/bash
+
+: <<'COMMENT'
+comment_get_struct_by_type_objectId: Return the comment record, searching by type and objectId
+COMMENT
+
+: <<'FUNCTION'
+Description: Return the comment record, searching by type and objectId
+Parameters:
+  $1 - Input variable that has the name
+    $1[type]
+    $1[objectId]
+	$2 - Output variable to hold the recor
+FUNCTION
+comment_get_struct_by_type_objectId() {
+	# CS = Comment Struct
+	declare -n _CS=$1
+	declare -n _OUTPUT=$2
+
+	unset _OUTPUT
+
+	# Field must exists
+	if [ -z ${_CS[type]} ]; then
+		eval $LOGGER ERROR "No type field found in CommentStruct"
+		return 1
+	fi
+  if [ -z ${_CS[objectId]} ]; then
+		eval $LOGGER ERROR "No objectId field found in CommentStruct"
+		return 1
+	fi
+
+	LOGGER_MSG="Search for object: ${_CS[objectId]}"
+	eval $LOGGER DEBUG
+
+	declare -A DATA
+	DATA[file]=$CTABLE_COMMENTS
+	init_file DATA
+
+  # [ scan ]
+	# field to search = 2 = schema_name
+  declare -A FILTER
+	FILTER[stop]="true"
+	FILTER[total]=2
+  FILTER[0,0]="2"
+  FILTER[0,1]="${_SS[type]}"
+  FILTER[1,0]="3"
+  FILTER[1,1]="${_SS[objectId]}"
+
+	simple_scan DATA RECORD FILTER
+	eval $M_CHECK_RES
+
+	# [ functions ]
+  copy_array RECORD _OUTPUT
+
+	return 0
+}

@@ -362,3 +362,18 @@ sort_array() {
 
 	# TODO
 }
+
+: <<'FUNCTION'
+Description: Copy an array preserving the indexes
+Parameters:
+  $1 - Source array
+	$2 - Target Array
+FUNCTION
+copy_array() {
+	local -n source_array=$1
+	local -n target_array=$2
+
+	for index in "${!source_array[@]}"; do
+		target_array[$index]="${source_array[$index]}"
+	done
+}

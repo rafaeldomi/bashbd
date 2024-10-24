@@ -20,14 +20,14 @@ LOG_INCLUDED=1
 COMMENT
 
 # COLORS
-CL_RED='\e[1;31m'
-CL_GREEN='\e[1;32m'
-CL_YELLOW='\e[1;33m'
-CL_BLUE='\e[1;34m'
-CL_MAGENTA='\e[1;35m'
-CL_CYAN='\e[1;36m'
+CL_RED='\033[1;31m'
+CL_GREEN='\033[1;32m'
+CL_YELLOW='\033[1;33m'
+CL_BLUE='\033[1;34m'
+CL_MAGENTA='\033[1;35m'
+CL_CYAN='\033[1;36m'
 # NoColor
-CL_NC='\e[0m\033[0m'
+CL_NC='\033[0m'
 
 declare -r -A LL=(
 			[FATAL]=1
@@ -54,7 +54,7 @@ debug() {
 }
 
 writeln() {
-	${PRG_PRINTF} "%s\n" "$1"
+	${PRG_PRINTF} "%b\n" "$1"
 }
 
 : <<'FUNCTION'
@@ -114,6 +114,7 @@ log () {
 
 	# If is ERROR or FATAL do a writeln too
 	if [[ "$_LEVEL" == "ERROR" || "$_LEVEL" == "FATAL" ]]; then
+	  MSG="${CL_RED}${MSG}${CL_NC}"
 		writeln "${MSG}"
 	fi
 
@@ -127,7 +128,7 @@ log () {
 		fnc_name="${_FUNC:0:18}.."
 	fi
 
-	$PRG_PRINTF "%s [%20s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$fnc_name" "$_LINE" "$_LEVEL" "$MSG"
+	$PRG_PRINTF "%s [%20s:%-3s %6s]: %b\n" "`date +\"%D %T\"`" "$fnc_name" "$_LINE" "$_LEVEL" "$MSG"
 
 	if [ "$_LEVEL" == "FATAL" ]; then
 		$PRG_PRINTF "%s [%14s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "EXITING PROGRAM BECAUSE OF FATAL ERROR"

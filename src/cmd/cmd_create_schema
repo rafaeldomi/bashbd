@@ -6,26 +6,36 @@ create_schema_execute() {
 	local i=0
 	local IDS=0
 
-	# Check if schema exists
-	for i in `${PRG_SEQ} 1 ${_SQLTKN[SCHEMA_total]}`; do
-		# If schema already exists we cant create a new one
-		if schema_get_id IDS ${_SQLTKN[SCHEMA_${i}]}; then
-			LOGGER_MSG="Schema ${_SQLTKN[SCHEMA_${i}]} already exists"
-			eval $LOGGER ERROR
-			return 1
-		fi
-	done
-
+	# [ md_table ]
+	#  Preparing the Insertion
 	declare -A ROW
 	ROW[table]=$CTABLE_SCHEMAS
 
-	# [ md_table ]
 	table_row_init ROW
 
-	# Insert the value in the schema datafile
-	for i in `${PRG_SEQ} 1 ${_SQLTKN[SCHEMA_total]}`; do
-		# [ md_table ]
-		table_row_add_value ROW ${MGC_NULL} "${_SQLTKN[SCHEMA_${i}]}"
+	# Check if schema exists
+	for ((i=1 ; i <= ${_SQLTKN[SCHEMA_total]}; i++)); do
+		SCHEMA_NAME=${_SQLTKN[SCHEMA_${i}]}
+
+		# If schema already exists we cant create a new one
+		#  - Check IFNOTEXISTS flag
+		# [ md_schema ]
+		declare -A SS
+		declare -A SCHEMA_RECORD
+		SS[schema]=$SCHEMA_NAME
+		if ! schema_get_struct_by_name SS SCHEMA_RECORD; then
+			table_row_add_value ROW ${MGC_NULL} "${SCHEMA_NAME}"
+		else
+			# Before giving error lets check IFNOTEXISTS
+			if [ "${_SQLTKN[IFNOTEXISTS]}" == "true" ]; then
+				LOGGER_MSG="Schema ${SCHEMA_NAME} already exists. IFNOTEXISTS supplied, not giving error."
+				continue
+			else
+				LOGGER_MSG="Schema ${SCHEMA_NAME} already exists"
+				eval $LOGGER ERROR
+				return 1
+			fi
+		fi
 	done
 
 	# [ md_table ]

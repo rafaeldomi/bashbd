@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# $1 - Tokens
+comment_execute() {
+  declare -n _SQLTKN=$1
+  local _TYPE=-1
+  local _TYPENAME=${_SQLTKN[TYPE]}
+  local _OBJECT=${_SQLTKN[OBJECT]}
+  local _OBJECTID=-1
+
+  declare -A ROW
+  ROW[table]=$CTABLE_COMMENTS
+
+  if [ -z ${_SQLTKN[TYPE]} ]; then
+    LOGGER_MSG="Invalid syntax for COMMENT command"
+    eval $LOGGER ERROR $LOGGER_MSG
+    return 1
+  fi
+
+  _TYPE=${COMMENT_TYPE_MAP[${_TYPENAME^^}]}
+  if [ "$_TYPE" == "" ]; then
+    LOGGER_MSG="Comment on $_TYPENAME not supported"
+    eval $LOGGER ERROR $LOGGER_MSG
+    return 1
+  fi
+
+  # Find the objectId
+  case "$_TYPE" in
+    $COMMENT_TYPE_SCHEMA)
+      P_SCHEMA="$_OBJECT"
+      eval $M_GET_SCHEMA
+      _OBJECTID=${SS[id]}
+      ;;
+  esac
+
+  # Check if exists
+  # [ md_comment ]
+  declare -A CS
+  CS[type]=${_TYPE}
+  CS[objectId]=${_OBJECTID}
+  comment_get_struct_by_type_objectId CS RECORD
+
+  # [ md_table ]
+  table_row_init ROW
+
+  # Comment table
+  # id = pass null for sequence
+  # type_id
+  # object_id
+  # comment
+  table_row_add_value ROW ${MGC_NULL} $_TYPE $_OBJECTID ${_SQLTKN[VALUE]}
+
+  # [ md_table ]
+  table_row_insert ROW
+
+  writeln "COMMENT OK"
+  return 0
+}

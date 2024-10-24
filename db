@@ -2,7 +2,7 @@
 
 echo "Loading files.."
 
-# Source some files
+# Source our code
 . src/macros
 . src/var
 . src/const
@@ -105,7 +105,7 @@ do_pre_init() {
 	# Run bootstrap process?
 	if [ $DO_BOOTSTRAP ]; then
 		# Import the necessary file
-		. bootstrap
+		. src/bootstrap
 
 		# [ bootstrap ]
 		bootstrap $DBDATA

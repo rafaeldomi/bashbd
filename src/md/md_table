@@ -1,11 +1,18 @@
 #!/bin/bash
 
-# Why those files has the md prefix? Cant remember what means
+# md for metadata
+
+: <<'COMMENT'
+table_get_struct_by_name : Get table structure by table name
+COMMENT
 
 : <<'FUNCTION'
-Description: Get a table stuct by name
+Description: Get a table struct by name
 Parameters:
   $1 - Struct AA (Associative Array) declared outside of this function
+	     $1[table] = can be: table
+			 										 schema.table
+	$2 - Output variable to hold the record
 FUNCTION
 table_get_struct_by_name() {
 	local schema_id=0
@@ -33,11 +40,11 @@ table_get_struct_by_name() {
 		TSN[tab]="${opened_table[0]}"
 	elif [ "${#opened_table[@]}" == 2 ]; then
 		# Search for the schema id
-		if ! schema_get_id schema_id ${opened_table[0]}; then
-			LOGGER_MSG="Schema '${opened_table[0]}' not found"
-			eval $LOGGER ERROR
-			return 1
-		fi
+		# load SCHEMA_RECORD
+		P_SCHEMA="${opened_table[0]}"
+		eval $M_GET_SCHEMA
+
+		hex_to_int schema_id "${SCHEMA_RECORD[1]}"
 
 		TSN[schema]="${opened_table[0]}"
 		TSN[tab]="${opened_table[1]}"
@@ -51,7 +58,7 @@ table_get_struct_by_name() {
 	eval $LOGGER DEBUG
 
 	########
-	# Search in the table tables
+	# Search in the table "bashbd.tables"
 	declare -A DATA
 	DATA[file]=$CTABLE_TABLES
 	init_file DATA
@@ -109,19 +116,21 @@ table_change_data() {
 }
 
 : <<'FUNCTION'
-Description: Initialize thw row by reading the metadata files
+Description: Initialize a row by reading the metadata files
 See NOTES for more details
 Parameters:
  $1 - ROW variable
+      $1[table] = tableId
 FUNCTION
 table_row_init() {
 	declare -n _R=$1
 
-	# The table name is in _R[table]
+	# The tableId is in _R[table]
 
-	# We need to read the attrs and the defaults, maybe has a sequence or something
+	# We need to read the attrs and the defaults, check for defaults like sequence or others
 	declare -A DATA_ATTRS
 	DATA_ATTRS[id]="${_R[table]}"
+	# [ md_attrs ]
 	if ! attrs_search DATA_ATTRS; then
 		LOGGER_MSG="Attrs for table '${_R[table]}' not found"
 		eval $LOGGER ERRROR
@@ -133,7 +142,8 @@ table_row_init() {
 
 	# Save the attrs of this table
 	local i=0
-	for i in `$PRG_SEQ 1 ${DATA_ATTRS[total]}`; do
+
+	for ((i=1; i<=${DATA_ATTRS[total]}; i++)); do
 		_R[NAME_${i}]="${DATA_ATTRS[${i}_name]}"
 		_R[DEF_${i}]="${DATA_ATTRS[${i}_default]}"
 		_R[NULL_${i}]="${DATA_ATTRS[${i}_null]}"
