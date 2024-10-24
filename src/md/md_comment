@@ -46,6 +46,8 @@ comment_get_struct_by_type_objectId() {
   FILTER[1,0]="3"
   FILTER[1,1]="${_SS[objectId]}"
 
+	declare -p FILTER
+
 	simple_scan DATA RECORD FILTER
 	eval $M_CHECK_RES
 

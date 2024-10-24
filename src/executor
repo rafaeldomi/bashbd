@@ -6,6 +6,7 @@
 . src/cmd/cmd_table
 . src/cmd/cmd_create
 . src/cmd/cmd_set
+. src/cmd/cmd_get
 . src/cmd/cmd_show
 . src/cmd/cmd_reset
 . src/cmd/cmd_truncate

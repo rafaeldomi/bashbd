@@ -16,13 +16,13 @@ truncate_execute() {
 
 		# Find the table
 		TS[table]="$table"
-		if ! table_get_struct_by_name TS; then
+		if ! table_get_struct_by_name TS RECORD; then
 			LOGGER_MSG="Table '${TS[table]}' not found"
 			eval $LOGGER ERROR
 			return 1
 		fi
 
-		LOGGER_MSG="Truncating table ${TS[table]} id: ${TS[id]}"
+		LOGGER_MSG="Truncating table ${TS[table]} id: ${RECORD[id]}"
 		eval $LOGGER DEBUG
 
 		${PRG_ECHO} "${MGC_TABLE}" > ${TS[id]}

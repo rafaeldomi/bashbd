@@ -21,6 +21,7 @@ echo "Loading files.."
 . src/md/md_table
 . src/md/md_schema
 . src/md/md_sequences
+. src/md/md_comment
 
 echo "Loaded"
 

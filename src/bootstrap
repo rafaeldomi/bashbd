@@ -123,33 +123,6 @@ bootstrap() {
 
 	eval $LOGGER LOG "Table schemas: OK"
 
-	##############################
-	## Table: sequences
-	# id   		 	integer
-	# schema_id  	integer
-	# name		 	200
-	# last_value	integer
-	storage_create_file "TABLE" ${CTABLE_SEQUENCE}
-
-	unset ROW
-	declare -A ROW
-
-	row_init int int 200 int
-
-	bootstrap_add_value 1 1 sq_sequence 2
-	bootstrap_add_value 2 1 sq_language 1
-	bootstrap_add_value 3 1 sq_types 2
-	bootstrap_add_value 4 1 sq_schemas 2
-	bootstrap_add_value 5 1 sq_table 8
-	bootstrap_add_value 6 1 sq_functions 8
-	bootstrap_add_value 7 1 sq_index 0
-	bootstrap_add_value 8 1 sq_attrs 26
-	bootstrap_add_value 9 1 sq_comments 0
-
-	# [ storage ]
-	row_append_simple ${CTABLE_SEQUENCE}
-
-	eval $LOGGER LOG "Table sequences: OK"
 
 	############################
 	## Table: language
@@ -296,13 +269,13 @@ bootstrap() {
 	bootstrap_add_value $((attr_id++)) ${CTABLE_TABLES} schema_id 	1 -1 	"" 			 			0
 
 	# Relation Attrs
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} id		1  -1 	"sequence:8" 	0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} table_id 1  -1 	"" 				0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} name 	2  200 	"" 				0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} types_id 1  -1 	"" 				0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} size 	1  -1 	"" 				1
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} id				1  -1 	"sequence:8" 	0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} table_id 1  -1 	"" 						0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} name 		2  200 	"" 						0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} types_id 1  -1 	"" 						0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} size 		1  -1 	"" 						1
 	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} default 	2  200 	${MGC_NULL} 	1
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} null 	1  -1 	${MGC_NULL} 	0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} null 		1  -1 	${MGC_NULL} 	0
 
 	# Relation functions
 	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} id 			1 -1 	"sequence:6" 0
@@ -337,11 +310,59 @@ bootstrap() {
 	## id					int
 	## type_id		int
 	## object_id	int
-	## comment		200
+	## comment		varchar(200)
 	#############
+  local comment_id=0
+
 	storage_create_file "TABLE" ${CTABLE_COMMENTS}
 
+	unset ROW
+	declare -A ROW
+
+	row_init int int int 200
+
+  bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_SCHEMAS "Schema metadata"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_FUNCTIONS "Functions metadata"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_ATTRS "Attributes metadata"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_COMMENTS "Comments metadata"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_INDEX "Index metadata"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_LANG "Language metadata"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_SEQUENCE "Sequence metadata"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_TABLES "Table metadata"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_TYPES "Types metadata"
+
+	# [ storage ]
+	row_append_simple ${CTABLE_COMMENTS}
+
 	eval $LOGGER LOG "Table comments OK"
+
+	##############################
+	## Table: sequences
+	# id   		 	integer
+	# schema_id  	integer
+	# name		 	200
+	# last_value	integer
+	storage_create_file "TABLE" ${CTABLE_SEQUENCE}
+
+	unset ROW
+	declare -A ROW
+
+	row_init int int 200 int
+
+	bootstrap_add_value 1 1 sq_sequence 2
+	bootstrap_add_value 2 1 sq_language 1
+	bootstrap_add_value 3 1 sq_types 2
+	bootstrap_add_value 4 1 sq_schemas 2
+	bootstrap_add_value 5 1 sq_table 8
+	bootstrap_add_value 6 1 sq_functions 8
+	bootstrap_add_value 7 1 sq_index 0
+	bootstrap_add_value 8 1 sq_attrs    $attr_id
+	bootstrap_add_value 9 1 sq_comments $comment_id
+
+	# [ storage ]
+	row_append_simple ${CTABLE_SEQUENCE}
+
+	eval $LOGGER LOG "Table sequences: OK"
 
 	######
 	## Table testes

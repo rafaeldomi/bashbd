@@ -19,6 +19,9 @@ table_get_struct_by_name() {
 
 	# TS = Table Struct
 	declare -n TSN=$1
+	declare -n _OUTPUT=$2
+
+	unset _OUTPUT
 
 	# Field table must exist
 	if [ -z ${TSN[table]} ]; then
@@ -74,23 +77,11 @@ table_get_struct_by_name() {
 		#  2 - Name of the table
 		#  3 - Schema id of the table
 		
-		# Convert the id of schema
-		#hex_to_int IV "${REC[3]}"
 
 		if [ "${REC[3]}" == "$schema_id_hex" ]; then
-		#if [ "$IV" == "$schema_id" ]; then
 			# Check if the table name match
 			if [ "${REC[2]}" == "${TSN[tab]}" ]; then
-				hex_to_int IV "${REC[1]}"
-				TS[id]=$IV
-				TS[position]="${REC[REC_POS]}"
-
-				# Just check if the table exists
-				if [ ! -f $IV ]; then
-					LOGGER_MSG="Table found in metadata, but the file does not exists"
-					eval $LOGGER ERROR
-					return 1
-				fi
+				copy_array REC _OUTPUT
 
 				return 0
 			fi

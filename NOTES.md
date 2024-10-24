@@ -3,17 +3,17 @@
 COMMAND		GROUP			MODIFIERS 		PARSER	IMPLEMENTED	TESTED(PARSER)	TESTED(BASHBD)
 SET				-					-							OK			OK					OK
 										[..,..]				OK			OK					OK
-SHOW			-					ALL						OK			OK					OK
+GET				-					ALL						OK			OK					OK
 										[..]      		OK			OK					OK
 										[..,..]				OK			OK					OK
 										RESERVED			OK			OK					OK
-					COMMENT   TABLE
-										INDEX
-										COLUMN
-										FUNCTION
-										TRIGGER
-										VIEW
-										SCHEMA
+SHOW			COMMENT   TABLE					OK									OK
+										INDEX					OK									OK
+										COLUMN				OK									OK
+										FUNCTION			OK									OK
+										TRIGGER				OK									OK
+										VIEW					OK									OK
+										SCHEMA				OK									OK
 RESET			-					ALL						OK			OK					OK
 										[..,..]				OK			OK					OK
 TABLE			-					[..]					OK			OK					OK
@@ -28,7 +28,7 @@ CREATE		SCHEMA		[..]					OK			OK					OK
 					VIEW			[..]
 DROP			SCHEMA		[..]					OK			OK					OK
 										[..,..]				OK			OK					OK
-										IFEXISTS			OK									OK
+										IFEXISTS			OK			OK					OK
 										CASCADE				OK									OK
 					TABLE			[..]					OK									OK
 										[..,..]				OK									OK

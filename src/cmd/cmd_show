@@ -1,78 +1,55 @@
 #!/bin/bash
 
 show_execute() {
-	LOGGER_MSG="Config to show: ${TOKENS[OPTION_full]}"
-	# declare -p TOKENS
-	eval $LOGGER DEBUG
+  declare -n _SQLTKN=$1
 
-  local optionTotal=${TOKENS["OPTION_total"]}
+  local _TYPE=-1
+  local _TYPENAME=${_SQLTKN[TYPE]}
+  local _OBJECT=${_SQLTKN[OBJECT]}
+  local _OBJECTID=-1
 
-  if [ ${optionTotal:-0} -eq 0 ]; then	
-		LOGGER_MSG="Show without option. Try SHOW ALL, or some of the options"
-		eval $LOGGER ERROR
-		return 1
-	fi
+  declare -p TOKENS
 
-	local option="${TOKENS[OPTION_1]^^}"
+  if [ -z ${_SQLTKN[TYPE]} ]; then
+    LOGGER_MSG="Invalid syntax for SHOW command"
+    eval $LOGGER ERROR $LOGGER_MSG
+    return 1
+  fi
 
-	if [ "$option" == "RESERVED" ]; then
-		declare -A TAB_PRINTER
+  _TYPE=${COMMENT_TYPE_MAP[${_TYPENAME^^}]}
+  if [ "$_TYPE" == "" ]; then
+    LOGGER_MSG="SHOW COMMENT on $_TYPENAME not supported"
+    eval $LOGGER ERROR $LOGGER_MSG
+    return 1
+  fi
 
-		TAB_PRINTER[header]="| value${MGC_FLD}|"
-		TAB_PRINTER[fields]=1
+  # Find the objectId
+  case "$_TYPE" in
+    $COMMENT_TYPE_SCHEMA)
+      P_SCHEMA="$_OBJECT"
+      eval $M_GET_SCHEMA
+      _OBJECTID=${SS[id]}
+      ;;
+  esac
 
-		local k
-		# [ RESERVED = parserv2 ]
-		# First order RESERVED
-		local ORDERED_RESERVED=($(${PRG_ECHO} ${RESERVED[@]} | ${PRG_TR} " " "\n" | ${PRG_SORT}))
+    # Check if exists
+  # [ md_comment ]
+  declare -A CS
+  CS[type]=${_TYPE}
+  CS[objectId]=${_OBJECTID}
+  if ! comment_get_struct_by_type_objectId CS RECORD; then
+    LOGGER_MSG="Comment not found"
+    eval $LOGGER ERROR
+    return 1
+  fi
 
-		for k in `seq 0 ${#ORDERED_RESERVED[@]}`; do
-			TAB_PRINTER[$((k+1))]="| ${ORDERED_RESERVED[$k]} ${MGC_FLD}|"
-		done
+  declare -A TAB_PRINTER
+  TAB_PRINTER[header]="COMMENT"
+  TAB_PRINTER[fields]=1
+  TAB_PRINTER[0]="${RECORD[4]}"
 
-		TAB_PRINTER[rows]=${#RESERVED[@]}
+  printer TAB_PRINTER
 
-		printer TAB_PRINTER
-		return 0
-	fi
+  return 0
 
-	# check if value exists
-  if [[ ! "$option" == "ALL" ]]; then
-		for i in `seq 1 ${TOKENS[OPTION_total]}`; do
-		  setting="${TOKENS[OPTION_$i]^^}"
-			if [ -z ${GC[$setting]} ]; then
-				LOGGER_MSG="Setting $setting is not recognized"
-				eval $LOGGER ERROR
-				return 1
-			fi
-		done
-	fi
-
-	declare -A TAB_PRINTER
-
-	TAB_PRINTER[header]="| setting${MGC_FLD}| value${MGC_FLD}|"
-	TAB_PRINTER[fields]=2
-	TAB_PRINTER[rows]=${TOKENS[OPTION_total]}
-
-	if [ "$option" == "ALL" ]; then
-	  # [ GC = var ]
-		local ORDERED_ALL=($(${PRG_ECHO} ${!GC[@]} | ${PRG_TR} " " "\n" | ${PRG_SORT}))
-		local k=1
-		for i in "${ORDERED_ALL[@]}"; do
-			let k++
-			TAB_PRINTER[$k]="| $i ${MGC_FLD}| ${GC[$i]} ${MGC_FLD}|"
-		done
-		TAB_PRINTER[rows]=$k
-	else
-	  local k
-	  for i in `seq 1 ${TOKENS[OPTION_total]}`; do
-			local setting="${TOKENS[OPTION_$i]^^}"
-			local value="${GC[$setting]}"
-
-			TAB_PRINTER[$i]="| $setting ${MGC_FLD}| $value ${MGC_FLD}|"
-		done
-	fi
-
-	printer TAB_PRINTER
-	return 0
 }

@@ -1,5 +1,29 @@
 [
   {
+    "sql": "show comment on table tablename",
+    "expected": {
+      "CMD": "SHOW",
+      "TYPE": "TABLE",
+      "OBJECT": "tablename"
+    }
+  },
+  {
+    "sql": "show comment on table schema.table",
+    "expected": {
+      "CMD": "SHOW",
+      "TYPE": "TABLE",
+      "OBJECT": "schema.table"
+    }
+  },
+  {
+    "sql": "show comment on function function_example",
+    "expected": {
+      "CMD": "SHOW",
+      "TYPE": "FUNCTION",
+      "OBJECT": "function_example"
+    }
+  },
+  {
     "sql": "comment on table table1 is 'comment string'",
     "expected": {
       "CMD": "COMMENT",
@@ -112,18 +136,18 @@
     }
   },
   {
-    "sql": "show all",
+    "sql": "get all",
     "expected": {
-      "CMD": "SHOW",
+      "CMD": "GET",
       "OPTION_full": "ALL",
       "OPTION_total": "1",
       "OPTION_1": "ALL"
     }
   },
   {
-    "sql": "show display, timing",
+    "sql": "get display, timing",
     "expected": {
-      "CMD": "SHOW",
+      "CMD": "GET",
       "OPTION_full": "display,timing",
       "OPTION_total": "2",
       "OPTION_1": "display",
@@ -131,9 +155,9 @@
     }
   },
   {
-    "sql": "show display",
+    "sql": "get display",
     "expected": {
-      "CMD": "SHOW",
+      "CMD": "GET",
       "OPTION_full": "display",
       "OPTION_total": "1",
       "OPTION_1": "display"

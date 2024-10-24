@@ -1,0 +1,78 @@
+#!/bin/bash
+
+get_execute() {
+	LOGGER_MSG="Config to get: ${TOKENS[OPTION_full]}"
+	# declare -p TOKENS
+	eval $LOGGER DEBUG
+
+  local optionTotal=${TOKENS["OPTION_total"]}
+
+  if [ ${optionTotal:-0} -eq 0 ]; then	
+		LOGGER_MSG="Get without option. Try GET ALL, or some of the options"
+		eval $LOGGER ERROR
+		return 1
+	fi
+
+	local option="${TOKENS[OPTION_1]^^}"
+
+	if [ "$option" == "RESERVED" ]; then
+		declare -A TAB_PRINTER
+
+		TAB_PRINTER[header]="| value${MGC_FLD}|"
+		TAB_PRINTER[fields]=1
+
+		local k
+		# [ RESERVED = parserv2 ]
+		# First order RESERVED
+		local ORDERED_RESERVED=($(${PRG_ECHO} ${RESERVED[@]} | ${PRG_TR} " " "\n" | ${PRG_SORT}))
+
+		for k in `seq 0 ${#ORDERED_RESERVED[@]}`; do
+			TAB_PRINTER[$((k+1))]="| ${ORDERED_RESERVED[$k]} ${MGC_FLD}|"
+		done
+
+		TAB_PRINTER[rows]=${#RESERVED[@]}
+
+		printer TAB_PRINTER
+		return 0
+	fi
+
+	# check if value exists
+  if [[ ! "$option" == "ALL" ]]; then
+		for i in `seq 1 ${TOKENS[OPTION_total]}`; do
+		  setting="${TOKENS[OPTION_$i]^^}"
+			if [ -z ${GC[$setting]} ]; then
+				LOGGER_MSG="Setting $setting is not recognized"
+				eval $LOGGER ERROR
+				return 1
+			fi
+		done
+	fi
+
+	declare -A TAB_PRINTER
+
+	TAB_PRINTER[header]="| setting${MGC_FLD}| value${MGC_FLD}|"
+	TAB_PRINTER[fields]=2
+	TAB_PRINTER[rows]=${TOKENS[OPTION_total]}
+
+	if [ "$option" == "ALL" ]; then
+	  # [ GC = var ]
+		local ORDERED_ALL=($(${PRG_ECHO} ${!GC[@]} | ${PRG_TR} " " "\n" | ${PRG_SORT}))
+		local k=1
+		for i in "${ORDERED_ALL[@]}"; do
+			let k++
+			TAB_PRINTER[$k]="| $i ${MGC_FLD}| ${GC[$i]} ${MGC_FLD}|"
+		done
+		TAB_PRINTER[rows]=$k
+	else
+	  local k
+	  for i in `seq 1 ${TOKENS[OPTION_total]}`; do
+			local setting="${TOKENS[OPTION_$i]^^}"
+			local value="${GC[$setting]}"
+
+			TAB_PRINTER[$i]="| $setting ${MGC_FLD}| $value ${MGC_FLD}|"
+		done
+	fi
+
+	printer TAB_PRINTER
+	return 0
+}
