@@ -517,7 +517,7 @@ do_loop() {
 				fi
 
 				if [[ -z ${TOKENS[$pos_sql]} && $mod_end == 1 ]]; then
-					echo "Tudo certo, não precisa mais continuar"
+				  echo "Were ok, dont need to continue"
 					break
 				fi
 
@@ -734,7 +734,7 @@ parse_sql() {
 
 	unset TOKENS
 	declare -gA TOKENS
-	TOKENS[SQL]="$1"
+	# TOKENS[SQL]="$1"
 
 	parse_log "Total size in char: $ts"
 
@@ -758,6 +758,9 @@ parse_sql() {
 		# We reached the end of the string
 		if [ "${#c}" == 0 ]; then
 			parse_log "End of the String"
+			TOKENS[SQL]="${par:0:$i}"
+			let remain=$i+1
+			TOKENS[REMAIN]="${par:$remain}"
 			break
 		fi
 
@@ -792,7 +795,11 @@ parse_sql() {
 						create_tkn "$value" "generic"
 					fi
 					create_tkn "$c" e
-					continue
+					TOKENS[SQL]="${par:0:$i}"
+					let remain=$i+1
+					TOKENS[REMAIN]="${par:$remain}"
+					# continue
+					break
 					;;
 			
 				# = ( ) , + - / *		
@@ -806,13 +813,13 @@ parse_sql() {
 					# s = separator
 					# gi = group init
 					# ge = group end
-					# u = unkown
+					# u = unknown
 					case "$c" in
 						=|-|+|/|\*) oper="o";;
 						,) oper="s";;
 						\() oper="gi"; let level++;;
 						\)) oper="ge"; let level--;;
-						*) oper="u";;				
+						*) oper="u";;
 					esac
 
 					create_tkn "$c" $oper
@@ -826,7 +833,7 @@ parse_sql() {
 		#		be treated like string (!)
 		if [ "$c" == "\"" ]; then
 			if [ $in_str == 0 ]; then
-				# Its the begginig
+				# Its the beginning
 				in_str=1
 				in_tkn=1
 				continue

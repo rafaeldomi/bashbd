@@ -4,7 +4,8 @@
     "expected": {
       "CMD": "SHOW",
       "TYPE": "TABLE",
-      "OBJECT": "tablename"
+      "OBJECT": "tablename",
+      "SQL": "show comment on table tablename"
     }
   },
   {
@@ -161,6 +162,28 @@
       "OPTION_full": "display",
       "OPTION_total": "1",
       "OPTION_1": "display"
+    }
+  },
+  {
+    "sql": "get output; get display",
+    "expected": {
+      "CMD": "GET",
+      "OPTION_full": "output",
+      "OPTION_total": "1",
+      "OPTION_1": "output",
+      "SQL": "get output",
+      "REMAIN": " get display"
+    }
+  },
+  {
+    "sql": "get output; get display;drop schema sc1",
+    "expected": {
+      "CMD": "GET",
+      "OPTION_full": "output",
+      "OPTION_total": "1",
+      "OPTION_1": "output",
+      "SQL": "get output",
+      "REMAIN": " get display;drop schema sc1"
     }
   },
   {

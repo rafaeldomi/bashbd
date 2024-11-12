@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # Check includes are okay
-DIRECTORY=$(pwd)
-cd ..
 
 # $1 - filepath
 checkFile() {
@@ -23,9 +21,14 @@ checkFile() {
   done
 }
 
-echo "Checking includes"
+check_unit_includes() {
+  DIRECTORY=$(pwd)
+  cd ${PATH_ROOT}
 
-checkFile db
-checkFile dump_data
+  echo "Checking includes"
 
-cd $DIRECTORY
+  checkFile db
+  checkFile dump_data
+
+  cd $DIRECTORY
+}

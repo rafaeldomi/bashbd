@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Every variable in src/const must the readonly
+bashbd_check_unit_const() {
+  declare -n _RESULT=$1
+  test_init _RESULT "Check const are all readonly"
+  _RESULT[tested]=1
+
+  grep -E "=" ${PATH_SRC}/const | grep -v readonly
+  RES=$?
+
+  if [ $RES == 1 ]; then
+    test_passed _RESULT
+  else
+    test_fail _RESULT
+  fi
+
+  test_finish _RESULT
+}

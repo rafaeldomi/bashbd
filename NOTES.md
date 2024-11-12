@@ -1,19 +1,19 @@
 # SQL Commands
 
 COMMAND		GROUP			MODIFIERS 		PARSER	IMPLEMENTED	TESTED(PARSER)	TESTED(BASHBD)
-SET				-					-							OK			OK					OK
-										[..,..]				OK			OK					OK
 GET				-					ALL						OK			OK					OK
 										[..]      		OK			OK					OK
 										[..,..]				OK			OK					OK
 										RESERVED			OK			OK					OK
-SHOW			COMMENT   TABLE					OK									OK
+SET				-					-							OK			OK					OK
+										[..,..]				OK			OK					OK
+SHOW			COMMENT   TABLE					OK			OK					OK
 										INDEX					OK									OK
 										COLUMN				OK									OK
 										FUNCTION			OK									OK
 										TRIGGER				OK									OK
 										VIEW					OK									OK
-										SCHEMA				OK									OK
+										SCHEMA				OK			OK					OK
 RESET			-					ALL						OK			OK					OK
 										[..,..]				OK			OK					OK
 TABLE			-					[..]					OK			OK					OK
@@ -32,8 +32,8 @@ DROP			SCHEMA		[..]					OK			OK					OK
 										CASCADE				OK									OK
 					TABLE			[..]					OK									OK
 										[..,..]				OK									OK
-TRUNCATE	TABLE			[..]					OK									OK
-										[..,..]				OK									OK
+TRUNCATE	TABLE			[..]					OK			OK					OK
+										[..,..]				OK			OK					OK
 COMMENT		TABLE			-							OK									OK
 					INDEX			-							OK									OK
 					COLUMN		-							OK
@@ -41,11 +41,11 @@ COMMENT		TABLE			-							OK									OK
 					TRIGGER		-							OK
 					VIEW			-							OK
 					SCHEMA		-							OK
-					*					[APPEND]			OK							OK
-REINDEX		TABLE			[..]					OK							OK
-										[..,..]				OK							OK
-					INDEX			[..]					OK							OK
-										[..,..]				OK							OK
+					*					[APPEND]			OK									OK
+REINDEX		TABLE			[..]					OK									OK
+										[..,..]				OK									OK
+					INDEX			[..]					OK									OK
+										[..,..]				OK									OK
 SELECT
 INSERT
 UPDATE
@@ -78,10 +78,11 @@ bashbd.index	 	 [6]
 bashbd.language  [7]
 bashbd.sequences [8]
 bashbd.comments  [9]
+bashbd.views     [10]
 
 bashbd.schemas
 	id   			integer
-	name 			varchar(200)
+	name 			varchar(200) [unique]
 bashbd.language
 	id				integer
 	name			char(200)
@@ -103,9 +104,13 @@ bashbd.attrs
 	size			integer
 	default		char(200)
 	null			boolean
+	unique		boolean
 bashbd.functions
-	id				integer
-	name			char(200)
+	id					integer
+	name				char(200)
+	handler			varchar
+	lang_id			integer
+	definition	text
 bashbd.index
 	id				integer
 	table_id	integer
@@ -120,6 +125,10 @@ bashbd.comments
 	type_id		integer
 	object_id	integer
 	comment		char(200)
+bashbd.views
+  id					integer
+	schema_id		integer
+	definition	text
 
 integer = 4 bytes
 char = defined size

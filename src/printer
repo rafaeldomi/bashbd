@@ -1,13 +1,18 @@
 #!/bin/bash
 
-# $1 - Object
-# $2 - Fields
-# $3 - Header
+: <<'FUNCTION'
+Description: Initialize a struct for holding printer data
+Parameters:
+ $1 - The variable that hold the struct
+ $2 - List of headers, separated by space
+FUNCTION
 printer_init() {
 	declare -n LPD=$1
 	LPD[rows]=0
-	LPD[header]="$3"
-	LPD[fields]=$2
+	LPD[header]="$2"
+
+	local -a temp_array=($2)
+	LPD[fields]=${#temp_array[@]}
 }
 
 printer_add() {
@@ -22,6 +27,7 @@ printer_add() {
 
 printer() {
 	declare -n PRINT=$1
+	local _VER=$2
 
   # NoC Number of Columns
 	local NoC=${PRINT[fields]}
@@ -30,22 +36,63 @@ printer() {
 	local line=""
 	local output=""
 
-  # [ functions ]
-	repeat output "+${MGC_FLD}" $NoC
+	if [ "${GC[OUTPUT]^^}" == "TABLE" ]; then
+		repeat output "+${MGC_FLD}" $NoC
+		delimiter=$(${PRG_PRINTF} "%s+" $output)
 
-	delimiter=$(${PRG_PRINTF} "%s+" $output)
+		# Define header
+		local -a temp_array=(${PRINT[header]})
+		header="|"
+		for ((i = 0; i < ${#temp_array[@]};i++)); do
+			header="$header ${temp_array[i]}${MGC_FLD}|"
+		done
 
-	table="${delimiter}\n${PRINT[header]}\n${delimiter}\n"
+		table="${delimiter}\n${header}\n${delimiter}\n"
 
-	for i in `${PRG_SEQ} 1 ${PRINT[rows]}`; do
-		line="${PRINT[$i]}"
+		for ((i=1; i <= ${PRINT[rows]}; i++)); do
+			local -a aline=(${PRINT[$i]})
+			line="|"
+			for ((f=0; f < ${#aline[@]} ;f++ )); do
+				line="$line ${aline[f]}${MGC_FLD}|"
+			done
 
-		table="${table}${line}\n"
-	done
+			table="${table}${line}\n"
+		done
 
-	${PRG_ECHO} -e "${table}\n${delimiter}" | ${PRG_COLUMN} -t -s"${MGC_FLD}" | ${PRG_AWK} '/^\+/{gsub(" ", "-", $0)}1'
-	if [ "${GC[SHOW_ROWS_FETCHED]}" == "true" ]; then
-		${PRG_ECHO} " (${PRINT[rows]} rows fetched)"
+		${PRG_ECHO} -e "${table}\n${delimiter}" | ${PRG_COLUMN} -t -s"${MGC_FLD}" | ${PRG_AWK} '/^\+/{gsub(" ", "-", $0)}1'
+		if [ "${GC[SHOW_ROWS_FETCHED]}" == "true" ]; then
+			${PRG_ECHO} " (${PRINT[rows]} rows fetched)"
+		fi
+	elif [ "${GC[OUTPUT]^^}" == "CSV" ]; then
+		# Define header
+		local -a temp_array=(${PRINT[header]})
+		header=""
+		delimiter=""
+		for ((i = 0; i < ${#temp_array[@]};i++)); do
+			header="$header${delimiter}${temp_array[i]}"
+			delimiter=";"
+		done
+
+		table="${header}\n"
+
+		# rows is 1-based, becuase is the total number of rows
+		for ((i=1; i <= ${PRINT[rows]}; i++)); do
+			local -a aline=(${PRINT[$i]})
+			line=""
+		  delimiter=""
+			for ((f=0; f < ${#aline[@]} ;f++ )); do
+				line="$line${delimiter}${aline[f]}"
+				delimiter=";"
+			done
+
+			table="${table}${line}\n"
+		done
+
+		${PRG_ECHO} -e $table
+	else
+		LOGGER_MSG="Output not recognized ${GC[OUTPUT]}"
+		eval $LOGGER ERROR
+		return 1
 	fi
 }
 

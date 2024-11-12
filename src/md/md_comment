@@ -42,11 +42,11 @@ comment_get_struct_by_type_objectId() {
 	FILTER[stop]="true"
 	FILTER[total]=2
   FILTER[0,0]="2"
-  FILTER[0,1]="${_SS[type]}"
+  FILTER[0,1]="${_CS[type]}"
   FILTER[1,0]="3"
-  FILTER[1,1]="${_SS[objectId]}"
+  FILTER[1,1]="${_CS[objectId]}"
 
-	declare -p FILTER
+	# declare -p FILTER
 
 	simple_scan DATA RECORD FILTER
 	eval $M_CHECK_RES

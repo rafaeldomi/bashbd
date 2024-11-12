@@ -1,9 +1,0 @@
-#!/bin/bash
-
-# set -e
-
-. tests_builtin
-. tests_functions
-. checks
-. check_includes
-. sql_tests.sh

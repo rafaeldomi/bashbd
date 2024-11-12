@@ -1,21 +1,5 @@
 #!/bin/bash
 
-. src/log
-. src/functions
-. src/parserv2
-. src/cmd/cmd_table
-. src/cmd/cmd_create
-. src/cmd/cmd_set
-. src/cmd/cmd_get
-. src/cmd/cmd_show
-. src/cmd/cmd_reset
-. src/cmd/cmd_truncate
-. src/cmd/cmd_drop_table
-. src/cmd/cmd_drop_schema
-. src/cmd/cmd_create_schema
-. src/cmd/cmd_create_table
-. src/cmd/cmd_comment
-
 execute() {
 	# Clear this "object" (I know, variable, OK)
 	unset SQLOBJ
@@ -24,6 +8,9 @@ execute() {
 	# [ parserv2 ]
 	parse_sql "${INPUT_CMD}" > /dev/null
 	RET="$?"
+
+	LOGGER_MSG="SQL '${TOKENS[SQL]}'"
+	eval $LOGGER DEBUG1
 
 	if [ ! "$RET" == "0" ]; then
 		LOGGER_MSG="There is a error in the SQL: ${ERROR[msg]}"
@@ -72,5 +59,10 @@ execute() {
 	if [ "${GC[TIMING]}" == "true" ]; then
 		local TIME_TOTAL=$(expr $TIME_FINAL - $TIME_INIT)
 		writeln "Elapsed Time: $TIME_TOTAL ms"
+	fi
+
+	if [ ${#TOKENS[REMAIN]} -gt 0 ]; then
+		INPUT_CMD="${TOKENS[REMAIN]}"
+		execute "$INPUT_CMD"
 	fi
 }

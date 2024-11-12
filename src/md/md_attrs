@@ -27,6 +27,7 @@ attrs_search() {
 		# 5 - size
 		# 6 - default
 		# 7 - null
+		# 8 - unique
 		hex_to_int val ${REC[2]}
 
 		if [ "${FA[id]}" == "$val" ]; then
@@ -39,6 +40,7 @@ attrs_search() {
 			FA[${i}_type]="${IT}"
 			FA[${i}_default]="${REC[6]}"
 			FA[${i}_null]="${REC[7]}"
+			FA[${i}_unique]="${REC[8]}"
 		fi
 	done
 	FA[total]=$i

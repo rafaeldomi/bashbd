@@ -165,8 +165,8 @@ bootstrap() {
 
 	#############################
 	## Table: tables
-	## id			int
-	## name			200
+	## id					int
+	## name				200
 	## schema_id	int
 	storage_create_file "TABLE" ${CTABLE_TABLES}
 
@@ -184,7 +184,8 @@ bootstrap() {
 	bootstrap_add_value $CTABLE_LANG language 1
 	bootstrap_add_value $CTABLE_SEQUENCE sequences 1
 	bootstrap_add_value $CTABLE_COMMENTS comments 1
-	bootstrap_add_value 10 teste 2
+	bootstrap_add_value $CTABLE_VIEWS views 1
+	# bootstrap_add_value 10 teste 2
 
 	row_append_simple ${CTABLE_TABLES}
 
@@ -192,16 +193,17 @@ bootstrap() {
 
 	###########################
 	## Table: functions
-	## id		int
-	## name		200
-	## handler	200
-	## lang_id	int
+	## id					int
+	## name				200
+	## handler		200
+	## lang_id		int
+	## definition	text
 	storage_create_file "TABLE" ${CTABLE_FUNCTIONS}
 
 	unset ROW
 	declare -A ROW
 
-	row_init int 200 200 int
+	row_init int 200 200 int text
 
 	bootstrap_add_value 1 sum bashbd.sum 1
 	bootstrap_add_value 2 coalesce bashbd.coalesce 1
@@ -234,6 +236,7 @@ bootstrap() {
 	## size			int
 	## default	200
 	## null			int
+	## unique   boolean
 	storage_create_file "TABLE" ${CTABLE_ATTRS}
 
 	# Types
@@ -243,62 +246,63 @@ bootstrap() {
 	unset ROW
 	declare -A ROW
 
-	# id - table_id - name - types_id - size - default - null
-	row_init int int 200 int int 200 bool
+	# id - table_id - name - types_id - size - default - null - unique
+	row_init int int 200 int int 200 bool bool
 
-	local attr_id=0
+	local attr_id=1
 
 	# Relation schemas
-	bootstrap_add_value $((attr_id++)) ${CTABLE_SCHEMAS} id 		1 -1 	"sequence:4" 	0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_SCHEMAS} name 	2 200 ${MGC_NULL} 	0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_SCHEMAS} id 		1 -1 	"sequence:4" 	0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_SCHEMAS} name 	2 200 ${MGC_NULL} 	0 true
 
 	# Relation Languages
-	bootstrap_add_value $((attr_id++)) ${CTABLE_LANG} id 			1 -1 	"sequence:2" 	0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_LANG} name 		2 200 ${MGC_NULL} 	0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_LANG} handler 	2 200 ${MGC_NULL} 	0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_LANG} id 			1 -1 	"sequence:2" 	0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_LANG} name 		2 200 ${MGC_NULL} 	0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_LANG} handler 2 200 ${MGC_NULL} 	0 false
 
 	# Relation Types
-	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} id 			1 -1 	"sequence:3" 	0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} name 		2 200 ${MGC_NULL}	 	0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} fnc_out 2 200 ${MGC_NULL} 	0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} size 		1 -1 	${MGC_NULL} 	0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} id 			1 -1 	"sequence:3" 	0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} name 		2 200 ${MGC_NULL}	 	0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} fnc_out 	2 200 ${MGC_NULL} 	0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} size 		1 -1 	${MGC_NULL} 	0 false
 
 	# Relation Table
-	bootstrap_add_value $((attr_id++)) ${CTABLE_TABLES} id		 			1	-1	"sequence:5" 	0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_TABLES} name				2	200 "" 			 			0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_TABLES} schema_id 	1 -1 	"" 			 			0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_TABLES} id		 			1	-1	"sequence:5" 	0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_TABLES} name				2	200 "" 			 			0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_TABLES} schema_id 	1 -1 	"" 			 			0 false
 
 	# Relation Attrs
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} id				1  -1 	"sequence:8" 	0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} table_id 1  -1 	"" 						0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} name 		2  200 	"" 						0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} types_id 1  -1 	"" 						0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} size 		1  -1 	"" 						1
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} default 	2  200 	${MGC_NULL} 	1
-	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} null 		1  -1 	${MGC_NULL} 	0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} id				1  -1 	"sequence:8" 	0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} table_id 1  -1 	"" 						0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} name 		2  200 	"" 						0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} types_id 1  -1 	"" 						0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} size 		1  -1 	"" 						1 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} default 	2  200 	${MGC_NULL} 	1 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_ATTRS} null 		1  -1 	${MGC_NULL} 	0 false
 
 	# Relation functions
-	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} id 			1 -1 	"sequence:6" 0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} name 		2 200 	${MGC_NULL}  0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} function 	2 200 	${MGC_NULL}  0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} language_id 	1 -1 	${MGC_NULL}  0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} id 					1 -1 	"sequence:6" 0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} name 				2 200 ${MGC_NULL}  0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} schema_id 		1 -1  ${MGC_NULL}  0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} function 		2 200 ${MGC_NULL}  0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} language_id 	1 -1 	${MGC_NULL}  0 false
 
 	# Relation index
-	bootstrap_add_value $((attr_id++)) ${CTABLE_INDEX} id 1 -1 "sequence:7" 0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_INDEX} name 2 200 "" 0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_INDEX} fields 2 200 "" 0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_INDEX} id 		1 -1 "sequence:7" 0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_INDEX} name 	2 200 "" 					0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_INDEX} fields 2 200 "" 					0 false
 
 	# Relation sequence
-	bootstrap_add_value $((attr_id++)) ${CTABLE_SEQUENCE} id 		 			1 -1 	"sequence:1"	0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_SEQUENCE} schema_id  	1 -1 	"" 			 			0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_SEQUENCE} name 		 		2 200	"" 			 			0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_SEQUENCE} last_value 	1 -1 	"" 			 			0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_SEQUENCE} id 		 			1 -1 	"sequence:1"	0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_SEQUENCE} schema_id  	1 -1 	"" 			 			0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_SEQUENCE} name 		 		2 200	"" 			 			0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_SEQUENCE} last_value 	1 -1 	"" 			 			0 false
 
 	# Relation comments
-	bootstrap_add_value $((attr_id++)) ${CTABLE_COMMENTS} id				1 -1 	"sequence:9"	0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_COMMENTS} type_id		1 -1 	""						0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_COMMENTS} object_id	1 -1 	""						0
-	bootstrap_add_value $((attr_id++)) ${CTABLE_COMMENTS} comment		2 200 ""						0
+	bootstrap_add_value $((attr_id++)) ${CTABLE_COMMENTS} id				1 -1 	"sequence:9"	0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_COMMENTS} type_id		1 -1 	""						0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_COMMENTS} object_id	1 -1 	""						0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_COMMENTS} comment		2 200 ""						0 false
 
 	# [ storage ]
 	row_append_simple ${CTABLE_ATTRS}
@@ -312,7 +316,7 @@ bootstrap() {
 	## object_id	int
 	## comment		varchar(200)
 	#############
-  local comment_id=0
+  local comment_id=1
 
 	storage_create_file "TABLE" ${CTABLE_COMMENTS}
 
@@ -321,15 +325,18 @@ bootstrap() {
 
 	row_init int int int 200
 
-  bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_SCHEMAS "Schema metadata"
-	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_FUNCTIONS "Functions metadata"
-	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_ATTRS "Attributes metadata"
-	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_COMMENTS "Comments metadata"
-	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_INDEX "Index metadata"
-	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_LANG "Language metadata"
-	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_SEQUENCE "Sequence metadata"
-	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_TABLES "Table metadata"
-	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_TYPES "Types metadata"
+  bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_SCHEMAS "Schema metadata table"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_FUNCTIONS "Functions metadata table"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_ATTRS "Attributes metadata table"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_COMMENTS "Comments metadata table"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_INDEX "Index metadata table"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_LANG "Language metadata table"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_SEQUENCE "Sequence metadata table"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_TABLES "Table metadata table"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_TABLE $CTABLE_TYPES "Types metadata table"
+
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_SCHEMA 1 "this schema holds metadata info"
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_SCHEMA 2 "public schema"
 
 	# [ storage ]
 	row_append_simple ${CTABLE_COMMENTS}
@@ -363,6 +370,23 @@ bootstrap() {
 	row_append_simple ${CTABLE_SEQUENCE}
 
 	eval $LOGGER LOG "Table sequences: OK"
+
+	##############################
+	## Table: views
+	# id   		 		integer
+	# schema_id		integer
+	# definition	text
+	storage_create_file "TABLE" ${CTABLE_VIEWS}
+
+	unset ROW
+	declare -A ROW
+
+	row_init int int text
+
+	# [ storage ]
+	row_append_simple ${CTABLE_VIEWS}
+
+	eval $LOGGER LOG "Table views: OK"
 
 	######
 	## Table testes

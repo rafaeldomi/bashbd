@@ -1,29 +1,9 @@
 #!/bin/bash
 
-echo "Loading files.."
-
 # Source our code
-. src/macros
-. src/var
-. src/const
-. src/log
-. src/internals
-. src/functions
-. src/executor
-. src/menu
-. src/storage/scan
-. src/storage/storage
-. src/storage/tuple
-. src/signals
-. src/printer
-. src/metadata
-. src/md/md_attrs
-. src/md/md_table
-. src/md/md_schema
-. src/md/md_sequences
-. src/md/md_comment
-
-echo "Loaded"
+for file in $(find src -type f); do
+	source $file
+done
 
 : <<'FUNCTION'
 Description: Do some checks before initializing the program
@@ -39,7 +19,7 @@ do_pre_init() {
 	$PRG_BASH -n $0
 	RES=$?
 	if [ ! $RES == 0 ]; then
-		# Lets use echo, 'cause we dont know what is broken (Could be logger)
+		# Lets use echo, 'cause we dont know what is broken (ex Could be logger)
 		echo "There is a problem with the code. Exiting"
 		exit 1
 	fi
@@ -47,8 +27,11 @@ do_pre_init() {
 	# Set the program name
 	PROGRAM=$($PRG_BASENAME $0)
 
-	while getopts "?svhtb:d:m:c:" arg; do
+	while getopts "?svhtb:d:m:c:o:" arg; do
 		case $arg in
+		  o)
+				GC[OUTPUT]=${OPTARG}
+				;;
 			t)
 				TUPLES_ONLY=1
 				;;
@@ -105,9 +88,6 @@ do_pre_init() {
 
 	# Run bootstrap process?
 	if [ $DO_BOOTSTRAP ]; then
-		# Import the necessary file
-		. src/bootstrap
-
 		# [ bootstrap ]
 		bootstrap $DBDATA
 		finish 0
@@ -174,6 +154,7 @@ main_loop() {
 		# [ executor ]
 		execute "$INPUT_CMD"
 
+		# -c parameter
 		if [ ! -z $INPUT_COMMAND ]; then
 			return 0
 		fi

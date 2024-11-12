@@ -8,7 +8,7 @@ show_execute() {
   local _OBJECT=${_SQLTKN[OBJECT]}
   local _OBJECTID=-1
 
-  declare -p TOKENS
+  # declare -p TOKENS
 
   if [ -z ${_SQLTKN[TYPE]} ]; then
     LOGGER_MSG="Invalid syntax for SHOW command"
@@ -28,15 +28,24 @@ show_execute() {
     $COMMENT_TYPE_SCHEMA)
       P_SCHEMA="$_OBJECT"
       eval $M_GET_SCHEMA
-      _OBJECTID=${SS[id]}
+      _OBJECTID=${SCHEMA_RECORD[1]}
+      ;;
+    $COMMENT_TYPE_TABLE)
+      P_TABLE="$_OBJECT"
+      eval $M_GET_TABLE
+      _OBJECTID=${TABLE_RECORD[1]}
       ;;
   esac
 
-    # Check if exists
+  # Check if exists
   # [ md_comment ]
   declare -A CS
-  CS[type]=${_TYPE}
-  CS[objectId]=${_OBJECTID}
+
+  int_to_hex type_hex 8 "${_TYPE}"
+
+  CS[type]="${type_hex}"
+  CS[objectId]="${_OBJECTID}"
+  # declare -p CS
   if ! comment_get_struct_by_type_objectId CS RECORD; then
     LOGGER_MSG="Comment not found"
     eval $LOGGER ERROR
@@ -44,9 +53,10 @@ show_execute() {
   fi
 
   declare -A TAB_PRINTER
-  TAB_PRINTER[header]="COMMENT"
+  TAB_PRINTER[header]="| COMMENT${MGC_FLD}|"
   TAB_PRINTER[fields]=1
-  TAB_PRINTER[0]="${RECORD[4]}"
+  TAB_PRINTER[rows]=1
+  TAB_PRINTER[1]="| ${RECORD[4]}${MGC_FLD}|"
 
   printer TAB_PRINTER
 

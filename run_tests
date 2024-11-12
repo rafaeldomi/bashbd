@@ -1,0 +1,54 @@
+#!/bin/bash
+
+. tests/run_tests_aux
+
+# Configure log outputs
+exec 3>&1 # use log_stdout
+exec > log.txt 2>&1 # use log
+
+cd tests
+
+for test_file in ./test_*; do
+  source $test_file
+done
+
+export PATH_SRC="../src"
+export PATH_ROOT=".."
+
+test_functions=$(declare -F | awk '{print $3}' | grep "^bashbd_check_unit_")
+
+# Variáveis para rastrear os resultados
+total_tests=0
+passed_tests=0
+failed_tests=0
+
+# Array para armazenar mensagens de erro
+error_logs=()
+
+log_stdout "Initiating tests"
+
+# Executa cada função de teste
+for test_func in $test_functions; do
+  declare -A RES_CHECK
+
+  $test_func RES_CHECK
+
+  declare -p RES_CHECK >&3
+  log_stdout " -> Tested: ${RES_CHECK[tested]} Outcome: ${RES_CHECK[result]} - Errors: ${RES_CHECK[error]}"
+
+  ((total_tests=$total_tests+$RES_CHECK[tested]))
+  ((passed_tests=$passed_tests+$RES_CHECK[]))
+
+    # ((total_tests++))
+    # # Executa o teste e armazena o status
+    # $test_func
+    # status=$?
+    # if [ $status -eq 0 ]; then
+    #     ((passed_tests++))
+    #     echo "$test_func: OK"
+    # else
+    #     ((failed_tests++))
+    #     echo "$test_func: FAIL"
+    #     error_logs+=("$test_func")
+    # fi
+done

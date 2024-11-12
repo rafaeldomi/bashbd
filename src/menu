@@ -8,7 +8,7 @@ cmd_menu() {
 
 	# Break in tokens
 	# TKN 0 = The command
-	# TKN 1 = Option, if the command permits
+	# TKN 1 = Option (optinal by command)
 	local TKN=(${@})
 
 	# Vim shows that using "$array_var[x]:init:end" is wrong, but is correct
@@ -26,10 +26,11 @@ cmd_menu() {
 		l)  menu_list "languages"  $CTABLE_LANG;;
 		i)  menu_list "indexes"    $CTABLE_INDEX;;
 		a)  menu_list "attributes" $CTABLE_ATTRS;;
-		
+
 		c)  menu_warm_cache "${TKN[1]}";;
 		b)  menu_call_function "${TKN[1]}" "${TKN[2]}" "${TKN[3]}";;
 		\?)	menu_show_help;;
+		h)  shift; menu_show_help_cmd "${TKN[@]}";;
 		*)  echo "Menu Comando $PAR não reconhecido"
 	esac
 
@@ -39,31 +40,24 @@ cmd_menu() {
 menu_show_help() {
 	writeln "Command menu"
 	writeln ""
-	writeln "\\?       Show this help"
+	writeln "\\?        Show this help"
+	writeln "\\h [CMD]  Show syntax example for the command"
 	writeln ""
-	writeln "\\a       List attributes"
-	writeln "\\c       List comments"
-	writeln "\\f       List functions"
-	writeln "\\i       List indexes"
-	writeln "\\l       List languages"
-	writeln "\\s       List schemas"
-	writeln "\\S       List sequences"
-	writeln "\\t       List tables"
-	writeln "\\y       List types"
+	writeln "\\\a       List attributes"
+	writeln "\\\c       List comments"
+	writeln "\\\f       List functions"
+	writeln "\\\i       List indexes"
+	writeln "\\\l       List languages"
+	writeln "\\\s       List schemas"
+	writeln "\\\S       List sequences"
+	writeln "\\\t       List tables"
+	writeln "\\\y       List types"
 	writeln ""
-	writeln "\\q     Quit program"
+	writeln "\\q        Quit program"
 }
 
-###################################################
-###################################################
-map_file_rows() {
-	unset rows
-	mapfile -t -s 1 -O 1 -d `$PRG_ECHO -e -n "\x1E"` rows < $1
-}
-
-map_fields() {
-	unset fields
-	mapfile -t -O 1 -d `$PRG_ECHO -en "\x1D"` fields <<<$( $PRG_ECHO "$1")
+menu_show_help_cmd() {
+	:
 }
 
 ###################################################

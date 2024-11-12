@@ -48,31 +48,27 @@ get_execute() {
 		done
 	fi
 
-	declare -A TAB_PRINTER
-
-	TAB_PRINTER[header]="| setting${MGC_FLD}| value${MGC_FLD}|"
-	TAB_PRINTER[fields]=2
-	TAB_PRINTER[rows]=${TOKENS[OPTION_total]}
+	# [ printer ]
+	declare -A PRINTER
+	printer_init PRINTER "settings value"
 
 	if [ "$option" == "ALL" ]; then
 	  # [ GC = var ]
 		local ORDERED_ALL=($(${PRG_ECHO} ${!GC[@]} | ${PRG_TR} " " "\n" | ${PRG_SORT}))
-		local k=1
 		for i in "${ORDERED_ALL[@]}"; do
-			let k++
-			TAB_PRINTER[$k]="| $i ${MGC_FLD}| ${GC[$i]} ${MGC_FLD}|"
+		  printer_add PRINTER "$i ${GC[$i]}"
 		done
-		TAB_PRINTER[rows]=$k
 	else
 	  local k
 	  for i in `seq 1 ${TOKENS[OPTION_total]}`; do
 			local setting="${TOKENS[OPTION_$i]^^}"
 			local value="${GC[$setting]}"
 
-			TAB_PRINTER[$i]="| $setting ${MGC_FLD}| $value ${MGC_FLD}|"
+			printer_add PRINTER "$setting $value"
 		done
 	fi
 
-	printer TAB_PRINTER
+	printer PRINTER
+
 	return 0
 }

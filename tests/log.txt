@@ -1,0 +1,15 @@
+Initiating tests
+Testing: Check const are all readonly
+declare -A COMMENT_TYPE_MAP=(
+  [TABLE]=$COMMENT_TYPE_TABLE
+  [INDEX]=$COMMENT_TYPE_INDEX
+  [COLUMN]=$COMMENT_TYPE_COLUMN
+  [FUNCTION]=$COMMENT_TYPE_FUNCTION
+  [TRIGGER]=$COMMENT_TYPE_TRIGGER
+  [VIEW]=$COMMENT_TYPE_VIEW
+  [SCHEMA]=$COMMENT_TYPE_SCHEMA
+run_tests_aux: line 37: ((: 0=0+1: attempted assignment to non-variable (error token is "=0+1")
+run_tests_aux: line 38: ((: 0=0+1: attempted assignment to non-variable (error token is "=0+1")
+ -> Tested: 1 Outcome: 0 - Errors: 
+./run_tests: line 37: ((: total_tests=0+[tested]: syntax error: operand expected (error token is "[tested]")
+./run_tests: line 38: ((: passed_tests=0+[]: syntax error: operand expected (error token is "[]")

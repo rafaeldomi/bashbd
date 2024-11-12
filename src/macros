@@ -25,3 +25,13 @@ M_GET_SCHEMA='
     eval $LOGGER ERROR;
     return 1;
   fi'
+
+M_GET_TABLE='
+  declare -A TS;
+  declare -A TABLE_RECORD;
+  TS[table]="$P_TABLE";
+  if ! table_get_struct_by_name TS TABLE_RECORD; then
+    LOGGER_MSG="Table "$P_TABLE" not found";
+    eval $LOGGER ERROR;
+    return 1;
+  fi'

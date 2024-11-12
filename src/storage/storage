@@ -239,7 +239,7 @@ row_add_value() {
 	fn=0
 	let ROW[ROWS]=${ROW[ROWS]}+1
 	rown=${ROW[ROWS]}
-	for pos in `$PRG_SEQ 1 ${#VALUES[@]}`; do
+	for (( pos = 1; pos <= ${#VALUES[@]}; pos++ )); do
 		# one more field/attribute
 		let fn=$fn+1
 
@@ -389,4 +389,16 @@ next_record() {
 	done
 
 	return 0
+}
+
+###################################################
+###################################################
+map_file_rows() {
+	unset rows
+	mapfile -t -s 1 -O 1 -d `$PRG_ECHO -e -n "\x1E"` rows < $1
+}
+
+map_fields() {
+	unset fields
+	mapfile -t -O 1 -d `$PRG_ECHO -en "\x1D"` fields <<<$( $PRG_ECHO "$1")
 }

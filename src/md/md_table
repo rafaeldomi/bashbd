@@ -216,7 +216,7 @@ table_row_insert() {
 	local METADATA=""
 
 	# Loop through all the records in the ROW Variable
-	for rn in `$PRG_SEQ 1 ${_R[ROWS]}`; do
+	for (( rn=1 ; rn<=${_R[ROWS]}; rn++ )); do
 		# In this first level of the loop we are in the Record level
 		#   so the IROW (inner row) must be blank
 		IROW=""

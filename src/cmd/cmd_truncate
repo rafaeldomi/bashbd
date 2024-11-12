@@ -7,7 +7,7 @@ truncate_execute() {
 	local sz=${TOKENS[TABLE_total]}
 	local i=0
 
-	for i in `${PRG_SEQ} 1 $sz`; do
+  for (( i=1; i<=$sz; i++ )); do
 		local table="${TOKENS[TABLE_${i}]}"
 		declare -A TS
 
@@ -22,10 +22,13 @@ truncate_execute() {
 			return 1
 		fi
 
-		LOGGER_MSG="Truncating table ${TS[table]} id: ${RECORD[id]}"
+		local file_id
+		hex_to_int file_id ${RECORD[1]}
+
+		LOGGER_MSG="Truncating table ${TS[table]} id: ${file_id}"
 		eval $LOGGER DEBUG
 
-		${PRG_ECHO} "${MGC_TABLE}" > ${TS[id]}
+		${PRG_ECHO} "${MGC_TABLE}" > ${file_id}
 
 		writeln "Table \"${TS[table]}\" truncated"
 	done

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+if [ ! $FUNCTIONS_INCLUDED ]; then
+FUNCTIONS_INCLUDED=1
+
 : <<'COMMENT'
 This file contains functions that doesn't fit in others files
 COMMENT
@@ -377,3 +380,5 @@ copy_array() {
 		target_array[$index]="${source_array[$index]}"
 	done
 }
+
+fi
