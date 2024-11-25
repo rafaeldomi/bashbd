@@ -1,5 +1,10 @@
 #!/bin/bash
 
+: <<'COMMENT'
+cmd_menu: Show menu
+menu_show_help_cmd: Show command definition
+COMMENT
+
 cmd_menu() {
 	if [ "${1^^}" == "HELP" ]; then
 		menu_show_help
@@ -28,9 +33,9 @@ cmd_menu() {
 		a)  menu_list "attributes" $CTABLE_ATTRS;;
 
 		c)  menu_warm_cache "${TKN[1]}";;
-		b)  menu_call_function "${TKN[1]}" "${TKN[2]}" "${TKN[3]}";;
+		b)  menu_call_function ${TKN[@]:1} ;;
 		\?)	menu_show_help;;
-		h)  shift; menu_show_help_cmd "${TKN[@]}";;
+		h)  menu_show_help_cmd ${TKN[@]:1} ;;
 		*)  echo "Menu Comando $PAR não reconhecido"
 	esac
 
@@ -43,6 +48,7 @@ menu_show_help() {
 	writeln "\\?        Show this help"
 	writeln "\\h [CMD]  Show syntax example for the command"
 	writeln ""
+	writeln "Database objects:"
 	writeln "\\\a       List attributes"
 	writeln "\\\c       List comments"
 	writeln "\\\f       List functions"
@@ -56,14 +62,53 @@ menu_show_help() {
 	writeln "\\q        Quit program"
 }
 
+: <<'FUNCTION'
+Description: Show command definition
+Parameters:
+  $1 - Command
+FUNCTION
 menu_show_help_cmd() {
-	:
+	local OUTPUT=""
+	local CMD="${1^^}"
+	local SUBCMD="${2^^}"
+
+	if [ -z $1 ]; then
+		COMMANDS="GET,SET,RESET,TABLE,CREATE SCHEMA,SHOW COMMENT"
+		OUTPUT=$(${PRG_ECHO} "$COMMANDS" | ${PRG_COLUMN} -s, -t)
+	fi
+
+	# echo $1
+	if [ "$CMD" == "GET" ]; then
+	  OUTPUT="GET [ALL|RESERVED|setting,...]"
+	fi
+	if [ "$CMD" == "SET" ]; then
+		OUTPUT="SET [config=value,...]"
+	fi
+	if [ "$CMD" == "RESET" ]; then
+	  OUTPUT="RESET [ALL|config,...]"
+	fi
+	if [ "$CMD" == "TABLE" ]; then
+	  OUTPUT="TABLE [table] (SAMPLE)"
+	fi
+	if [ "$CMD" == "CREATE" ]; then
+	  if [ "$SUBCMD" == "SCHEMA" ]; then
+	  	OUTPUT="CREATE SCHEMA [IFNOTEXISTS] (schema,...)"
+		fi
+	fi
+	if [ "$CMD" == "SHOW" ]; then
+	  OUTPUT="SHOW COMMENT ON (table|schema) (object)"
+	fi
+
+	# echo $OUTPUT
+
+	writeln "$OUTPUT"
 }
 
 ###################################################
 ###################################################
 # $1 - Id of the table to list
 menu_list() {
+	# [ printer ]
 	printer_dump_table "Listing $1" $2
 }
 
@@ -73,6 +118,6 @@ menu_warm_cache() {
 }
 
 menu_call_function() {
-	LOGGER_MSG="Call fn: $1"
+	# LOGGER_MSG="Call fn: $1"
 	eval $1 $2 $3
 }

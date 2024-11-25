@@ -15,7 +15,7 @@ done
 export PATH_SRC="../src"
 export PATH_ROOT=".."
 
-test_functions=$(declare -F | awk '{print $3}' | grep "^bashbd_check_unit_")
+test_functions=$(declare -F | awk '{print $3}' | grep "^bashdb_check_unit_")
 
 # Variáveis para rastrear os resultados
 total_tests=0

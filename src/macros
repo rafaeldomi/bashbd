@@ -26,6 +26,8 @@ M_GET_SCHEMA='
     return 1;
   fi'
 
+# set P_TABLE
+# [ md_table.table_get_struct_by_name ]
 M_GET_TABLE='
   declare -A TS;
   declare -A TABLE_RECORD;

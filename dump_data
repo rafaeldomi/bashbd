@@ -24,23 +24,20 @@ PRG_PRINTF="printf"
 # [ functions ]
 find_binaries
 
-declare -A ATABLE
-declare -A TAB_PRINT
-
 # $1 - Field N
 # $2 - Value
-check_size() {
-	atual=${ATABLE[S_$1]}
-	input=${#2}
+# check_size() {
+# 	atual=${ATABLE[S_$1]}
+# 	input=${#2}
 
-	if [ -z $atual ]; then
-		atual=0
-	fi
+# 	if [ -z $atual ]; then
+# 		atual=0
+# 	fi
 
-	if [ "$input" -gt "$atual" ]; then
-		ATABLE[S_$1]=$input
-	fi
-}
+# 	if [ "$input" -gt "$atual" ]; then
+# 		ATABLE[S_$1]=$input
+# 	fi
+# }
 
 echo "Dumping: $FILE"
 
@@ -60,22 +57,27 @@ echo "  Type: $VALUE ($OUT)"
 # -d = Delimitador de record
 mapfile -t -s 1 -O 1 -d ${MGC_SEP} DATA < $FILE
 
-echo "Total Rows: ${#DATA[@]}"
-ATABLE[ROWS]=${#DATA[@]}
+TOTAL_RECORDS=${#DATA[@]}
+
+echo "Total Rows: $TOTAL_RECORDS"
 
 rown=0
 TABDATA=""
-TABFLD="| N${MGC_FLD}| Pos${MGC_FLD}| Size${MGC_FLD}| Alive"
+PRINTER_HEADER="N Pos Size Alive"
 position=1
 position_f=1
 
+declare -A PRINTER
+
 # Loop in the records
-for i_row in "${DATA[@]}"; do
+for (( rown = 1 ; rown <= ${TOTAL_RECORDS}; rown++)); do
 	# First we need to break by the header, just break by the Size of the Header
+	i_row=${DATA[rown]}
+
 	HEADER[1]="${i_row:0:${SH}}"
 	HEADER[2]="${i_row:7}"
 
-	echo "${HEADER[1]}"
+	# echo "${HEADER[1]}"
 
 	## Break the record header
 	mapfile -t -O 1 -d ${MGC_FLD} HFLD <<<$(echo -n "${HEADER[1]}")
@@ -90,17 +92,33 @@ for i_row in "${DATA[@]}"; do
 	# rown = total records
 	# rowf = total fields / columns
 
-	let rown++
 	# Loop in the fields on the record
 	rowf=0
+	declare -A RECORD_DATA_HOLDER
 
 	sz_hex=${HFLD[2]:0:4}
 	hex_to_int SZ $sz_hex
 
 	let position_f=$position+$SH
-	# N | Pos | Size | Alive
-	TABDATA="| $rown${MGC_FLD}| ${position} ($position_f)${MGC_FLD}| $sz_hex ($SZ)${MGC_FLD}| ${HFLD[1]}"
-	let position=$position+${#i_row}
+
+	# Just in the Row #1 (That must be the header of the object)
+	if [ $rown -eq 1 ]; then
+		NoC="${#FLD[@]}"
+		for (( n=1; n <= $NoC; n++)); do
+			PRINTER_HEADER="$PRINTER_HEADER Fld${n}"
+		done
+
+		printer_init PRINTER "$PRINTER_HEADER"
+	fi
+
+	printer_new_row PRINTER
+	printer_row_field PRINTER "$rown"
+	printer_row_field PRINTER "$position ($position_f)"
+	printer_row_field PRINTER "$sz_hex"
+	printer_row_field PRINTER "${HFLD[1]}"
+
+	# printer_row_field
+	prf=3
 
 	# Loop in the fields
 	for f in "${FLD[@]}"; do
@@ -115,37 +133,11 @@ for i_row in "${DATA[@]}"; do
 			VAL="(null)"
 		fi
 
-		TABDATA="${TABDATA}${MGC_FLD}| ${VAL}"
-
-		# Preenche o header da tabela de saida apenas no primeiro ow
-		if [ "${rown}" -eq 1 ]; then
-			TABFLD="$TABFLD${MGC_FLD}| Fld${rowf}"
-		fi
-		
-		ATABLE[${rown}_${rowf}]="$VAL"
+		printer_row_field PRINTER "$VAL"
 	done
 
-	TAB_PRINT[${rown}]="$TABDATA ${MGC_FLD}|"
-
-	# Just in the Row #1 (That must be the header of the object)
-	if [ "$rown" == 1 ]; then
-		# TF for Total Fields
-		ATABLE[TF]=$rowf
-	fi
+	let position=$position+${#i_row}
 done
 
-echo "Total fields: ${ATABLE[TF]}"
-echo "Total Rows: ${ATABLE[ROWS]}"
-echo ""
-
-TAB_PRINT[header]="${TABFLD} ${MGC_FLD}|"
-TAB_PRINT[rows]="${ATABLE[ROWS]}"
-TAB_PRINT[fields]="${ATABLE[TF]}"
-
-let TAB_PRINT[fields]=${TAB_PRINT[fields]}+4
-
-#echo "Initiate printable"
-
-# Print Table
-#time printTablev2 TAB_PRINT
-printer TAB_PRINT
+# Print Table [ printer ]
+printer PRINTER

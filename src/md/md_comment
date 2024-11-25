@@ -7,7 +7,7 @@ COMMENT
 : <<'FUNCTION'
 Description: Return the comment record, searching by type and objectId
 Parameters:
-  $1 - Input variable that has the name
+  $1 - Input variable with following struct:
     $1[type]
     $1[objectId]
 	$2 - Output variable to hold the recor

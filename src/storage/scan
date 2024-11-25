@@ -10,6 +10,7 @@ Parameters:
       $3[total] = Total of filter entries to check
       $3[0,0] = filter 0 fieldNumber
       $3[0,1] = filter 0 value
+      $3[0,2] = filter operator (default: equal)
 Return Code:
   0 - Found Record
   1 - No record found

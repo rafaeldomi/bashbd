@@ -1,7 +1,5 @@
 #!/bin/bash
 
-. src/storage/storage
-
 : <<'COMMENT'
 Description of ROW Vector:
 	ROWS      => Total row number in the vector
@@ -77,7 +75,7 @@ dec_to_hex() {
 
 
 : <<'FUNCTION'
-Description: Mark our DIR as a data directory used by bashbd
+Description: Mark our DIR as a data directory used by bashdb
  Must be called just by bootstrap function
 FUNCTION
 bootstrap_stamp_dir() {
@@ -88,8 +86,8 @@ bootstrap_stamp_dir() {
 Description: Do the bootstrap of a data dir
 FUNCTION
 bootstrap() {
-	# Am I running through bashbd program?
-	is_bashbd
+	# Am I running through bashdb program?
+	is_bashdb
 	RES=$?
 	if [ "$RES" == "1" ]; then
 		echo "This must be run through bd program. Exiting"
@@ -116,7 +114,7 @@ bootstrap() {
 
 	row_init int 200
 
-	bootstrap_add_value 1 bashbd
+	bootstrap_add_value 1 bashdb
 	bootstrap_add_value 2 public
 
 	row_append_simple ${CTABLE_SCHEMAS}
@@ -205,14 +203,14 @@ bootstrap() {
 
 	row_init int 200 200 int text
 
-	bootstrap_add_value 1 sum bashbd.sum 1
-	bootstrap_add_value 2 coalesce bashbd.coalesce 1
-	bootstrap_add_value 3 max bashbd.max 1
-	bootstrap_add_value 4 min bashbd.min 1
-	bootstrap_add_value 5 count bashbd.count 1
-	bootstrap_add_value 6 avg bashbd.avg 1
-	bootstrap_add_value 7 nextval bashbd.nextval 1
-	bootstrap_add_value 8 currval bashbd.currval 1
+	bootstrap_add_value 1 sum bashdb.sum 1
+	bootstrap_add_value 2 coalesce bashdb.coalesce 1
+	bootstrap_add_value 3 max bashdb.max 1
+	bootstrap_add_value 4 min bashdb.min 1
+	bootstrap_add_value 5 count bashdb.count 1
+	bootstrap_add_value 6 avg bashdb.avg 1
+	bootstrap_add_value 7 nextval bashdb.nextval 1
+	bootstrap_add_value 8 currval bashdb.currval 1
 
 	row_append_simple ${CTABLE_FUNCTIONS}
 

@@ -9,9 +9,9 @@ drop_schema_execute() {
 	for ((i=1; i<=${TOKENS[SCHEMA_total]}; i++)); do
 		local schema="${TOKENS[SCHEMA_${i}]}"
 
-		# Cannot drop schema bashbd
-		if [ "$schema" == "bashbd" ]; then
-			eval $LOGGER ERROR "Cannot drop schema bashbd"
+		# Cannot drop schema bashdb
+		if [ "$schema" == "bashdb" ]; then
+			eval $LOGGER ERROR "Cannot drop schema bashdb"
 			return 1
 		fi
 

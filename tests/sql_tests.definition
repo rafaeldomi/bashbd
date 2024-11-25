@@ -1,0 +1,149 @@
+:001_get_default_schema
+GET default_schema
+>>>EXPECTED>>>
+settings;value
+DEFAULT_SCHEMA;public
+
+:001_get_all
+GET ALL
+>>>EXPECTED>>>
+settings;value
+COLOR;nocolor
+DEFAULT_SCHEMA;public
+INPLACE;true
+MIN_LOG;1
+NULL_TEXT;(null)
+OUTPUT;csv
+SAMPLE_COUNT;5
+SHOW_PARSER;false
+SHOW_ROWS_FETCHED;false
+TIMING;false
+TIMING_PROCESS;false
+
+:table_command_sample
+table bashdb.tables sample
+>>>EXPECTED>>>
+id;name;schema_id
+1;schemas;1
+2;tables;1
+3;attrs;1
+4;types;1
+5;functions;1
+
+:table_command
+table bashdb.language
+>>>EXPECTED>>>
+id;name;handler
+1;builtin;(null)
+
+:001_get_multiple
+GET DEFAULT_SCHEMA, OUTPUT
+>>>EXPECTED>>>
+settings;value
+DEFAULT_SCHEMA;public
+OUTPUT;csv
+
+:001_get_reserved
+GET RESERVED
+>>>EXPECTED>>>
+value
+ALL
+AND
+AS
+ASC
+BY
+CASCADE
+COMMENT
+CREATE
+DEFAULT
+DELETE
+DESC
+DROP
+FROM
+FUNCTION
+GET
+GROUP
+IFEXISTS
+IFNOTEXISTS
+INDEX
+INSERT
+INTO
+IS
+NOTNULL
+ON
+OR
+ORDER
+REINDEX
+RESET
+SCHEMA
+SELECT
+SET
+SHOW
+TABLE
+TRIGGER
+TRUNCATE
+UPDATE
+VALUES
+WHERE
+
+:002_set
+SET OUTPUT=table;get output
+>>>EXPECTED>>>
+SET
++-----------+--------+
+| settings  | value  |
++-----------+--------+
+| OUTPUT    | TABLE  |
++-----------+--------+
+
+:002_set_multiple
+set default_schema=bashdb,sample_count=10;get default_schema,sample_count
+>>>EXPECTED>>>
+SET
+settings;value
+DEFAULT_SCHEMA;bashdb
+SAMPLE_COUNT;10
+
+:003_show_comment_schema
+show comment on schema public;
+>>>EXPECTED>>>
+COMMENT
+public schema
+
+:show_comment_table
+show comment on table bashdb.tables;
+>>>EXPECTED>>>
+COMMENT
+Table metadata table
+
+:cmd_reset
+set sample_count=10;reset sample_count
+>>>EXPECTED>>>
+SET
+Result
+OK
+
+:cmd_reset_all
+set sample_count=10;reset all; get sample_count
+>>>EXPECTED>>>
+SET
+Result
+OK
+settings;value
+SAMPLE_COUNT;5
+
+:cmd_create_schema
+create schema test; table bashdb.schemas; create schema test;
+>>>EXPECTED>>>
+CREATE SCHEMA OK
+id;name
+1;bashdb
+2;public
+3;test
+Schema test already exists
+
+:cmd_create_schema_ifnotexists
+create schema ifnotexists test;
+>>>EXPECTED>>>
+NOTE: skipping schema test, because already exists and IFNOTEXISTS supplied
+CREATE SCHEMA OK

@@ -1,8 +1,5 @@
 #!/bin/bash
 
-. src/log
-. src/functions
-
 IS_IN_SIGNAL=0
 
 signal_trap() {

@@ -28,7 +28,10 @@ create_schema_execute() {
 		else
 			# Before giving error lets check IFNOTEXISTS
 			if [ "${_SQLTKN[IFNOTEXISTS]}" == "true" ]; then
-				LOGGER_MSG="Schema ${SCHEMA_NAME} already exists. IFNOTEXISTS supplied, not giving error."
+				# LOGGER_MSG="Schema ${SCHEMA_NAME} already exists. IFNOTEXISTS supplied, not giving error."
+				# eval $LOGGER WARNING
+
+				writeln "NOTE: skipping schema ${SCHEMA_NAME}, because already exists and IFNOTEXISTS supplied"
 				continue
 			else
 				LOGGER_MSG="Schema ${SCHEMA_NAME} already exists"

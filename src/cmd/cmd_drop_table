@@ -28,9 +28,9 @@ drop_table_execute() {
 		fi
 	fi
 
-	# Check if table is in bashbd schema and block
-	if [ "${TS[schema]}" == "bashbd" ]; then
-		eval $LOGGER ERROR "Cannot drop tables in schema bashbd"
+	# Check if table is in bashdb schema and block
+	if [ "${TS[schema]}" == "bashdb" ]; then
+		eval $LOGGER ERROR "Cannot drop tables in schema bashdb"
 		return 1
 	fi
 

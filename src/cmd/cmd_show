@@ -52,13 +52,15 @@ show_execute() {
     return 1
   fi
 
-  declare -A TAB_PRINTER
-  TAB_PRINTER[header]="| COMMENT${MGC_FLD}|"
-  TAB_PRINTER[fields]=1
-  TAB_PRINTER[rows]=1
-  TAB_PRINTER[1]="| ${RECORD[4]}${MGC_FLD}|"
+  # [ functions ]
+  timing_process
 
-  printer TAB_PRINTER
+  # [ printer ]
+  declare -A PRINTER
+  printer_init PRINTER "COMMENT"
+  printer_new_row PRINTER
+  printer_row_field PRINTER "${RECORD[4]}"
+  printer PRINTER
 
   return 0
 

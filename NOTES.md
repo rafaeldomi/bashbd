@@ -1,55 +1,68 @@
 # SQL Commands
 
-COMMAND		GROUP			MODIFIERS 		PARSER	IMPLEMENTED	TESTED(PARSER)	TESTED(BASHBD)
-GET				-					ALL						OK			OK					OK
-										[..]      		OK			OK					OK
-										[..,..]				OK			OK					OK
-										RESERVED			OK			OK					OK
-SET				-					-							OK			OK					OK
-										[..,..]				OK			OK					OK
-SHOW			COMMENT   TABLE					OK			OK					OK
-										INDEX					OK									OK
-										COLUMN				OK									OK
-										FUNCTION			OK									OK
-										TRIGGER				OK									OK
-										VIEW					OK									OK
-										SCHEMA				OK			OK					OK
-RESET			-					ALL						OK			OK					OK
-										[..,..]				OK			OK					OK
-TABLE			-					[..]					OK			OK					OK
-										SAMPLE				OK									OK
-CREATE		SCHEMA		[..]					OK			OK					OK
-										[..,..]				OK			OK					OK
-										IFNOTEXISTS		OK			OK					OK
-					INDEX			[col]					OK									OK
-										(col,...)			OK									OK
-					TABLE			NOTNULL				OK
-										DEFAULT				OK
-					VIEW			[..]
-DROP			SCHEMA		[..]					OK			OK					OK
-										[..,..]				OK			OK					OK
-										IFEXISTS			OK			OK					OK
-										CASCADE				OK									OK
-					TABLE			[..]					OK									OK
-										[..,..]				OK									OK
-TRUNCATE	TABLE			[..]					OK			OK					OK
-										[..,..]				OK			OK					OK
-COMMENT		TABLE			-							OK									OK
-					INDEX			-							OK									OK
-					COLUMN		-							OK
-					FUNCTION	-							OK
-					TRIGGER		-							OK
-					VIEW			-							OK
-					SCHEMA		-							OK
-					*					[APPEND]			OK									OK
-REINDEX		TABLE			[..]					OK									OK
-										[..,..]				OK									OK
-					INDEX			[..]					OK									OK
-										[..,..]				OK									OK
-SELECT
-INSERT
-UPDATE
-DELETE
+COMMAND		GROUP				MODIFIERS 		PARSER	TESTED	IMPL	TESTED	HELP (\h)
+GET				-						ALL						OK			OK			OK		OK			OK
+											[..]      		OK			OK			OK		OK			OK
+											[..,..]				OK			OK			OK		OK			OK
+											RESERVED			OK			OK			OK		OK			OK
+SET				-						-							OK			OK			OK		OK			OK
+											[..,..]				OK			OK			OK		OK			OK
+RESET			-						ALL						OK			OK			OK		OK			OK
+											[..,..]				OK			OK			OK		OK			OK
+TABLE			-						[..]					OK			OK			OK		OK			OK
+											SAMPLE				OK			OK			OK		OK			OK
+COMMENT	ON	TABLE			-							OK			OK
+						INDEX			-							OK			OK
+						COLUMN		-							OK
+						FUNCTION	-							OK
+						TRIGGER		-							OK
+						VIEW			-							OK
+						SCHEMA		-							OK
+						*					[APPEND]			OK			OK
+SHOW			COMMENT ON 	TABLE					OK			OK			OK		OK			OK
+											SCHEMA				OK			OK			OK		OK			OK
+											INDEX					OK			OK
+											COLUMN				OK			OK
+											FUNCTION			OK			OK
+											TRIGGER				OK			OK
+											VIEW					OK			OK
+CREATE		SCHEMA			[..]					OK			OK			OK		OK			OK
+											[..,..]				OK			OK			OK						OK
+											IFNOTEXISTS		OK			OK			OK		OK			OK
+					INDEX				[col]					OK							OK
+											(col,...)			OK							OK
+					TABLE				NOTNULL				OK
+											DEFAULT				OK
+											LIKE()
+					VIEW				[..]
+DROP			SCHEMA			[..]					OK			OK			OK
+											[..,..]				OK			OK			OK
+											IFEXISTS			OK			OK			OK
+											CASCADE				OK			OK
+					TABLE				[..]					OK			OK
+											[..,..]				OK			OK
+					VIEW				[..]
+TRUNCATE	TABLE				[..]					OK			OK			OK
+											[..,..]				OK			OK			OK
+REINDEX		TABLE				[..]					OK			OK
+											[..,..]				OK			OK
+					INDEX				[..]					OK			OK
+											[..,..]				OK			OK
+SELECT	SINGLE TABLE
+				SINGLE FILTER
+				MULTIPLE FILTER
+				INNER JOIN
+				LEFT JOIN
+				RIGHT JOIN
+INSERT	VALUES(),()
+				FROM SELECT
+UPDATE	SINGLE FILTER
+				MULTIPLE FILTER
+				WITH JOIN
+DELETE	FROM
+				WHERE
+				SINGLE FILTER
+				MULTIPLE FILTER
 
 # Data File Anatomy
 
@@ -69,34 +82,34 @@ Pos 1 - 1E == New record, init header
 * dd if=1 count=8 ibs=1 skip=8 conv=notrunc status=none
 * dd if=1 count=200 ibs=1 skip=8 conv=notrunc status=none
 
-bashbd.schemas   [1]
-bashbd.tables    [2]
-bashbd.attrs     [3]
-bashbd.types     [4]
-bashbd.functions [5]
-bashbd.index	 	 [6]
-bashbd.language  [7]
-bashbd.sequences [8]
-bashbd.comments  [9]
-bashbd.views     [10]
+bashdb.schemas   [1]
+bashdb.tables    [2]
+bashdb.attrs     [3]
+bashdb.types     [4]
+bashdb.functions [5]
+bashdb.index	 	 [6]
+bashdb.language  [7]
+bashdb.sequences [8]
+bashdb.comments  [9]
+bashdb.views     [10]
 
-bashbd.schemas
+bashdb.schemas
 	id   			integer
 	name 			varchar(200) [unique]
-bashbd.language
+bashdb.language
 	id				integer
 	name			char(200)
 	handler		char(200)
-bashbd.types
+bashdb.types
 	id				integer
 	name			char(200)
 	fnc_out		char(200)
 	size			integer
-bashbd.tables
+bashdb.tables
 	id				integer
 	name 			char(200)
 	schema_id	integer
-bashbd.attrs
+bashdb.attrs
 	id				integer
 	table_id	integer
 	name			char(200)
@@ -105,27 +118,27 @@ bashbd.attrs
 	default		char(200)
 	null			boolean
 	unique		boolean
-bashbd.functions
+bashdb.functions
 	id					integer
 	name				char(200)
 	handler			varchar
 	lang_id			integer
 	definition	text
-bashbd.index
+bashdb.index
 	id				integer
 	table_id	integer
 	fields		char(200)
-bashbd.sequences
+bashdb.sequences
 	id					integer
 	schema_id		integer
 	name				char(200)
 	last_value	integer
-bashbd.comments
+bashdb.comments
 	id				integer
 	type_id		integer
 	object_id	integer
 	comment		char(200)
-bashbd.views
+bashdb.views
   id					integer
 	schema_id		integer
 	definition	text
@@ -134,7 +147,7 @@ integer = 4 bytes
 char = defined size
 
 schemas
-  - 1 - bashbd
+  - 1 - bashdb
   - 2 - public
 
 tables

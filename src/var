@@ -19,7 +19,7 @@ ERRCODE=-1
 
 # PROGRAMNAME
 #	Name of this program
-#	This value is set at bashbd init
+#	This value is set at bashdb init
 PROGRAM="-1"
 
 #####################
@@ -34,15 +34,20 @@ declare -A CACHE_TABLE
 declare -A GC
 GC[NULL_TEXT]="(null)"
 GC[TIMING]=true	            # command \t
-GC[MIN_LOG]=8		            # 5 = log
+GC[TIMING_PROCESS]=true     # show processing time
+GC[MIN_LOG]=7		            # 5 = log
 GC[INPLACE]=true            # Use inplace updates if possible (Similar to Postgres HotUpdate)
 GC[SHOW_PARSER]=false       # if show parser structure
 GC[SHOW_ROWS_FETCHED]=true  # if show how many rows fetched in the command
 GC[SAMPLE_COUNT]=5          # Number of rows to sample (TABLE SQL command) if not provided
 GC[DEFAULT_SCHEMA]="public" # Default schema to use if not provided
 GC[OUTPUT]="table"          # Output format - table,csv
+GC[COLOR]="normal"          # Color Schema (Normal|colorless)
 
 # To save the original values before the FIRST change
 declare -A GC_ORIGINAL
+
+# Hold the execution timing(init, finish and process)
+declare -A TIMING
 
 fi

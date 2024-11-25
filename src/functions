@@ -1,10 +1,19 @@
 #!/bin/bash
-
 if [ ! $FUNCTIONS_INCLUDED ]; then
 FUNCTIONS_INCLUDED=1
 
 : <<'COMMENT'
 This file contains functions that doesn't fit in others files
+
+_assert					Assert condition
+ask_for_input 	Ask client for some input
+copy_array  		Copy an array preserving the indexes
+finish      		Finish program
+repeat      		Repeat char
+trim        		Trim String
+timing_init			Init timing for a new execution
+timing_finish		Set finish time for the execution
+timing_process	Set when execution finish processing (before printing)
 COMMENT
 
 : <<'FUNCTION'
@@ -61,13 +70,16 @@ Description: Main program help menu
 FUNCTION
 show_help() {
 	writeln "Program help"
-	writeln " -b [dir]   Initialize a new data structure directory"
-	writeln " -c [conf]  Set a configuration file"
-	writeln "            Default = bd.conf"
-	writeln " -d [dir]   Set the database directory"
-	writeln " -h         Show this help"
-	writeln " -s         Start with strace"
-	writeln " -t         Show only records"
+	writeln " -b [dir]    Initialize a new data structure directory"
+	writeln " -c "[...]"  SQL commands"
+	writeln " -d [dir]    Set the database directory"
+	writeln " -h|?        Show this help"
+	writeln " -n          No color in outputs"
+	writeln " -o [format] Output format (csv|table)"
+	writeln " -s          Start with strace"
+	writeln " -t          Show only records"
+	writeln " -v          Show bashdb version"
+	
 	finish 0
 }
 
@@ -87,7 +99,7 @@ ask_for_input() {
 	prepare_history
 
 	while [ true ]; do
-		read -r -e -p "bashbd> " TMP
+		read -r -e -p "bashdb> " TMP
 
 		# if the return code is 1, means that (probably) got a CTRL+D
 		#   so, finish the program
@@ -178,11 +190,11 @@ check_file() {
 		return -1
 	fi
 
-	# Does file is owned by bashbd?
+	# Does file is owned by bashdb?
 	# This prevent that we change things that should not be touched
 	USR=`stat -c %U $1`
-	if [ $USR != "bashbd" ]; then
-		eval $LOGGER ERROR "File is not owned by bashbd user"
+	if [ $USR != "bashdb" ]; then
+		eval $LOGGER ERROR "File is not owned by bashdb user"
 		return -1
 	fi
 
@@ -207,9 +219,9 @@ _assert() {
 }
 
 : <<'FUNCTION'
-Description: Check if the function is running inside bashbd program
+Description: Check if the function is running inside bashdb program
 FUNCTION
-is_bashbd() {
+is_bashdb() {
 	local PRG=`basename $0`
 	LOGGER_MSG="Programa: $PRG"
 	eval $LOGGER LOG
@@ -219,7 +231,7 @@ is_bashbd() {
 }
 
 : <<'FUNCTION'
-Description: Check if $1 is a dir and his a data directory for bashbd
+Description: Check if $1 is a dir and his a data directory for bashdb
 Parameters:
   $1 - DIR
 FUNCTION
@@ -229,9 +241,9 @@ check_data_dir() {
 		eval $LOGGER FATAL "Could not find data structure"
 	fi
 
-	# Is a directory stampped by bashbd?
+	# Is a directory stampped by bashdb?
 	if [ ! -f $DBDATA/$STAMP_FILE ]; then
-		eval $LOGGER FATAL "This directory is not a bashbd dir"
+		eval $LOGGER FATAL "This directory is not a bashdb dir"
 	fi
 }
 
@@ -381,4 +393,34 @@ copy_array() {
 	done
 }
 
+: <<'FUNCTION'
+Description: Init a new timing
+FUNCTION
+timing_init() {
+	TIMING[INIT]=$(${PRG_DATE} +%s%3N)
+	TIMING[PROCESS]=0
+	TIMING[FINAL]=0
+}
+
+timing_finish() {
+	TIMING[FINAL]=$(${PRG_DATE} +%s%3N)
+
+	# Check if need to show
+	if [ "${GC[TIMING]}" == "true" ]; then
+		local TIME_TOTAL=$(expr ${TIMING[FINAL]} - ${TIMING[INIT]})
+		local elapsed_time="Elapsed Time: $TIME_TOTAL ms"
+
+		if [[ ${GC[TIMING_PROCESS]} == true && ${TIMING[PROCESS]} -gt 0 ]]; then
+			local PROCESS_TOTAL=$(expr ${TIMING[PROCESS]} - ${TIMING[INIT]})
+			local process_time=" (Processing: $PROCESS_TOTAL ms)"
+		fi
+		writeln "$elapsed_time${process_time}"
+	fi
+}
+
+timing_process() {
+	TIMING[PROCESS]=$(${PRG_DATE} +%s%3N)
+}
+
+# End of the include
 fi

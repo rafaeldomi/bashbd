@@ -12,17 +12,17 @@ Optionally, the functions can set a error message in the MSGERROR variable
 COMMENT
 
 # Get next value of a sequence
-bashbd.nextval() {
+bashdb.nextval() {
 	:
 }
 
 # Get the actual value of a sequence
-bashbd.currval() {
+bashdb.currval() {
 	:
 }
 
 # Sum of values
-bashbd.sum() {
+bashdb.sum() {
 	local _RET=$1
 	VALUE=0
 	shift
@@ -37,7 +37,7 @@ bashbd.sum() {
 
 # Return the first not-null value
 # COALESCE
-bashbd.coalesce() {
+bashdb.coalesce() {
 	local _RET=$1
 	shift
 	VALUE="$1"
@@ -51,7 +51,7 @@ bashbd.coalesce() {
 
 # Return the maximum value in the array
 # MAX
-bashbd.max() {
+bashdb.max() {
 	local _RET=$1
 	shift
 	VALUE="$1"
@@ -68,7 +68,7 @@ bashbd.max() {
 
 # Return the minimum value in the array
 # MIN
-bashbd.min() {
+bashdb.min() {
 	local _RET=$1
 	shift
 	VALUE="$1"
@@ -85,7 +85,7 @@ bashbd.min() {
 
 # Count how many values exists in the array
 # Count
-bashbd.count() {
+bashdb.count() {
 	local _RET=$1
 	VALUE=${#}
 	let VALUE=$VALUE-1	
@@ -99,7 +99,7 @@ Description: Average function for avg SQL function
 Parameters:
   $1 - Array with values
 FUNCTION
-bashbd.avg() {
+bashdb.avg() {
 	local _RET=$1
 	local TOTN=0
 	local TOTV=0
@@ -119,6 +119,6 @@ bashbd.avg() {
 }
 
 # Order
-bashbd.order() {
+bashdb.order() {
 	:
 }

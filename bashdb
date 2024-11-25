@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Source our code
-for file in $(find src -type f); do
+path=$(dirname $0)
+for file in $(find $path/src -type f); do
 	source $file
 done
 
@@ -27,7 +28,7 @@ do_pre_init() {
 	# Set the program name
 	PROGRAM=$($PRG_BASENAME $0)
 
-	while getopts "?svhtb:d:m:c:o:" arg; do
+	while getopts "?svhtnd:b:m:c:o:" arg; do
 		case $arg in
 		  o)
 				GC[OUTPUT]=${OPTARG}
@@ -49,6 +50,7 @@ do_pre_init() {
 				# Run the bootstrap and finish, nothing more
 				# [ bootstrap ]
 				DO_BOOTSTRAP=1
+				DBDATA="${OPTARG}"
 				;;
 			d)
 				DBDATA="${OPTARG}"
@@ -63,6 +65,10 @@ do_pre_init() {
 				INPUT_COMMAND=1
 				CMD="${OPTARG}"
 				;;
+			n)
+				# NoColor
+				GC[COLOR]="nocolor"
+				;;
 		esac
 	done
 
@@ -70,6 +76,7 @@ do_pre_init() {
 		GC[MIN_LOG]=1
 		GC[SHOW_PARSER]=false
 		GC[TIMING]=false
+		GC[TIMING_PROCESS]=false
 		GC[SHOW_ROWS_FETCHED]=false
 	fi
 
@@ -139,6 +146,12 @@ main_loop() {
 		   [ "${INPUT_CMD^^}" == "HELP" ]; then
 			# [ menu ]
 			cmd_menu "${INPUT_CMD}"
+
+			# -c parameter
+			if [ ! -z $INPUT_COMMAND ]; then
+				return 0
+			fi
+
 			continue
 		fi
 

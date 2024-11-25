@@ -28,7 +28,7 @@ test_sum() {
 	sumres[8]=-400
 
 	for pos in `seq 1 ${#sumvalues[@]}`; do
-		bashbd.sum RET ${sumvalues[pos]}
+		bashdb.sum RET ${sumvalues[pos]}
 		echo "${FUNCNAME[0]} - Test $pos: `test_eq $RET ${sumres[pos]}`"
 	done
 
@@ -58,7 +58,7 @@ test_max() {
 	mres[8]=9292
 
 	for pos in `seq 1 ${#mval[@]}`; do
-		bashbd.max RET ${mval[pos]}
+		bashdb.max RET ${mval[pos]}
 		echo "${FUNCNAME[0]} - Test $pos: `test_eq $RET ${mres[pos]}`"
 	done
 	let TOTAL_TESTS=$TOTAL_TESTS+${#mval[@]}
@@ -85,7 +85,7 @@ test_min() {
 	minres[7]=-23
 
 	for pos in `seq 1 ${#minval[@]}`; do
-		bashbd.min RET ${minval[pos]}
+		bashdb.min RET ${minval[pos]}
 		echo "${FUNCNAME[0]} - Test $pos: `test_eq $RET ${minres[pos]}`"
 	done
 	let TOTAL_TESTS=$TOTAL_TESTS+${#minval[@]}
@@ -106,7 +106,7 @@ test_count() {
 	cres[4]=17
 
 	for pos in `seq 1 ${#cval[@]}`; do
-		bashbd.count RET ${cval[pos]}
+		bashdb.count RET ${cval[pos]}
 		echo "${FUNCNAME[0]} - Test $pos: `test_eq $RET ${cres[pos]}`"
 	done
 	let TOTAL_TESTS=$TOTAL_TESTS+${#cval[@]}
@@ -129,7 +129,7 @@ test_avg() {
 	cres[5]="6"
 
 	for pos in `seq 1 ${#cval[@]}`; do
-		bashbd.avg RET ${cval[pos]}
+		bashdb.avg RET ${cval[pos]}
 		echo "${FUNCNAME[0]} - Test $pos: `test_eq $RET ${cres[pos]}`"
 	done
 	let TOTAL_TESTS=$TOTAL_TESTS+${#cval[@]}

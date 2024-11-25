@@ -4,7 +4,7 @@ reset_execute() {
 	LOGGER_MSG="Reset option: ${TOKENS[SETTING_full]}"
 	eval $LOGGER DEBUG
 
-  declare -p GC_ORIGINAL
+  # declare -p GC_ORIGINAL
 
 	if [ ${#GC_ORIGINAL[@]} -le 0 ]; then
 		LOGGER_MSG="No changes done"
@@ -42,11 +42,10 @@ reset_execute() {
 		done
 	fi
 
-	declare -A TAB_PRINTER
-	TAB_PRINTER[header]="| Result${MGC_FLD}|"
-	TAB_PRINTER[fields]=1
-	TAB_PRINTER[rows]=1
-	TAB_PRINTER[1]="| OK${MGC_FLD}|"
-
-	printer TAB_PRINTER
+	# [ printer ]
+	declare -A PRINTER
+	printer_init PRINTER "Result"
+	printer_new_row PRINTER
+	printer_row_field PRINTER "OK"
+	printer PRINTER
 }

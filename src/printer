@@ -1,5 +1,27 @@
 #!/bin/bash
 
+: <<'COMMENT'
+How to use
+Those functions manages the struct that is used to print the result on screen
+Look at this example:
+
+# Declare the PRINTER variable that will hold all the data
+declare -p PRINTER
+
+# Initialize the PRINTER variable, pass the fields names
+printer_init PRINTER "field1 field2..."
+
+# Indiciates that we are defining a new row to output
+printer_new_row PRINTER
+
+# For each field you should call a printer_row_field in order
+printer_row_field PRINTER "value1"	# value1 for field1
+printer_row_field PRINTER "value2"	# value2 for field2
+
+# Finally output to screen
+printer PRINTER
+COMMENT
+
 : <<'FUNCTION'
 Description: Initialize a struct for holding printer data
 Parameters:
@@ -15,14 +37,18 @@ printer_init() {
 	LPD[fields]=${#temp_array[@]}
 }
 
-printer_add() {
-	# Local Printer Data
-	declare -n LPD=$1
+printer_new_row() {
+	declare -n _LPD=$1
+	let _LPD[rows]++
+	let _LPD[fn]=0
+}
 
-	# We inc before
-	let LPD[rows]++
+printer_row_field() {
+	declare -n _LPD=$1
+	local _value="$2"
 
-	LPD[${LPD[rows]}]="$2"
+	_LPD[${_LPD[rows]},${_LPD[fn]}]="$_value"
+	let _LPD[fn]++
 }
 
 printer() {
@@ -36,6 +62,11 @@ printer() {
 	local line=""
 	local output=""
 
+  if [ -z ${PRINT[rows]} ]; then
+		${PRG_ECHO} "No rows found"
+		return 0
+	fi
+
 	if [ "${GC[OUTPUT]^^}" == "TABLE" ]; then
 		repeat output "+${MGC_FLD}" $NoC
 		delimiter=$(${PRG_PRINTF} "%s+" $output)
@@ -43,17 +74,16 @@ printer() {
 		# Define header
 		local -a temp_array=(${PRINT[header]})
 		header="|"
-		for ((i = 0; i < ${#temp_array[@]};i++)); do
+		for ((i = 0; i < ${#temp_array[@]}; i++)); do
 			header="$header ${temp_array[i]}${MGC_FLD}|"
 		done
 
 		table="${delimiter}\n${header}\n${delimiter}\n"
 
 		for ((i=1; i <= ${PRINT[rows]}; i++)); do
-			local -a aline=(${PRINT[$i]})
 			line="|"
-			for ((f=0; f < ${#aline[@]} ;f++ )); do
-				line="$line ${aline[f]}${MGC_FLD}|"
+			for ((f=0; f < $NoC; f++)); do
+				line="$line ${PRINT[$i,$f]}${MGC_FLD}|"
 			done
 
 			table="${table}${line}\n"
@@ -80,12 +110,17 @@ printer() {
 			local -a aline=(${PRINT[$i]})
 			line=""
 		  delimiter=""
-			for ((f=0; f < ${#aline[@]} ;f++ )); do
-				line="$line${delimiter}${aline[f]}"
+
+			for ((f=0; f < $NoC ;f++ )); do
+				line="$line${delimiter}${PRINT[$i,$f]}"
 				delimiter=";"
 			done
 
-			table="${table}${line}\n"
+			if [ $i -eq ${PRINT[rows]} ]; then
+				table="${table}${line}"
+			else
+				table="${table}${line}\n"
+			fi
 		done
 
 		${PRG_ECHO} -e $table
@@ -121,26 +156,36 @@ printer_dump_table() {
 	fi
 	attrs_get_header ATTRS
 
-	declare -A TAB_PRINT
-	printer_init TAB_PRINT ${ATTRS[total]} "${ATTRS[header]}"
+	# [ printer ]
+	declare -A PRINTER
+	printer_init PRINTER "${ATTRS[header]}"
 
+	# [ storage ]
 	declare -A DATA
 	DATA[file]=$_TABLE
-	# [ storage ]
 	init_file DATA
 
 	# [ storage.next_record ]
 	unset REC
+	local row=1
 	while next_record DATA REC; do
-		local ROW="|"
-		local k=0
+	  local k=0
 		local value=""
 
+		if [[ -n $_SAMPLE && $_SAMPLE -gt 0 ]]; then
+		  if [ $row -gt $_SAMPLE ]; then
+			  break
+			fi
+			let row++
+		fi
+
+		printer_new_row PRINTER
+
 		# Loop the fields in the record struct
-		for k in `$PRG_SEQ 1 ${REC[REC_TOT]}`; do
+		for (( k=1; k <= ${REC[REC_TOT]}; k++)); do
 			# Check if value is null
 			if [ "${REC[$k]}" == "$MGC_NULL" ]; then
-				ROW="$ROW${GC[NULL_TEXT]}${MGC_FLD}|"
+			  printer_row_field PRINTER "${GC[NULL_TEXT]}"
 			else
 				value="${REC[$k]}"
 				# Check the type of this attr
@@ -155,17 +200,15 @@ printer_dump_table() {
 					fi
 					value="$IV"
 				fi
-				
-				ROW="$ROW${value}${MGC_FLD}|"
+
+				printer_row_field PRINTER "$value"
 			fi
 		done
-
-		printer_add TAB_PRINT "$ROW"
 	done
 
 	if [ ! "$1" == "" ]; then
 		${PRG_ECHO} "$1"
 	fi
 
-	printer TAB_PRINT
+	printer PRINTER
 }

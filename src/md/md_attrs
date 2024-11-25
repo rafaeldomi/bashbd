@@ -58,9 +58,9 @@ attrs_search() {
 attrs_get_header() {
 	declare -n FA=$1
 	local i=0
-	local val="|"
+	local val=""
 	for i in `$PRG_SEQ 1 ${FA[total]}`; do
-		val="$val ${FA[${i}_name]} ${MGC_FLD}|"
+		val="$val ${FA[${i}_name]}"
 	done
 	FA[header]="$val"
 }

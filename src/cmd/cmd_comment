@@ -25,11 +25,17 @@ comment_execute() {
   fi
 
   # Find the objectId
+  # [ macros - "M_GET_xxxx" ]
   case "$_TYPE" in
     $COMMENT_TYPE_SCHEMA)
       P_SCHEMA="$_OBJECT"
       eval $M_GET_SCHEMA
       _OBJECTID=${SS[id]}
+      ;;
+    $COMMENT_TYPE_TABLE)
+      P_TABLE="$_OBJECT"
+      eval $M_GET_TABLE
+      _OBJECTID=${TS[id]}
       ;;
   esac
 
@@ -52,6 +58,9 @@ comment_execute() {
 
   # [ md_table ]
   table_row_insert ROW
+
+  # [ functions ]
+  timing_process
 
   writeln "COMMENT OK"
   return 0

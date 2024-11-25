@@ -16,29 +16,30 @@ get_execute() {
 	local option="${TOKENS[OPTION_1]^^}"
 
 	if [ "$option" == "RESERVED" ]; then
-		declare -A TAB_PRINTER
-
-		TAB_PRINTER[header]="| value${MGC_FLD}|"
-		TAB_PRINTER[fields]=1
-
 		local k
 		# [ RESERVED = parserv2 ]
 		# First order RESERVED
 		local ORDERED_RESERVED=($(${PRG_ECHO} ${RESERVED[@]} | ${PRG_TR} " " "\n" | ${PRG_SORT}))
 
-		for k in `seq 0 ${#ORDERED_RESERVED[@]}`; do
-			TAB_PRINTER[$((k+1))]="| ${ORDERED_RESERVED[$k]} ${MGC_FLD}|"
+		# [ functions ]
+		timing_process
+
+		# [ printer ]
+		declare -A PRINTER
+		printer_init PRINTER "value"
+
+		for ((k=0; k < ${#ORDERED_RESERVED[@]}; k++ )); do
+		  printer_new_row PRINTER
+			printer_row_field PRINTER "${ORDERED_RESERVED[$k]}"
 		done
 
-		TAB_PRINTER[rows]=${#RESERVED[@]}
-
-		printer TAB_PRINTER
+		printer PRINTER
 		return 0
 	fi
 
 	# check if value exists
   if [[ ! "$option" == "ALL" ]]; then
-		for i in `seq 1 ${TOKENS[OPTION_total]}`; do
+	  for ((i=1; i<= ${TOKENS[OPTION_total]}; i++)); do
 		  setting="${TOKENS[OPTION_$i]^^}"
 			if [ -z ${GC[$setting]} ]; then
 				LOGGER_MSG="Setting $setting is not recognized"
@@ -56,17 +57,24 @@ get_execute() {
 	  # [ GC = var ]
 		local ORDERED_ALL=($(${PRG_ECHO} ${!GC[@]} | ${PRG_TR} " " "\n" | ${PRG_SORT}))
 		for i in "${ORDERED_ALL[@]}"; do
-		  printer_add PRINTER "$i ${GC[$i]}"
+		  printer_new_row PRINTER
+		  printer_row_field PRINTER "$i"
+			printer_row_field PRINTER "${GC[$i]}"
 		done
 	else
 	  local k
-	  for i in `seq 1 ${TOKENS[OPTION_total]}`; do
+		for ((i=1 ; i <= ${TOKENS[OPTION_total]}; i++)); do
 			local setting="${TOKENS[OPTION_$i]^^}"
 			local value="${GC[$setting]}"
 
-			printer_add PRINTER "$setting $value"
+			printer_new_row PRINTER
+			printer_row_field PRINTER "$setting"
+			printer_row_field PRINTER "$value"
 		done
 	fi
+
+	# [ functions ]
+  timing_process
 
 	printer PRINTER
 

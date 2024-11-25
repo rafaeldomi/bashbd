@@ -38,8 +38,9 @@ readonly MGC_FLD=$(echo -en "\x1D")
 readonly MGC_HEADER=$(echo -en "\x02")
 
 ### STAMP
-readonly STAMP_FILE=bashbd.stamp
+readonly STAMP_FILE=bashdb.stamp
 
+### Comment definition
 readonly COMMENT_TYPE_TABLE=0
 readonly COMMENT_TYPE_INDEX=1
 readonly COMMENT_TYPE_COLUMN=2
@@ -62,7 +63,7 @@ declare -A COMMENT_TYPE_MAP=(
 ### Others
 # Version
 readonly VERSION=0
-readonly HISTORY_FILE=~/.bashbd.history
+readonly HISTORY_FILE=~/.bashdb.history
 
 # These const are being used to control the position of the record in the datafile
 #  and the total of fields of that record

@@ -9,19 +9,17 @@ table_execute() {
 	eval $LOGGER DEBUG
 
 	# Find the table struct
-	declare -A TS
-	TS[table]="$value"
-	if ! table_get_struct_by_name TS; then
-		LOGGER_MSG="Table '${TS[table]}' not found"
-		eval $LOGGER ERROR
-		return 1
-	fi
+	P_TABLE="$value"
+	eval $M_GET_TABLE
 
-	# Just call the printer_dump_table
 	SAMPLE=-1
 	if [ "${TOKENS[SAMPLE]}" == "true" ]; then
 		SAMPLE=${GC[SAMPLE_COUNT]}
 	fi
 
-	printer_dump_table "" ${TS[id]} $SAMPLE
+	hex_to_int ID "${TABLE_RECORD[1]}"
+
+  # Just call the printer_dump_table
+	# [ printer ]
+	printer_dump_table "" ${ID} $SAMPLE
 }
