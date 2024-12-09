@@ -21,6 +21,7 @@ e = case f1 = m (match):
    - if match, continues
    - if not match, cannot more tokens/strings
 b = Boolean modifier
+s = check start of string
 
 field 3 = Token to search
 if:
@@ -48,6 +49,11 @@ codes
 4 - SQL Command not found
 COMMENT
 
+# --- Command help
+# [] - Optional
+# () - Group of
+declare -A DEF_COMMANDS_HELP
+
 # -------------------
 # Auxs
 # -------------------
@@ -61,15 +67,23 @@ declare -r DEF_KV=(s:::KEY m::=: s:::VALUE)
 declare -r DEF_TRUNCATE=(i::TRUNCATE:CMD i:o:TABLE: s:l::TABLE e:)
 
 # TABLE (NAME) [SAMPLE]
+DEF_COMMANDS_HELP[TABLE_description]="Show table records"
+DEF_COMMANDS_HELP[TABLE_syntax]="TABLE (TABLE) [SAMPLE]"
 declare -r DEF_TABLE=(i::TABLE:CMD s:::TABLE m:ob:SAMPLE e:)
 
 # SET (setting=value,...)
+DEF_COMMANDS_HELP[SET_description]="Change global configuration variable"
+DEF_COMMANDS_HELP[SET_syntax]="SET [config=value,...]"
 declare -r DEF_SET=(i::SET:CMD g:l:DEF_KV:KV: e:)
 
 # GET (ALL|setting,setting)
+DEF_COMMANDS_HELP[GET_description]="Get global configuration variables. If get reserved will get the reserved tokens"
+DEF_COMMANDS_HELP[GET_syntax]="GET [RESERVED|ALL|setting,...]"
 declare -r DEF_GET=(i::GET:CMD s:l::OPTION e:)
 
 # RESET (ALL|setting,setting)
+DEF_COMMANDS_HELP[RESET_description]="Revert the global configuration variables to its default values"
+DEF_COMMANDS_HELP[RESET_syntax]="RESET [ALL|config,...]"
 declare -r DEF_RESET=(i::RESET:CMD s:l::SETTING e:)
 
 # REINDEX (INDEX|TABLE) name
@@ -81,11 +95,15 @@ declare -r DEF_COMMENT_TYPES=(TABLE INDEX COLUMN FUNCTION TRIGGER VIEW SCHEMA SE
 declare -r DEF_COMMENT=(i::COMMENT:CMD i::ON o::DEF_COMMENT_TYPES:TYPE s:::OBJECT i::IS s:::VALUE m:ob:APPEND e:)
 
 # SHOW COMMENT ON (TABLE|INDEX|COLUMN|FUNCTION|TRIGGER)
+DEF_COMMANDS_HELP[SHOW_description]="Get object's comment"
+DEF_COMMANDS_HELP[SHOW_syntax]="SHOW COMMENT ON (TABLE|INDEX|COLUMN|FUNCTION|TRIGGER) (object)"
 declare -r DEF_SHOW=(i::SHOW:CMD i::COMMENT i::ON o::DEF_COMMENT_TYPES:TYPE s:::OBJECT)
 
 # Creates
 
 # CREATE SCHEMA [IFNOTEXISTS] (name,...)
+DEF_COMMANDS_HELP[CREATE_SCHEMA_description]="Create a new schema"
+DEF_COMMANDS_HELP[CREATE_SCHEMA_syntax]="CREATE SCHEMA [IFNOTEXISTS] (schema,...)"
 declare -r DEF_CREATE_SCHEMA=(i::CREATE:CMD i::SCHEMA:OBJECT m:ob:IFNOTEXISTS s:l::SCHEMA e:)
 
 # CREATE TABLE (name) ( {DEF_ATTRS}  )
@@ -98,9 +116,12 @@ declare -r DEF_CREATE_INDEX=(i::CREATE:CMD i:o:UNIQUE:UNIQUE i::INDEX:OBJECT i:o
 
 # Drops
 # DROP SCHEMA [IFEXISTS] (schema,...) [CASCADE]
+DEF_COMMANDS_HELP[DROP_SCHEMA_description]="Drop an existing schema"
+DEF_COMMANDS_HELP[DROP_SCHEMA_syntax]="DROP SCHEMA [IFEXISTS] (schema,...) [CASCADE]"
 declare -r DEF_DROP_SCHEMA=(i::DROP:CMD i::SCHEMA:OBJECT m:ob:IFEXISTS s:l::SCHEMA m:ob:CASCADE e:)
 
 # DROP TABLE [IFEXISTS] (table, ...)
+DEF_COMMANDS_HELP[DROP_TABLE_syntax]="DROP TABLE [IFEXISTS] (table,...)"
 declare -r DEF_DROP_TABLE=(i::DROP:CMD i::TABLE:OBJECT m:ob:IFEXISTS s:l::TABLE e:)
 
 # INSERT
@@ -132,13 +153,15 @@ declare -r DEF_SEL_PO=(g::DEF_SEL_FIELDS:FP m::\):)
 
 declare -r DEF_OPERS=(- \+ '\*' / \=)
 
-# PO - Parenthesis Open
+# PO - parentheses Open
 declare -r DEF_PO=(\()
-# PC - Parenthesis Close
+# PC - parentheses Close
 declare -r DEF_PC=(\))
 
-declare -A PARSE_DEF
-readonly PARSE_DEF=(
+# Parsing backslash commands here give us the ability to interleave sql commands with backslashs (like \env or \function)
+declare -r DEF_MENU_BACKSLASH=(i:s:\\:BACKSLASH e:)
+
+declare -r -A PARSE_DEF=(
 	[TRUNCATE]=DEF_TRUNCATE
 	[TABLE]=DEF_TABLE
 	[CREATE_SCHEMA]=DEF_CREATE_SCHEMA
@@ -182,16 +205,22 @@ parse() {
 
 	# Search for a definition
 	local U="${PARSE_DEF[$TKN]}"
+	if [ "${TKN:0:1}" == "\\" ]; then
+		local U="DEF_MENU_BACKSLASH"
+	fi
 
 	if [ ! -z $U ]; then
 		declare -n CMD_DEF="$U"
 	else
+	  parse_log "Definition not found"
 		ERROR[CODE]=4
 		ERROR[MSG]="Command $TKN Not found"
 		return ${ERROR[CODE]}
 	fi
 
 	do_parse
+
+	declare -p TOKENS
 }
 
 make_prop() {
@@ -207,27 +236,33 @@ do_parse() {
 	echo "** DO PARSE"
 	echo "** DEF PRINCIPAL: ${CMD_DEF[@]}"
 
-	pos_sql=1 # Aonde estamos no SQL
+	pos_sql=1 # Our position in SQL string
 	level=0
 
 	do_loop CMD_DEF
 
-	if [ ! -z ${ERROR[code]} ]; then
-		echo "ERROR: ${ERROR[msg]}"
+  if [ ! -z ${ERROR[code]} ]; then
+		return 1
 	else
-		echo "FINISHED"
+	  return 0
 	fi
 
-	for key in $(echo "${!TOKENS[@]}" | tr ' ' '\n' | sort); do
-	   echo "$key=${TOKENS[$key]}"
-	done
-	declare -p TOKENS
+	# if [ ! -z ${ERROR[code]} ]; then
+	# 	echo "ERROR: ${ERROR[msg]}"
+	# else
+	# 	echo "FINISHED"
+	# fi
+
+	# for key in $(echo "${!TOKENS[@]}" | tr ' ' '\n' | sort); do
+	#    echo "$key=${TOKENS[$key]}"
+	# done
+	# declare -p TOKENS
 }
 
 # $1 - DEFINITION
 # $2 - prefix to add to name
 do_loop() {
-	# This let is NOT 'local'
+	# This let is NOT in 'local' scope
 	let level++
 	local prf_local="${2}"
 
@@ -239,6 +274,7 @@ do_loop() {
 	local mod_list=0
 	local mod_end=0
 	local mod_bool=0
+	local mod_start=0
 
 	declare -n DEF_CMD="$1"
 
@@ -261,6 +297,7 @@ do_loop() {
 		fi
 
 		# Open the fields definition
+		#   Break DEF_CMD in an array in DEF
 		make_prop "${DEF_CMD[$pos_def]}"
 
 		# Check for the modifiers
@@ -268,11 +305,12 @@ do_loop() {
 		mod_list=0
 		mod_end=0
 		mod_bool=0
+		mod_start=0
 		if [ ! -z "${DEF[1]}" ]; then
 			echo "  | Modifiers: ${DEF[1]}"
 
 			let sz=${#DEF[1]}-1
-			for i in `seq 0 $sz`; do
+			for (( i=0 ; i <= $sz ; i++)); do
 				sv="${DEF[1]:$i:1}"
 				case $sv in
 					o) mod_opc=1
@@ -283,26 +321,30 @@ do_loop() {
 						;;
 					b) mod_bool=1
 						;;
+					s) mod_start=1
+					  ;;
 				esac
 			done
 		fi
-		parse_log "  |  - Opcional: $mod_opc | List: $mod_list | End: $mod_end | Boolean: $mod_bool"
+		parse_log "  |  - Optional: $mod_opc | List: $mod_list | End: $mod_end | Boolean: $mod_bool | Start: $mod_start"
 
+		# value_token is what is expected, according to the definition
+		# value_sql is what we are reading from the SQL command
 		value_token="${DEF[2]}"
 		value_sql="${TOKENS[$pos_sql]}"
 
 		echo "  | VALUE_SQL: $value_sql | VALUE_TOKEN: $value_token"
 
-		# Se for ; e tipo e no TOKENS e nao for DEF[0] = e podemos dar erro
+		# If ';' AND type 'e' in TOKENS AND not DEF[0] we can give error
 		if [[ "$value_sql" == ";" &&
 			  "${TOKENS[${pos_sql}_t]}" == "e" &&
 			  ! "${DEF[0]}" == "e" ]]; then
-			echo "Termino de SQL antes do esperado"
+			echo "SQL terminated before expected"
 			break
 		fi
 
 		# DEF
-		#  0 = identificador -- i s e g
+		# field 0 = identifier -- i s e g
 		case ${DEF[0]} in
 			# Next token
 			n)  parse_log "  | GROUP: Next Token"
@@ -417,11 +459,11 @@ do_loop() {
 
 				if [ $found == 0 ]; then
 					if [ ! "${DEF[1]}" == "o" ]; then
-						echo "SQL nao formado corretamente"
-						echo "Opcional? ${DEF[1]}"
+						echo "Malformed SQL"
+						echo "Optional? ${DEF[1]}"
 						break
 					else
-						echo "não achou mas é opcional. Anda def"
+						echo "Not found, but its optional, walk def"
 
 						let pos_def++
 						continue
@@ -528,9 +570,9 @@ do_loop() {
 					echo "SQL syntax error. Check SQL"
 					break
 				fi
-
 				;;
-			# Identificador / literal
+
+			# Identifier / literal
 			i) 
 				parse_log "  | GROUP: Identifier"
 				parse_log "  | Search for: $value_token"
@@ -538,20 +580,32 @@ do_loop() {
 				if [ "$value_sql" == "$value_token" ]; then
 					parse_log "  | FOUND"
 					if [ ! -z ${DEF[3]} ]; then
-						# Salvar o nosso valor de m no def[3]
+						# Save the 'm' value in def[3]
 						TOKENS[${DEF[3]}]="$value_sql"
 					fi
 				else
-					# Check if has a optional modifier, if so just continue
-					if [ $mod_opc -eq 1 ]; then
-						let pos_def++
-						continue
-					else
-						# if not optional, we have a syntax error
-						ERROR[code]=3
-						ERROR[msg]="Expected operator not found. Check your SQL"
-						parse_log "${ERROR[msg]}"
-						break
+				  local MATCH_START=0
+				  # Check for "start" modifier
+				  if [ $mod_start -eq 1 ]; then
+						if [[ "$value_sql" =~ "${value_token}"* ]]; then
+							parse_log "  | FOUND by start"
+							TOKENS[${DEF[3]}]="$value_sql"
+							MATCH_START=1
+						fi
+					fi
+
+					if [ $MATCH_START -eq 0 ]; then
+						# Check if has a optional modifier, if so just continue
+						if [ $mod_opc -eq 1 ]; then
+							let pos_def++
+							continue
+						else
+							# if not optional, we have a syntax error
+							ERROR[code]=3
+							ERROR[msg]="Expected operator not found. Check your SQL"
+							parse_log "${ERROR[msg]}"
+							break
+						fi
 					fi
 				fi
 
@@ -642,6 +696,7 @@ do_loop() {
 				let pos_def++
 				;;
 
+			# indicator of end ;
 			e)
 				echo "This is an indicator that should not have any more tokens in array"
 
@@ -663,12 +718,12 @@ do_loop() {
 				;;
 		esac
 
-		#declare -p TOKENS
+		# declare -p TOKENS
 
 		let g++
-		if [ $g -gt 20 ]; then
+		if [ $g -gt 30 ]; then
 			echo ""
-			echo "more than  100loops. Leaving"
+			echo "more than 30 loops. Exiting"
 			break
 		fi
 	done
@@ -678,6 +733,7 @@ do_loop() {
 		echo "${ERROR[msg]}"
 	fi
 
+	# Leaving this level
 	let level--
 }
 
@@ -734,7 +790,6 @@ parse_sql() {
 
 	unset TOKENS
 	declare -gA TOKENS
-	# TOKENS[SQL]="$1"
 
 	parse_log "Total size in char: $ts"
 
@@ -747,9 +802,9 @@ parse_sql() {
 	fi
 
 	# Instead of using a process that tokenize all string based on a separator
-	#  like (read -a TOKENS <<< $1), I realize that doing a tokenizer give me more
+	#  like (read -a TOKENS <<< $1), I realized that doing a tokenizer give me more
 	#  control in this step and gave best results
-	for i in `seq 0 $ts`; do
+	for (( i = 0; i <= $ts; i++)); do
 		# Some variable inside the loop must be declared with the local identifier
 		local c="${par:i:1}"
 
@@ -868,7 +923,7 @@ parse_sql() {
 	done
 
 	# If we reach this point and the variable in_tkn = 1 means that we have a value
-	#	to create token
+	#	 to create token
 	if [ $in_tkn == 1 ]; then
 		create_tkn "$value" "generic"
 	fi
@@ -877,8 +932,7 @@ parse_sql() {
 	declare -p TOKENS
 
 	let sz=${TOKENS[total]}
-	for tot in `seq 1 $sz`; do
-		#echo "$tot"
+	for ((tot = 1; tot <= $sz ; tot ++)); do
 		echo "KEY: ${TOKENS[$tot]}"
 		echo "  type: ${TOKENS[${tot}_t]}  | pos: ${TOKENS[${tot}_pos]}  | level: ${TOKENS[${tot}_l]}"
 	done

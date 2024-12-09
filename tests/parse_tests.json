@@ -1,5 +1,26 @@
 [
   {
+    "sql": "\\f",
+    "expected": {
+      "BACKSLASH": "\\f"
+    }
+  },
+  {
+    "sql": "\\env VARIABLE",
+    "expected": {
+      "BACKSLASH": "\\env",
+      "2": "VARIABLE"
+    }
+  },
+  {
+    "sql": "\\h CREATE TABLE",
+    "expected": {
+      "BACKSLASH": "\\h",
+      "2": "CREATE", 
+      "3": "TABLE"
+    }
+  },
+  {
     "sql": "show comment on table tablename",
     "expected": {
       "CMD": "SHOW",

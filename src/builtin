@@ -9,7 +9,34 @@ All the functions should have a return code:
  1 - Fault
 
 Optionally, the functions can set a error message in the MSGERROR variable
+
+bashdb.nextval
+bashdb.currval
+bashdb.sum
+bashdb.coalesce
+bashdb.max
+bashdb.min
+bashdb.count
+bashdb.avg
+bashdb.order
 COMMENT
+
+bashdb.capitalize() {
+	local _RET=$1
+	eval $_RET="${2@u}"
+	return 0
+}
+
+bashdb.tolower() {
+	local _RET=$1
+	eval $_RET="${2@L}"
+}
+
+bashdb.toupper() {
+	local _RET=$1
+	eval $_RET="${2@U}"
+	return 0
+}
 
 # Get next value of a sequence
 bashdb.nextval() {

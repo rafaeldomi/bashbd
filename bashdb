@@ -58,9 +58,6 @@ do_pre_init() {
 			s)
 				STRACE=1
 				;;
-			m)
-				MENUOPTION="${OPTARG}"
-				;;
 			c)
 				INPUT_COMMAND=1
 				CMD="${OPTARG}"
@@ -104,36 +101,24 @@ do_pre_init() {
 	check_data_dir $DBDATA
 
 	cd $DBDATA
-
-	if [ ! -z $MENUOPTION ]; then
-		case "$MENUOPTION" in
-			# [ menu ]
-			s) menu_list_schemas ;;
-			t) menu_list_tables ;;
-			S) menu_list_sequences ;;
-			l) menu_list_lang ;;
-			y) menu_list_types ;;
-		esac
-		finish 0
-	fi
 }
 
 main_loop() {
-	# [ bd ]
+	# [ bashdb ]
 	do_pre_init "$@"
 
 	eval $LOGGER DEBUG1 "Using database folder: $DBDATA"
 	eval $LOGGER LOG "Program ready"
 	eval $LOGGER LOG "Type help for menu or exit to finish"
 
-	# This is the program main loop, ethernal
+	# This is the program main loop, eternal
 	while [ true ]; do
 		# [ functions ]
 		# ask_for_input exposes INPUT_CMD
 		if [ -z $INPUT_COMMAND ]; then
 			ask_for_input
 		else
-			LOGGER_MSG="Command: $CMD"
+			LOGGER_MSG="Command: ${CMD}"
 			eval $LOGGER DEBUG1
 			INPUT_CMD="${CMD}"
 		fi
@@ -141,19 +126,26 @@ main_loop() {
 		LOGGER_MSG="Input '${INPUT_CMD}'"
 		eval $LOGGER DEBUG1
 
-		# Help or subcommand
-		if [ "${INPUT_CMD:0:1}" == "\\" ] ||
-		   [ "${INPUT_CMD^^}" == "HELP" ]; then
+		# HELP
+		if [ "${INPUT_CMD^^}" == "HELP" ]; then
 			# [ menu ]
-			cmd_menu "${INPUT_CMD}"
-
-			# -c parameter
-			if [ ! -z $INPUT_COMMAND ]; then
-				return 0
-			fi
-
-			continue
+			menu_show_help
+			return 0
 		fi
+
+		# Help or subcommand
+		# if [ "${INPUT_CMD:0:1}" == "\\" ] ||
+		#    [ "${INPUT_CMD^^}" == "HELP" ]; then
+		# 	# [ menu ]
+		# 	cmd_menu "${INPUT_CMD}"
+
+		# 	# -c parameter
+		# 	if [ ! -z $INPUT_COMMAND ]; then
+		# 		return 0
+		# 	fi
+
+		# 	continue
+		# fi
 
 		# Oh no, I'd like to see you soon
 		if [ "${INPUT_CMD^^}" == "EXIT" ]; then

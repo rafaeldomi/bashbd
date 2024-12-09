@@ -1,23 +1,18 @@
 #!/bin/bash
 
 : <<'COMMENT'
-cmd_menu: Show menu
-menu_show_help_cmd: Show command definition
+backslash_menu			Executes the backslash commands
+menu_show_help_cmd	Show commands definition
 COMMENT
 
-cmd_menu() {
-	if [ "${1^^}" == "HELP" ]; then
-		menu_show_help
-		return 0
-	fi
-
+backslash_menu() {
 	# Break in tokens
 	# TKN 0 = The command
 	# TKN 1 = Option (optinal by command)
 	local TKN=(${@})
 
-	# Vim shows that using "$array_var[x]:init:end" is wrong, but is correct
-	case "${TKN[0]:1:1}" in
+	# Vim shows that using "$array_var[x]:init" is wrong, but is correct
+	case "${TKN[0]:1}" in
 		q)  finish 0;;
 		## TODO
 		## Find a better place to put the menu_list functions
@@ -36,10 +31,21 @@ cmd_menu() {
 		b)  menu_call_function ${TKN[@]:1} ;;
 		\?)	menu_show_help;;
 		h)  menu_show_help_cmd ${TKN[@]:1} ;;
-		*)  echo "Menu Comando $PAR não reconhecido"
+		env) menu_show_variable ${TKN[@]} ;;
+		*)  echo "Option '$PAR' not recognized"
 	esac
 
 	return 0
+}
+
+menu_show_variable() {
+	if [ -z $2 ]; then
+		LOGGER_MSG="\env but variable not supplied"
+		eval $LOGGER ERROR 
+		return 1
+	fi
+
+	log_variable $2
 }
 
 menu_show_help() {
@@ -59,6 +65,8 @@ menu_show_help() {
 	writeln "\\\t       List tables"
 	writeln "\\\y       List types"
 	writeln ""
+	writeln "\\\env     Print internal variable - just for dev"
+	writeln ""
 	writeln "\\\q       Quit program"
 }
 
@@ -77,37 +85,16 @@ menu_show_help_cmd() {
 		OUTPUT=$(${PRG_ECHO} "$COMMANDS" | ${PRG_COLUMN} -s, -t)
 	fi
 
-	# echo $1
-	if [ "$CMD" == "GET" ]; then
-	  OUTPUT="SQL Command: GET
-Description: Get global configuration variables. If get reserved will get the reserved tokens
-Syntax: GET [RESERVED|ALL|setting,...]"
-	fi
-	if [ "$CMD" == "SET" ]; then
-		OUTPUT="SET [config=value,...]"
-	fi
-	if [ "$CMD" == "RESET" ]; then
-	  OUTPUT="RESET [ALL|config,...]"
-	fi
-	if [ "$CMD" == "TABLE" ]; then
-	  OUTPUT="TABLE [table] (SAMPLE)"
-	fi
-	if [ "$CMD" == "CREATE" ]; then
-	  if [ "$SUBCMD" == "SCHEMA" ]; then
-	  	OUTPUT="CREATE SCHEMA [IFNOTEXISTS] (schema,...)"
-		fi
-	fi
-	if [ "$CMD" == "DROP" ]; then
-		if [ "$SUBCMD" == "SCHEMA" ]; then
-			OUTPUT="DROP SCHEMA [IFEXISTS] (schema,...) [CASCADE]"
-		fi
-	fi
-	if [ "$CMD" == "SHOW" ]; then
-	  OUTPUT="SHOW COMMENT ON (table|schema|function|sequence) (object)"
-	fi
+  local idx_syntax="${CMD}${SUBCMD:+"_${SUBCMD}"}_syntax"
+	local idx_desc="${CMD}${SUBCMD:+"_${SUBCMD}"}_description"
 
-	# echo $OUTPUT
+  OUTPUT="${DEF_COMMANDS_HELP[$idx_syntax]}"
+	OUTPUT_DESC="${DEF_COMMANDS_HELP[$idx_desc]}"
 
+  writeln "SQL Command: ${CMD} ${SUBCMD}"
+	if [ ! "$OUTPUT_DESC" == "" ]; then
+		writeln "Description: $OUTPUT_DESC"
+	fi
 	writeln "$OUTPUT"
 }
 

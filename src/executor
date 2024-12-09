@@ -9,51 +9,52 @@ execute() {
 	parse_sql "${INPUT_CMD}" > /dev/null
 	RET="$?"
 
-	LOGGER_MSG="SQL '${TOKENS[SQL]}'"
-	eval $LOGGER DEBUG1
+	if [ -n ${TOKENS[BACKSLASH]} ]; then
+		backslash_menu ${TOKENS[SQL]}
+	else
+		# LOGGER_MSG="SQL '${TOKENS[SQL]}'"
+		# eval $LOGGER DEBUG1
 
-	if [ ! "$RET" == "0" ]; then
-		LOGGER_MSG="There is a error in the SQL: ${ERROR[msg]}"
-		eval $LOGGER ERROR
+		if [ ! "$RET" == "0" ]; then
+			LOGGER_MSG="There is a error in the SQL: ${ERROR[msg]}"
+			eval $LOGGER ERROR
 
-		return $RET
+			return $RET
+		fi
+
+		if [ ${GC[SHOW_PARSER]} == true ]; then
+			declare -p TOKENS
+		fi
+
+		CMD="${TOKENS[CMD]}"
+		if [[ "$CMD" == "DROP" ||
+					"$CMD" == "CREATE" ]]; then
+			CMD="${CMD}_${TOKENS[OBJECT]}"
+		fi
+
+		LOGGER_MSG="Command |$CMD|"
+		eval $LOGGER DEBUG1
+
+		# The name of the function is standardized
+		local fnc_call="${CMD,,}_execute"
+
+		fn_exist $fnc_call
+		RES=$?
+
+		if [ ! "$RES" == "0" ]; then
+			LOGGER_MSG="Unknown command: ${CMD}"
+			eval $LOGGER ERROR
+			return 1
+		fi
+
+		# [ functions ]
+		timing_init
+
+		eval $fnc_call TOKENS
+
+		# [ functions ]
+		timing_finish
 	fi
-
-  if [ ${GC[SHOW_PARSER]} == true ]; then
-		declare -p TOKENS
-	fi
-
-	# Find out the object codes
-	#post_parser
-
-	CMD="${TOKENS[CMD]}"
-	if [[ "$CMD" == "DROP" ||
-		    "$CMD" == "CREATE" ]]; then
-		CMD="${CMD}_${TOKENS[OBJECT]}"
-	fi
-
-	LOGGER_MSG="Command |$CMD|"
-	eval $LOGGER DEBUG1
-
-	# The name of the function is standardized
-	local fnc_call="${CMD,,}_execute"
-
-	fn_exist $fnc_call
-	RES=$?
-
-	if [ ! "$RES" == "0" ]; then
-		LOGGER_MSG="Unknown command: ${CMD}"
-		eval $LOGGER ERROR
-		return 1
-	fi
-
-	# [ functions ]
-	timing_init
-
-	eval $fnc_call TOKENS
-
-  # [ functions ]
-	timing_finish
 
 	if [ ${#TOKENS[REMAIN]} -gt 0 ]; then
 		INPUT_CMD="${TOKENS[REMAIN]}"

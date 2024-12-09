@@ -4,13 +4,17 @@ if [ ! $LOG_INCLUDED ]; then
 LOG_INCLUDED=1
 
 : <<'COMMENT'
-writeln 	Just a simple echo
-log				Normal log
-debug			Messages of debug, program internals
+debug					Messages of debug, program internals
+log 					Normal log
+log_can_log		Check if can show log
+log_variable	Show variable by name
+writeln				Just a simple echo
 LOGGER
 	-> Use this version
 		eval $LOGGER [LEVEL] [MSG]
-	-> To messages that have variable in it, or ", save the content to the LOGGER_MSG variable
+	-> If your message has variables or " set LOGGER_MSG instead passing by parameter:
+	  LOGGER_MSG="An example of ${VAR_WHATEVER}"
+		eval $LOGGER [LEVEL]
 COMMENT
 
 # COLORS
@@ -82,7 +86,7 @@ log () {
 	local fnc_name=""
 	local VALUES=""
 
-	# Order of the importance of logs
+	# Order of log level
 	# 1 - FATAL
 	# 2 - ERROR
 	# 3 - WARNING
@@ -100,7 +104,7 @@ log () {
 		VALUES=($@)
 		SPC=""
 		local i=0
-		for i in `$PRG_SEQ 3 ${#}`; do
+		for (( i = 3; i <= ${#}; i++  )); do
 			MSG="$MSG${SPC}${VALUES[i]}"
 			SPC=" "
 		done
@@ -109,9 +113,9 @@ log () {
 	# If is ERROR or FATAL do a writeln too
 	if [[ "$_LEVEL" == "ERROR" || "$_LEVEL" == "FATAL" ]]; then
 	  if [ ${GC[COLOR]} == "normal" ]; then
-	  	MSG="${CL_RED}${MSG}${CL_NC}"
+		  MSG_COLOR="${CL_RED}"
 		fi
-		writeln "${MSG}"
+		writeln "${MSG_COLOR}${MSG}${CL_NC}"
 	fi
 
 	# Check if we do log
@@ -124,7 +128,7 @@ log () {
 		fnc_name="${_FUNC:0:18}.."
 	fi
 
-	$PRG_PRINTF "%s [%20s:%-3s %6s]: %b\n" "`date +\"%D %T\"`" "$fnc_name" "$_LINE" "$_LEVEL" "$MSG"
+	$PRG_PRINTF "%s [%20s:%-3s %6s]: %b%s%b\n" "`date +\"%D %T\"`" "$fnc_name" "$_LINE" "$_LEVEL" "$MSG_COLOR" "$MSG" "$CL_NC"
 
 	if [ "$_LEVEL" == "FATAL" ]; then
 		$PRG_PRINTF "%s [%14s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "EXITING PROGRAM BECAUSE OF FATAL ERROR"
@@ -140,10 +144,7 @@ FUNCTION
 log_variable() {
 	local _V=$1
 
-	# Always DEBUG2
-	if  log_can_log DEBUG2; then
-		declare -p $_V
-	fi
+	declare -p $_V
 }
 
 fi

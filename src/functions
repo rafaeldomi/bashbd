@@ -3,17 +3,33 @@ if [ ! $FUNCTIONS_INCLUDED ]; then
 FUNCTIONS_INCLUDED=1
 
 : <<'COMMENT'
-This file contains functions that doesn't fit in others files
-
-_assert					Assert condition
-ask_for_input 	Ask client for some input
-copy_array  		Copy an array preserving the indexes
-finish      		Finish program
-repeat      		Repeat char
-trim        		Trim String
-timing_init			Init timing for a new execution
-timing_finish		Set finish time for the execution
-timing_process	Set when execution finish processing (before printing)
+_assert							Assert condition
+append_fmt_string
+append_row_simple
+ask_for_input				Ask client for some input
+check_data_dir
+check_file
+copy_array					Copy an array preserving the indexes
+find_binaries
+finish							Finish program
+fn_exist
+hex_to_int
+init_empty_row
+int_to_hex
+isEmptyString
+is_bashdb
+prepare_history
+removeEmptyLines
+repeat							Repeat char
+repeatString				Repeat String
+report_finish
+show_help						Show help menu
+sort_array
+timing_finish				Set finish time for the execution
+timing_init					Init timing for a new execution
+timing_process			Set when execution finish processing (before printing)
+trim								Trim String, using bash expanstion
+trimString					Another version of trimString, using sed
 COMMENT
 
 : <<'FUNCTION'
