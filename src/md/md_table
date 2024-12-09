@@ -3,7 +3,10 @@
 # md for metadata
 
 : <<'COMMENT'
+record_update
+table_change_data
 table_get_struct_by_name : Get table structure by table name
+table_row_insert
 COMMENT
 
 : <<'FUNCTION'
@@ -394,4 +397,30 @@ table_get_id() {
 	:
 }
 
+: <<'FUNCTION'
+Description: Update a row. This function will check if can update in-place
+Parameters:
+ $1 - ROW Record (initialized by table_row_init)
+ $2 - Old Record
+ $3 - New record
+FUNCTION
+table_row_update() {
+	local _ROW=$1
+  declare -n _OLDRECORD=$2
+	declare -n _NEWRECORD=$3
+	local inplace=0 # false
 
+	# Field loop and check whats is changing and if can update in-place
+
+  if [ $inplace -eq 0 ]; then
+	  LOGGER_MSG="Updating row in-place"
+		eval $LOGGER DEBUG1
+
+	  # [ md/md_table ] 
+		tuple_set_notalive $CTABLE_COMMENTS ${_NEWRECORD[REC_POS]}
+		table_row_add_value _ROW ${_NEWRECORD[1]} ${_NEWRECORD[2]} ${_NEWRECORD[2]} "${_NEWRECORD[3]}"
+		table_row_insert _ROW
+	else
+		:
+	fi
+}

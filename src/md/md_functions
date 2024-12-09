@@ -1,0 +1,32 @@
+#!/bin/bash
+
+function_get_struct_by_name() {
+  declare -n _FS=$1
+  declare -n _OUTPUT=$2
+
+  unset _OUTPUT
+  local FUNCTION
+
+  declare -A DATA
+  DATA[file]=$CTABLE_FUNCTIONS
+  init_file DATA
+
+  # [ scan ]
+  declare -A FILTER
+  FILTER[total]="1"
+  FILTER[stop]="true"
+  FILTER[0,0]="3"
+  FILTER[0,1]="${_FS[function]}"
+
+  simple_scan DATA OUTPUT_RECORD FILTER
+  eval $M_CHECK_RES
+
+  if [ -z OUTPUT_RECORD ]; then
+    LOGGER_MSG="Scan Failed"
+    eval $LOGGER ERROR
+    return 1
+  fi
+
+  copy_array OUTPUT_RECORD _OUTPUT
+  return 0
+}

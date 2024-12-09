@@ -17,3 +17,27 @@ FUNCTION
 tuple_get_tuple_field1() {
 	:
 }
+
+: <<'FUNCTION'
+Description: Mark the tuple as not alive
+Parameters:
+ $1 - Table ID
+ $2 - pos
+FUNCTION
+tuple_set_notalive() {
+  local _TABLEID=$1
+	local _TUPLEPOS=$2
+	local _POS=0
+	let _POS=${_TUPLEPOS}+1
+
+  declare -A CH_DATA
+	CH_DATA[table]=${_TABLEID}
+	CH_DATA[pos]=${_POS}
+	CH_DATA[data]="0" # Marking not alive
+	if ! table_change_data CH_DATA; then
+		eval $LOGGER ERROR "Fail to change data on table"
+		declare -p CH_DATA
+		return 1
+	fi
+	return 0
+}

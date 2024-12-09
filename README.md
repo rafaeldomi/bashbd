@@ -33,8 +33,8 @@ For help type \?
 # [1. BashDB. What is it?](#bashdb)
 BashDB is a DBMS writeten entirely in bash.
 Once there are a huge number of DBMS out there, the question that may arise is: But why?
-I script in bash for a long time and I'm a Postgres DBA for so long too, so I asked myself if I could do this, as a challenge to myself. This program is not meant to be perfomatic.
-During this process I had learned a lot not only of bash, but also about the postgres internals (a lot of code readed).
+I script in bash for a long time and I'm a Postgres DBA for so long as well, so I asked me if I could do this, as a challenge to myself. This program is not meant to be performatic.
+During this process I have learned a lot, not only of bash, but also about the postgres internals (a lot of code read).
 
 Its important to say, of course, DO NOT use this program in a production environment.
 
@@ -77,9 +77,10 @@ fnc() {
 ```
 
 ## [2.2 Returning values](#22-returning-values)
-If the function must return a value, the first parameter of the function is used for this purpose. Is similar to an c function that has the first parameter returning by reference.
+If the function must return a value, the first parameter of the function is used for this purpose. Is similar to c function that has the first parameter returning by reference.
 
 Example:
+```bash
 #!/bin/bash
 
 # $1 - The return
@@ -90,18 +91,19 @@ fnc() {
 	# Setting the variable, by reference. Must have the "eval" command
 	eval $_RET="Value inside the function"
 }
+```
 
 # Just pass the name of the variable, without the "$" symbol
 fnc VALUE
 echo $VALUE ## << this is going to print "Value inside the function"
 
 Note: There are some cases that is not compliant with this convention . These are, in majority, the firsts functions created.
-
 Note 2: Prefer this method of returning values than returning with echo, because this way is more faster. Further read: xxxx
 
 ## [2.3 Function Header](#23-function-header)
 The function must have all the parameters declared, like this:
 
+```bash
 #!/bin/bash
 
 : <<'FUNCTION'
@@ -115,6 +117,7 @@ concat() {
 
 	eval $_RET="$2$3"
 }
+```
 
 ## [2.4 About "source" or "dot" to import](#24-about-source-or-dot-to-import)
 
@@ -240,8 +243,9 @@ bashdb.tables
 bashdb.attrs
 bashdb.types
 bashdb.functions
-bashdb.index
-bashdb.lang
+bashdb.indexes
+bashdb.languages
 bashdb.sequences
 bashdb.comments
+bashdb.views
 ```

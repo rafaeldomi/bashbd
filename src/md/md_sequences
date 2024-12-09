@@ -1,5 +1,66 @@
 #!/bin/bash
 
+sequence_get_struct_by_name() {
+  declare -n _SS=$1
+  declare -n _OUTPUT=$2
+
+  unset _OUTPUT
+  local SEQUENCE
+
+# Check for schema
+	# Check if there is a better way to do this, its kind ugly
+	local IFS='.'
+	local opened_seq=(${_SS[sequence]})
+	unset IFS
+
+	if [ "${#opened_seq[@]}" == 1 ]; then
+		_SS[schema]=2 # default to public
+		_SS[sequence]="${opened_seq[0]}"
+	elif [ "${#opened_seq[@]}" == 2 ]; then
+		# Search for the schema id
+		# load SCHEMA_RECORD
+		P_SCHEMA="${opened_seq[0]}"
+		eval $M_GET_SCHEMA
+
+		hex_to_int schema_id "${SCHEMA_RECORD[1]}"
+
+		_SS[schema]="${opened_seq[0]}"
+		_SS[sequence]="${opened_seq[1]}"
+	else
+		LOGGER_MSG="There is no implementation that works with '${_SS[sequence]}'"
+		eval $LOGGER ERROR
+		return 1
+	fi
+
+	LOGGER_MSG="Using schema: ${_SS[schema]}"
+	eval $LOGGER DEBUG
+
+  declare -A DATA
+  DATA[file]=$CTABLE_SEQUENCE
+  init_file DATA
+
+  # [ scan ]
+  declare -A FILTER
+  FILTER[total]="1"
+  FILTER[stop]="true"
+  FILTER[0,0]="2"
+  FILTER[0,1]="${_SS[schema]}"
+  FILTER[1,0]="3"
+  FILTER[1,1]="${_SS[sequence]}"
+
+  simple_scan DATA OUTPUT_RECORD FILTER
+  eval $M_CHECK_RES
+
+  if [ -z OUTPUT_RECORD ]; then
+    LOGGER_MSG="Scan Failed"
+    eval $LOGGER ERROR
+    return 1
+  fi
+
+  copy_array OUTPUT_RECORD _OUTPUT
+  return 0
+}
+
 # $1 - output
 # $2 - sequence id
 sequence_nextval() {

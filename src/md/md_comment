@@ -41,6 +41,10 @@ comment_get_struct_by_type_objectId() {
   declare -A FILTER
 	FILTER[stop]="true"
 	FILTER[total]=2
+	# [x,y]
+	# x = filter ID
+	# y=0 field number
+	# y=1 field value to match
   FILTER[0,0]="2"
   FILTER[0,1]="${_CS[type]}"
   FILTER[1,0]="3"

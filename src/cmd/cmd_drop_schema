@@ -63,18 +63,14 @@ drop_schema_execute() {
 		LOGGER_MSG="Will mark not alive. file: $CTABLE_SCHEMAS - pos ${SCHEMA_RECORD[REC_POS]}"
 		eval $LOGGER DEBUG
 
-		local cvl=0
-		let cvl=${SCHEMA_RECORD[REC_POS]}+1
-		declare -A CH_DATA
-		CH_DATA[table]=$CTABLE_SCHEMAS
-		CH_DATA[pos]=$cvl
-		CH_DATA[data]="0"
-		if ! table_change_data CH_DATA; then
-			eval $LOGGER ERROR "Fail to change data on table"
-			declare -p CH_DATA
-			return 1
-		fi
+		# [ storage/tuple ]
+		tuple_set_notalive $CTABLE_SCHEMAS ${SCHEMA_RECORD[REC_POS]}
 
 		writeln "Schema ${schema} dropped"
 	done
+
+	# [ functins ]
+	timing_process
+
+	return 0
 }

@@ -8,9 +8,6 @@ comment_execute() {
   local _OBJECT=${_SQLTKN[OBJECT]}
   local _OBJECTID=-1
 
-  declare -A ROW
-  ROW[table]=$CTABLE_COMMENTS
-
   if [ -z ${_SQLTKN[TYPE]} ]; then
     LOGGER_MSG="Invalid syntax for COMMENT command"
     eval $LOGGER ERROR $LOGGER_MSG
@@ -35,9 +32,12 @@ comment_execute() {
     $COMMENT_TYPE_TABLE)
       P_TABLE="$_OBJECT"
       eval $M_GET_TABLE
-      _OBJECTID=${TS[id]}
+      _OBJECTID=${TABLE_RECORD[1]}
       ;;
   esac
+
+  LOGGER_MSG="Found objectId ${_OBJECTID}"
+  eval $LOGGER DEBUG1
 
   # Check if exists
   # [ md_comment ]
@@ -45,19 +45,43 @@ comment_execute() {
   CS[type]=${_TYPE}
   CS[objectId]=${_OBJECTID}
   comment_get_struct_by_type_objectId CS RECORD
+  FOUND=$?
 
   # [ md_table ]
+  declare -A ROW
+  ROW[table]=$CTABLE_COMMENTS
   table_row_init ROW
 
-  # Comment table
-  # id = pass null for sequence
-  # type_id
-  # object_id
-  # comment
-  table_row_add_value ROW ${MGC_NULL} $_TYPE $_OBJECTID ${_SQLTKN[VALUE]}
+  # If found we need to mark the old one as not alive
+  if [ $FOUND -eq 0 ]; then
+    LOGGER_MSG="Comment already exists"
+    eval $LOGGER DEBUG1
 
-  # [ md_table ]
-  table_row_insert ROW
+    # [ functions ]
+    copy_array RECORD NEW_RECORD
+
+    NEW_RECORD[4]="${_SQLTKN[VALUE]}"
+
+    # [ md/md_table ]
+    # ROW from table_row_init
+    # RECORD is the original record, before update
+    # NEW_RECORD is the record that contains the new data
+    table_row_update ROW RECORD NEW_RECORD
+    eval $M_CHECK_RES
+
+    # [ storage/tuple ]
+    # tuple_set_notalive $CTABLE_COMMENTS ${RECORD[REC_POS]}
+  else
+    # Comment table
+    # id = pass null for sequence
+    # type_id
+    # object_id
+    # comment
+    table_row_add_value ROW ${MGC_NULL} $_TYPE $_OBJECTID "${_SQLTKN[VALUE]}"
+
+    # [ md_table ]
+    table_row_insert ROW
+  fi
 
   # [ functions ]
   timing_process

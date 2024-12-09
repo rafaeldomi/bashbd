@@ -44,6 +44,10 @@ create_schema_execute() {
 	# [ md_table ]
 	table_row_insert ROW
 
+	# [ functions ]
+	timing_process
+
+	# finishing
 	writeln "CREATE SCHEMA OK"
 	return 0
 }

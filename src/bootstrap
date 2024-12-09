@@ -144,6 +144,7 @@ bootstrap() {
 	## Table: Types
 	## id				int
 	## name			varchar(200)
+	## fnc_in   varchar(200)
 	## fnc_out	varchar(200)
 	## size			int
 	storage_create_file "TABLE" ${CTABLE_TYPES}
@@ -151,11 +152,13 @@ bootstrap() {
 	unset ROW
 	declare -A ROW
 
-	row_init int 200 200 int
+	row_init int 200 200 200 int
 
-	bootstrap_add_value 1 int  fnc_out 4
-	bootstrap_add_value 2 char ${MGC_NULL} ${MGC_NULL}
-	bootstrap_add_value 3 bool ${MGC_NULL} 1
+	bootstrap_add_value 1 int  bashdb.fnc_in_int 	bashdb.fnc_out_int	4
+	bootstrap_add_value 2 char ${MGC_NULL} 			 	${MGC_NULL} 				-1
+	bootstrap_add_value 3 bool ${MGC_NULL} 			 	${MGC_NULL} 				1
+	bootstrap_add_value 4 text ${MGC_NULL} 			 	${MGC_NULL} 				-1
+  bootstrap_add_value 5 json bashdb.fnc_in_json	bashdb.fnc_out_json	-1
 
 	row_append_simple ${CTABLE_TYPES}
 
@@ -179,7 +182,7 @@ bootstrap() {
 	bootstrap_add_value $CTABLE_TYPES types 1
 	bootstrap_add_value $CTABLE_FUNCTIONS functions 1
 	bootstrap_add_value $CTABLE_INDEX indexes 1
-	bootstrap_add_value $CTABLE_LANG language 1
+	bootstrap_add_value $CTABLE_LANG languages 1
 	bootstrap_add_value $CTABLE_SEQUENCE sequences 1
 	bootstrap_add_value $CTABLE_COMMENTS comments 1
 	bootstrap_add_value $CTABLE_VIEWS views 1
@@ -192,25 +195,25 @@ bootstrap() {
 	###########################
 	## Table: functions
 	## id					int
+	## schema_id  int
 	## name				200
 	## handler		200
 	## lang_id		int
-	## definition	text
 	storage_create_file "TABLE" ${CTABLE_FUNCTIONS}
 
 	unset ROW
 	declare -A ROW
 
-	row_init int 200 200 int text
+	row_init int int 200 200 int text
 
-	bootstrap_add_value 1 sum bashdb.sum 1
-	bootstrap_add_value 2 coalesce bashdb.coalesce 1
-	bootstrap_add_value 3 max bashdb.max 1
-	bootstrap_add_value 4 min bashdb.min 1
-	bootstrap_add_value 5 count bashdb.count 1
-	bootstrap_add_value 6 avg bashdb.avg 1
-	bootstrap_add_value 7 nextval bashdb.nextval 1
-	bootstrap_add_value 8 currval bashdb.currval 1
+	bootstrap_add_value 1 -1 sum 			bashdb.sum 				1
+	bootstrap_add_value 2 -1 coalesce	bashdb.coalesce 	1
+	bootstrap_add_value 3 -1 max 			bashdb.max 				1
+	bootstrap_add_value 4 -1 min 			bashdb.min 				1
+	bootstrap_add_value 5 -1 count 		bashdb.count 			1
+	bootstrap_add_value 6 -1 avg 			bashdb.avg 				1
+	bootstrap_add_value 7 -1 nextval 	bashdb.nextval 		1
+	bootstrap_add_value 8 -1 currval 	bashdb.currval 		1
 
 	row_append_simple ${CTABLE_FUNCTIONS}
 
@@ -261,6 +264,7 @@ bootstrap() {
 	# Relation Types
 	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} id 			1 -1 	"sequence:3" 	0 true
 	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} name 		2 200 ${MGC_NULL}	 	0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} fnc_in 	2 200 ${MGC_NULL} 	0 false
 	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} fnc_out 	2 200 ${MGC_NULL} 	0 false
 	bootstrap_add_value $((attr_id++)) ${CTABLE_TYPES} size 		1 -1 	${MGC_NULL} 	0 false
 
@@ -280,10 +284,10 @@ bootstrap() {
 
 	# Relation functions
 	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} id 					1 -1 	"sequence:6" 0 true
+	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} schema_id		1 -1 	${MGC_NULL}  0 false
 	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} name 				2 200 ${MGC_NULL}  0 false
-	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} schema_id 		1 -1  ${MGC_NULL}  0 false
-	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} function 		2 200 ${MGC_NULL}  0 false
-	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} language_id 	1 -1 	${MGC_NULL}  0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} handler	 		2 200 ${MGC_NULL}  0 false
+	bootstrap_add_value $((attr_id++)) ${CTABLE_FUNCTIONS} lang_id	 		2 -1  ${MGC_NULL}  0 false
 
 	# Relation index
 	bootstrap_add_value $((attr_id++)) ${CTABLE_INDEX} id 		1 -1 "sequence:7" 0 true
@@ -336,6 +340,10 @@ bootstrap() {
 	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_SCHEMA 1 "this schema holds metadata info"
 	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_SCHEMA 2 "public schema"
 
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_FUNCTION 1 "function to sum"
+
+	bootstrap_add_value $((comment_id++)) $COMMENT_TYPE_SEQUENCE 1 "sequence for sequence table"
+
 	# [ storage ]
 	row_append_simple ${CTABLE_COMMENTS}
 
@@ -343,9 +351,9 @@ bootstrap() {
 
 	##############################
 	## Table: sequences
-	# id   		 	integer
+	# id   		 		integer
 	# schema_id  	integer
-	# name		 	200
+	# name		 		200
 	# last_value	integer
 	storage_create_file "TABLE" ${CTABLE_SEQUENCE}
 

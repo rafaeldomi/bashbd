@@ -10,6 +10,8 @@ show_execute() {
 
   # declare -p TOKENS
 
+  declare -p $1
+
   if [ -z ${_SQLTKN[TYPE]} ]; then
     LOGGER_MSG="Invalid syntax for SHOW command"
     eval $LOGGER ERROR $LOGGER_MSG
@@ -34,6 +36,16 @@ show_execute() {
       P_TABLE="$_OBJECT"
       eval $M_GET_TABLE
       _OBJECTID=${TABLE_RECORD[1]}
+      ;;
+    $COMMENT_TYPE_FUNCTION)
+      P_FUNCTION="$_OBJECT"
+      eval $M_GET_FUNCTION
+      _OBJECTID=${FUNCTION_RECORD[1]}
+      ;;
+    $COMMENT_TYPE_SEQUENCE)
+      P_SEQUENCE="$_OBJECT"
+      eval $M_GET_SEQUENCE
+      _OBJECTID=${SEQUENCE_RECORD[1]}
       ;;
   esac
 

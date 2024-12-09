@@ -59,7 +59,7 @@ menu_show_help() {
 	writeln "\\\t       List tables"
 	writeln "\\\y       List types"
 	writeln ""
-	writeln "\\q        Quit program"
+	writeln "\\\q       Quit program"
 }
 
 : <<'FUNCTION'
@@ -73,13 +73,15 @@ menu_show_help_cmd() {
 	local SUBCMD="${2^^}"
 
 	if [ -z $1 ]; then
-		COMMANDS="GET,SET,RESET,TABLE,CREATE SCHEMA,SHOW COMMENT"
+		COMMANDS="GET,SET,RESET,TABLE,CREATE SCHEMA,SHOW COMMENT,DROP SCHEMA"
 		OUTPUT=$(${PRG_ECHO} "$COMMANDS" | ${PRG_COLUMN} -s, -t)
 	fi
 
 	# echo $1
 	if [ "$CMD" == "GET" ]; then
-	  OUTPUT="GET [ALL|RESERVED|setting,...]"
+	  OUTPUT="SQL Command: GET
+Description: Get global configuration variables. If get reserved will get the reserved tokens
+Syntax: GET [RESERVED|ALL|setting,...]"
 	fi
 	if [ "$CMD" == "SET" ]; then
 		OUTPUT="SET [config=value,...]"
@@ -95,8 +97,13 @@ menu_show_help_cmd() {
 	  	OUTPUT="CREATE SCHEMA [IFNOTEXISTS] (schema,...)"
 		fi
 	fi
+	if [ "$CMD" == "DROP" ]; then
+		if [ "$SUBCMD" == "SCHEMA" ]; then
+			OUTPUT="DROP SCHEMA [IFEXISTS] (schema,...) [CASCADE]"
+		fi
+	fi
 	if [ "$CMD" == "SHOW" ]; then
-	  OUTPUT="SHOW COMMENT ON (table|schema) (object)"
+	  OUTPUT="SHOW COMMENT ON (table|schema|function|sequence) (object)"
 	fi
 
 	# echo $OUTPUT

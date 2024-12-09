@@ -37,3 +37,23 @@ M_GET_TABLE='
     eval $LOGGER ERROR;
     return 1;
   fi'
+
+M_GET_FUNCTION='
+  declare -A FS;
+  declare -A FUNCTION_RECORD;
+  FS[function]="$P_FUNCTION";
+  if ! function_get_struct_by_name FS FUNCTION_RECORD; then
+    LOGGER_MSG="Function "$P_FUNCTION" not found";
+    eval $LOGGER ERROR;
+    return 1;
+  fi'
+
+M_GET_SEQUENCE='
+  declare -A SS;
+  declare -A SEQUENCE_RECORD;
+  SS[sequence]="$P_SEQUENCE";
+  if ! sequence_get_struct_by_name SS SEQUENCE_RECORD; then
+    LOGGER_MSG="Sequence "$P_SEQUENCE" not found";
+    eval $LOGGER ERROR;
+    return 1;
+  fi'

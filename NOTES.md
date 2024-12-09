@@ -11,11 +11,12 @@ RESET			-						ALL						OK			OK			OK		OK			OK
 											[..,..]				OK			OK			OK		OK			OK
 TABLE			-						[..]					OK			OK			OK		OK			OK
 											SAMPLE				OK			OK			OK		OK			OK
-COMMENT	ON	TABLE			-							OK			OK
+COMMENT	ON	TABLE			-							OK			OK			OK
 						INDEX			-							OK			OK
 						COLUMN		-							OK
 						FUNCTION	-							OK
 						TRIGGER		-							OK
+						SEQUENCE	-							
 						VIEW			-							OK
 						SCHEMA		-							OK
 						*					[APPEND]			OK			OK
@@ -23,9 +24,10 @@ SHOW			COMMENT ON 	TABLE					OK			OK			OK		OK			OK
 											SCHEMA				OK			OK			OK		OK			OK
 											INDEX					OK			OK
 											COLUMN				OK			OK
-											FUNCTION			OK			OK
+											FUNCTION			OK			OK			OK
 											TRIGGER				OK			OK
 											VIEW					OK			OK
+											SEQUENCE			OK
 CREATE		SCHEMA			[..]					OK			OK			OK		OK			OK
 											[..,..]				OK			OK			OK						OK
 											IFNOTEXISTS		OK			OK			OK		OK			OK
@@ -35,10 +37,10 @@ CREATE		SCHEMA			[..]					OK			OK			OK		OK			OK
 											DEFAULT				OK
 											LIKE()
 					VIEW				[..]
-DROP			SCHEMA			[..]					OK			OK			OK
-											[..,..]				OK			OK			OK
-											IFEXISTS			OK			OK			OK
-											CASCADE				OK			OK
+DROP			SCHEMA			[..]					OK			OK			OK						OK
+											[..,..]				OK			OK			OK						OK
+											IFEXISTS			OK			OK			OK						OK
+											CASCADE				OK			OK										OK
 					TABLE				[..]					OK			OK
 											[..,..]				OK			OK
 					VIEW				[..]
@@ -87,8 +89,8 @@ bashdb.tables    [2]
 bashdb.attrs     [3]
 bashdb.types     [4]
 bashdb.functions [5]
-bashdb.index	 	 [6]
-bashdb.language  [7]
+bashdb.indexes	 [6]
+bashdb.languages [7]
 bashdb.sequences [8]
 bashdb.comments  [9]
 bashdb.views     [10]
