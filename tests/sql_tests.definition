@@ -1,3 +1,21 @@
+:backslash
+\s
+>>>EXPECTED>>>
+Listing schemas
+id;name
+1;bashdb
+2;public
+
+:env
+\env SZ_INT
+>>>EXPECTED>>>
+declare -r SZ_INT="4"
+
+:\function
+\function bashdb.capitalize testing
+>>>EXPECTED>>>
+Testing
+
 :001_get_default_schema
 GET default_schema
 >>>EXPECTED>>>
@@ -31,7 +49,7 @@ id;name;schema_id
 5;functions;1
 
 :table_command
-table bashdb.language
+table bashdb.languages
 >>>EXPECTED>>>
 id;name;handler
 1;builtin;(null)
@@ -77,6 +95,7 @@ REINDEX
 RESET
 SCHEMA
 SELECT
+SEQUENCE
 SET
 SHOW
 TABLE

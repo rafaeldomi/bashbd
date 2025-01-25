@@ -69,7 +69,6 @@ json_to_assoc_array() {
   declare -p assoc_array
 }
 
-
 main() {
   echo "** Starting parser checks"
   local total_errors=0

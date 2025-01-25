@@ -10,7 +10,7 @@ show_execute() {
 
   # declare -p TOKENS
 
-  declare -p $1
+  # declare -p $1
 
   if [ -z ${_SQLTKN[TYPE]} ]; then
     LOGGER_MSG="Invalid syntax for SHOW command"

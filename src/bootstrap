@@ -206,14 +206,17 @@ bootstrap() {
 
 	row_init int int 200 200 int text
 
-	bootstrap_add_value 1 -1 sum 			bashdb.sum 				1
-	bootstrap_add_value 2 -1 coalesce	bashdb.coalesce 	1
-	bootstrap_add_value 3 -1 max 			bashdb.max 				1
-	bootstrap_add_value 4 -1 min 			bashdb.min 				1
-	bootstrap_add_value 5 -1 count 		bashdb.count 			1
-	bootstrap_add_value 6 -1 avg 			bashdb.avg 				1
-	bootstrap_add_value 7 -1 nextval 	bashdb.nextval 		1
-	bootstrap_add_value 8 -1 currval 	bashdb.currval 		1
+	local function_id=1
+
+	bootstrap_add_value $((function_id++)) -1 sum 			bashdb.sum 				1
+	bootstrap_add_value $((function_id++)) -1 coalesce	bashdb.coalesce 	1
+	bootstrap_add_value $((function_id++)) -1 max 			bashdb.max 				1
+	bootstrap_add_value $((function_id++)) -1 min 			bashdb.min 				1
+	bootstrap_add_value $((function_id++)) -1 count 		bashdb.count 			1
+	bootstrap_add_value $((function_id++)) -1 avg 			bashdb.avg 				1
+	bootstrap_add_value $((function_id++)) -1 nextval 	bashdb.nextval 		1
+	bootstrap_add_value $((function_id++)) -1 currval 	bashdb.currval 		1
+	bootstrap_add_value $((function_id++)) -1 hash 			bashdb.hash		 		1
 
 	row_append_simple ${CTABLE_FUNCTIONS}
 

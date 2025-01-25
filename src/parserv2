@@ -124,6 +124,9 @@ declare -r DEF_DROP_SCHEMA=(i::DROP:CMD i::SCHEMA:OBJECT m:ob:IFEXISTS s:l::SCHE
 DEF_COMMANDS_HELP[DROP_TABLE_syntax]="DROP TABLE [IFEXISTS] (table,...)"
 declare -r DEF_DROP_TABLE=(i::DROP:CMD i::TABLE:OBJECT m:ob:IFEXISTS s:l::TABLE e:)
 
+# DROP VIEW [IFEXISTS] (view,...)
+declare -r DEF_DROP_VIEW=(i::DROP:CMD i::VIEW:OBJECT m:ob:IFEXISTS s:l::VIEW e:)
+
 # INSERT
 # insert into (table) ( (col1,...)) VALUES ( (value1,...)),((value1,...))
 # insert into (table) ( (col1,...)) select ...
@@ -169,6 +172,7 @@ declare -r -A PARSE_DEF=(
 	[CREATE_INDEX]=DEF_CREATE_INDEX
 	[DROP_SCHEMA]=DEF_DROP_SCHEMA
 	[DROP_TABLE]=DEF_DROP_TABLE
+	[DROP_VIEW]=DEF_DROP_VIEW
 	[SET]=DEF_SET
 	[GET]=DEF_GET
 	[SHOW]=DEF_SHOW

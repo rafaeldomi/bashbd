@@ -13,6 +13,37 @@
     }
   },
   {
+    "sql": "\\function bashdb.capitalize testing",
+    "expected": {
+      "BACKSLASH": "\\function",
+      "2": "bashdb.capitalize",
+      "3": "testing"
+    }
+  },
+  {
+    "sql": "CREATE INDEX idx_sample ON tab(col)",
+    "expected": {
+      "OBJECT": "INDEX",
+      "TABLE": "tab",
+      "NAME": "idx_sample",
+      "CMD": "CREATE",
+      "COL_full": "col",
+      "COL_1": "col"
+    }
+  },
+  {
+    "sql": "CREATE INDEX idx_sample ON tab(col, col2)",
+    "expected": {
+      "OBJECT": "INDEX",
+      "TABLE": "tab",
+      "NAME": "idx_sample",
+      "CMD": "CREATE",
+      "COL_full": "col,col2",
+      "COL_1": "col",
+      "COL_2": "col2"
+    }
+  },
+  {
     "sql": "\\h CREATE TABLE",
     "expected": {
       "BACKSLASH": "\\h",

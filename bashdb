@@ -133,20 +133,6 @@ main_loop() {
 			return 0
 		fi
 
-		# Help or subcommand
-		# if [ "${INPUT_CMD:0:1}" == "\\" ] ||
-		#    [ "${INPUT_CMD^^}" == "HELP" ]; then
-		# 	# [ menu ]
-		# 	cmd_menu "${INPUT_CMD}"
-
-		# 	# -c parameter
-		# 	if [ ! -z $INPUT_COMMAND ]; then
-		# 		return 0
-		# 	fi
-
-		# 	continue
-		# fi
-
 		# Oh no, I'd like to see you soon
 		if [ "${INPUT_CMD^^}" == "EXIT" ]; then
 			eval $LOGGER LOG "Exiting program"

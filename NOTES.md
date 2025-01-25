@@ -1,6 +1,9 @@
 # SQL Commands
 
 COMMAND		GROUP				MODIFIERS 		PARSER	TESTED	IMPL	TESTED	HELP (\h)
+BACKSLASH	\s					-							OK			OK			OK		OK			-
+					\env				-							OK			OK			OK		OK			-
+					\function		-							OK			OK			OK		OK			-
 GET				-						ALL						OK			OK			OK		OK			OK
 											[..]      		OK			OK			OK		OK			OK
 											[..,..]				OK			OK			OK		OK			OK
@@ -16,7 +19,7 @@ COMMENT	ON	TABLE			-							OK			OK			OK
 						COLUMN		-							OK
 						FUNCTION	-							OK
 						TRIGGER		-							OK
-						SEQUENCE	-							
+						SEQUENCE	-							OK
 						VIEW			-							OK
 						SCHEMA		-							OK
 						*					[APPEND]			OK			OK
@@ -31,8 +34,8 @@ SHOW			COMMENT ON 	TABLE					OK			OK			OK		OK			OK
 CREATE		SCHEMA			[..]					OK			OK			OK		OK			OK
 											[..,..]				OK			OK			OK						OK
 											IFNOTEXISTS		OK			OK			OK		OK			OK
-					INDEX				[col]					OK							OK
-											(col,...)			OK							OK
+					INDEX				[col]					OK			OK
+											(col,...)			OK			OK
 					TABLE				NOTNULL				OK
 											DEFAULT				OK
 											LIKE()

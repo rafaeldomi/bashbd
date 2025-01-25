@@ -149,3 +149,17 @@ bashdb.avg() {
 bashdb.order() {
 	:
 }
+
+# Published hash function
+# $1 - String
+# $2 - Bucket Size
+bashdb.hash() {
+	local _RET=$1
+	local string="$2"
+	local bucket_size="$3"
+	local RESULT
+
+	division_hash RESULT "$string" "$bucket_size"
+	eval $_RET="$RESULT"
+	return 0
+}

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+division_hash() {
+  local _RET=$1
+  local input_string="$2"
+  local table_size="$3"
+  local total=0
+
+  # Check if table_size is a positive integer
+  if ! [[ "$table_size" =~ ^[0-9]+$ ]] || [ "$table_size" -le 0 ]; then
+    #echo "Error: Table size must be a positive integer"
+    return 1
+  fi
+
+  # Convert each character to its ASCII value and accumulate
+  # We use 'printf "%d" "'$char' to get the ASCII code.
+  # Then we add it to total.
+  local char
+  local ascii_val
+  for (( i=0; i<${#input_string}; i++ )); do
+    char="${input_string:i:1}"
+    # We want to use the printf from bash not from OS, so do not change to PRG_PRINTF here
+    printf -v ascii_val "%d" "'$char"
+    total=$(( total + ascii_val ))
+  done
+
+  # Compute the hash (Division Method)
+  local hash_value=$(( total % table_size ))
+
+  eval $_RET="$hash_value"
+  return 0
+}

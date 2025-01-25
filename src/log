@@ -114,8 +114,9 @@ log () {
 	if [[ "$_LEVEL" == "ERROR" || "$_LEVEL" == "FATAL" ]]; then
 	  if [ ${GC[COLOR]} == "normal" ]; then
 		  MSG_COLOR="${CL_RED}"
+			MSG_COLOR_CLEAR="${CL_NC}"
 		fi
-		writeln "${MSG_COLOR}${MSG}${CL_NC}"
+		writeln "${MSG_COLOR}${MSG}${MSG_COLOR_CLEAR}"
 	fi
 
 	# Check if we do log
@@ -128,7 +129,7 @@ log () {
 		fnc_name="${_FUNC:0:18}.."
 	fi
 
-	$PRG_PRINTF "%s [%20s:%-3s %6s]: %b%s%b\n" "`date +\"%D %T\"`" "$fnc_name" "$_LINE" "$_LEVEL" "$MSG_COLOR" "$MSG" "$CL_NC"
+	$PRG_PRINTF "%s [%20s:%-3s %6s]: %b%s%b\n" "`date +\"%D %T\"`" "$fnc_name" "$_LINE" "$_LEVEL" "$MSG_COLOR" "$MSG" "$MSG_COLOR_CLEAR"
 
 	if [ "$_LEVEL" == "FATAL" ]; then
 		$PRG_PRINTF "%s [%14s:%-3s %6s]: %s\n" "`date +\"%D %T\"`" "$_FUNC" "$_LINE" "$LL" "EXITING PROGRAM BECAUSE OF FATAL ERROR"

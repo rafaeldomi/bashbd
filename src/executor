@@ -9,7 +9,7 @@ execute() {
 	parse_sql "${INPUT_CMD}" > /dev/null
 	RET="$?"
 
-	if [ -n ${TOKENS[BACKSLASH]} ]; then
+	if [ -n "${TOKENS[BACKSLASH]}" ]; then
 		backslash_menu ${TOKENS[SQL]}
 	else
 		# LOGGER_MSG="SQL '${TOKENS[SQL]}'"

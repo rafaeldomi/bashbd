@@ -32,6 +32,7 @@ backslash_menu() {
 		\?)	menu_show_help;;
 		h)  menu_show_help_cmd ${TKN[@]:1} ;;
 		env) menu_show_variable ${TKN[@]} ;;
+		function) menu_call_function ${TKN[@]:1} ;;
 		*)  echo "Option '$PAR' not recognized"
 	esac
 
@@ -113,5 +114,7 @@ menu_warm_cache() {
 
 menu_call_function() {
 	# LOGGER_MSG="Call fn: $1"
-	eval $1 $2 $3
+	local RET
+	eval ${1} RET ${@:2}
+	writeln $RET
 }
